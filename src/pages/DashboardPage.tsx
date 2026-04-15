@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
   const [recentOps, setRecentOps] = useState<any[]>([]);
+  const [allOps, setAllOps] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
   const [loading, setLoading] = useState(true);
