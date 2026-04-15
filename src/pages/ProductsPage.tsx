@@ -245,6 +245,41 @@ export default function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* QR Code Dialog */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5 text-primary" />
+              QR Kod
+            </DialogTitle>
+            <DialogDescription>
+              {qrProduct?.name} — {qrProduct?.product_code}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div id="qr-canvas" className="p-4 bg-card border border-border rounded-lg">
+              {qrProduct && (
+                <QRCodeCanvas
+                  value={qrProduct.product_code}
+                  size={200}
+                  level="M"
+                  includeMargin
+                />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Yopish</Button>
+            <Button onClick={downloadQrPng}>
+              <Download className="w-4 h-4 mr-2" />
+              PNG yuklash
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
