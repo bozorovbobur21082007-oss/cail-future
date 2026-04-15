@@ -236,21 +236,38 @@ export default function OperationsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Badge ID</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={workerInputRef}
-                  value={workerBadge}
-                  onChange={(e) => setWorkerBadge(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && verifyWorker()}
-                  placeholder="Badge kartasini skanerlang..."
-                />
-                <Button onClick={() => verifyWorker()} disabled={loading || !workerBadge.trim()}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+            {showWorkerScanner ? (
+              <QrScanner
+                onScan={(result) => {
+                  setShowWorkerScanner(false);
+                  setWorkerBadge(result);
+                  verifyWorker(result);
+                }}
+                onClose={() => setShowWorkerScanner(false)}
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Badge ID</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      ref={workerInputRef}
+                      value={workerBadge}
+                      onChange={(e) => setWorkerBadge(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && verifyWorker()}
+                      placeholder="Badge kartasini skanerlang..."
+                    />
+                    <Button onClick={() => verifyWorker()} disabled={loading || !workerBadge.trim()}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full gap-2" onClick={() => setShowWorkerScanner(true)}>
+                  <Camera className="w-4 h-4" />
+                  Kamera orqali skanerlash
                 </Button>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
