@@ -26,7 +26,7 @@ export default function DashboardPage() {
         const [productsRes, workersRes, opsRes] = await Promise.all([
           supabase.from('products').select('*'),
           supabase.from('workers').select('id'),
-          supabase.from('operations').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('operations').select('*').order('created_at', { ascending: false }).limit(500),
         ]);
 
         const products = productsRes.data || [];
