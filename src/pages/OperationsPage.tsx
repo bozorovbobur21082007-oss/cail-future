@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowDownCircle, ArrowUpCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
+import QrScanner from '@/components/QrScanner';
 
 interface Worker {
   id: string;
@@ -45,6 +46,8 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
+  const [showWorkerScanner, setShowWorkerScanner] = useState(false);
+  const [showProductScanner, setShowProductScanner] = useState(false);
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -233,21 +236,38 @@ export default function OperationsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Badge ID</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={workerInputRef}
-                  value={workerBadge}
-                  onChange={(e) => setWorkerBadge(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && verifyWorker()}
-                  placeholder="Badge kartasini skanerlang..."
-                />
-                <Button onClick={() => verifyWorker()} disabled={loading || !workerBadge.trim()}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+            {showWorkerScanner ? (
+              <QrScanner
+                onScan={(result) => {
+                  setShowWorkerScanner(false);
+                  setWorkerBadge(result);
+                  verifyWorker(result);
+                }}
+                onClose={() => setShowWorkerScanner(false)}
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Badge ID</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      ref={workerInputRef}
+                      value={workerBadge}
+                      onChange={(e) => setWorkerBadge(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && verifyWorker()}
+                      placeholder="Badge kartasini skanerlang..."
+                    />
+                    <Button onClick={() => verifyWorker()} disabled={loading || !workerBadge.trim()}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full gap-2" onClick={() => setShowWorkerScanner(true)}>
+                  <Camera className="w-4 h-4" />
+                  Kamera orqali skanerlash
                 </Button>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -279,21 +299,38 @@ export default function OperationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Mahsulot ID</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={productInputRef}
-                  value={productCode}
-                  onChange={(e) => setProductCode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
-                  placeholder="QR kodni skanerlang..."
-                />
-                <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+            {showProductScanner ? (
+              <QrScanner
+                onScan={(result) => {
+                  setShowProductScanner(false);
+                  setProductCode(result);
+                  scanProduct(result);
+                }}
+                onClose={() => setShowProductScanner(false)}
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Mahsulot ID</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      ref={productInputRef}
+                      value={productCode}
+                      onChange={(e) => setProductCode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
+                      placeholder="QR kodni skanerlang..."
+                    />
+                    <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full gap-2" onClick={() => setShowProductScanner(true)}>
+                  <Camera className="w-4 h-4" />
+                  Kamera orqali skanerlash
                 </Button>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
