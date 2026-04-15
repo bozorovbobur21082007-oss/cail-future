@@ -14,6 +14,7 @@ import {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
+  const [trends, setTrends] = useState<{ thisWeekOps: number; lastWeekOps: number; thisWeekIn: number; lastWeekIn: number; thisWeekOut: number; lastWeekOut: number }>({ thisWeekOps: 0, lastWeekOps: 0, thisWeekIn: 0, lastWeekIn: 0, thisWeekOut: 0, lastWeekOut: 0 });
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
   const [recentOps, setRecentOps] = useState<any[]>([]);
   const [allOps, setAllOps] = useState<any[]>([]);
