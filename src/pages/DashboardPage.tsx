@@ -127,11 +127,30 @@ export default function DashboardPage() {
 
   if (!stats) return <p className="text-muted-foreground">Ma'lumot yuklanmadi</p>;
 
+  const calcTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
+  const TrendBadge = ({ current, previous }: { current: number; previous: number }) => {
+    const pct = calcTrend(current, previous);
+    if (pct === 0) return <span className="text-[10px] text-muted-foreground ml-1">—</span>;
+    const isUp = pct > 0;
+    return (
+      <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ml-2 ${isUp ? 'text-success' : 'text-destructive'}`}>
+        <TrendingUp className={`w-3 h-3 ${!isUp ? 'rotate-180' : ''}`} />
+        {isUp ? '+' : ''}{pct}%
+      </span>
+    );
+  };
+
+  const opstrend = calcTrend(trends.thisWeekOps, trends.lastWeekOps);
+
   const statCards = [
-    { label: "Jami mahsulotlar", value: stats.total_products, icon: Package, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Jami soni", value: stats.total_quantity, icon: Boxes, color: "text-success", bg: "bg-success/10" },
-    { label: "Ishchilar", value: stats.total_workers, icon: Users, color: "text-violet-600", bg: "bg-violet-50" },
-    { label: "Bugungi operatsiyalar", value: stats.today_operations, icon: ArrowLeftRight, color: "text-warning", bg: "bg-warning/10" },
+    { label: "Jami mahsulotlar", value: stats.total_products, icon: Package, color: "text-primary", bg: "bg-primary/10", trend: null },
+    { label: "Jami soni", value: stats.total_quantity, icon: Boxes, color: "text-success", bg: "bg-success/10", trend: null },
+    { label: "Ishchilar", value: stats.total_workers, icon: Users, color: "text-violet-600", bg: "bg-violet-50", trend: null },
+    { label: "Bugungi operatsiyalar", value: stats.today_operations, icon: ArrowLeftRight, color: "text-warning", bg: "bg-warning/10", trend: { current: trends.thisWeekOps, previous: trends.lastWeekOps } },
   ];
 
   return (
@@ -149,7 +168,11 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
-                  <p className="text-2xl font-bold mt-1">{s.value}</p>
+                  <div className="flex items-center mt-1">
+                    <p className="text-2xl font-bold">{s.value}</p>
+                    {s.trend && <TrendBadge current={s.trend.current} previous={s.trend.previous} />}
+                  </div>
+                  {s.trend && <p className="text-[10px] text-muted-foreground">haftalik trend</p>}
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                   <s.icon className={`w-5 h-5 ${s.color}`} />
@@ -169,7 +192,11 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun kirim</p>
-              <p className="text-xl font-bold">{stats.today_in}</p>
+              <div className="flex items-center">
+                <p className="text-xl font-bold">{stats.today_in}</p>
+                <TrendBadge current={trends.thisWeekIn} previous={trends.lastWeekIn} />
+              </div>
+              <p className="text-[10px] text-muted-foreground">haftalik trend</p>
             </div>
           </CardContent>
         </Card>
