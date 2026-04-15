@@ -27,10 +27,13 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+  const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10 });
+  const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
     const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
