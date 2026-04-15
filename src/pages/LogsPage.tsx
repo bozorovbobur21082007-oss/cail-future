@@ -93,10 +93,20 @@ export default function LogsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Loglar</h1>
           <p className="text-sm text-muted-foreground mt-1">Barcha ombor operatsiyalari tarixi</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-          <Filter className="w-4 h-4 mr-2" />
-          Filterlar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="w-4 h-4 mr-2" />
+            Filterlar
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => exportCSV(operations)} disabled={operations.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => exportPDF(operations)} disabled={operations.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       {showFilters && (
