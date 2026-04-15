@@ -16,7 +16,37 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
   const [recentOps, setRecentOps] = useState<any[]>([]);
+  const [allOps, setAllOps] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
   const [loading, setLoading] = useState(true);
+
+  const buildChartData = (operations: any[], period: 'week' | 'month' = chartPeriod) => {
+    const now = new Date();
+    const days = period === 'week' ? 7 : 30;
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - days + 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    const dayMap: Record<string, { date: string; label: string; kirim: number; chiqim: number }> = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      const label = `${d.getDate()}/${d.getMonth() + 1}`;
+      dayMap[key] = { date: key, label, kirim: 0, chiqim: 0 };
+    }
+
+    operations.forEach(op => {
+      const day = op.created_at?.slice(0, 10);
+      if (dayMap[day]) {
+        if (op.action_type === 'IN') dayMap[day].kirim += op.quantity;
+        else dayMap[day].chiqim += op.quantity;
+      }
+    });
+
+    setChartData(Object.values(dayMap));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,7 +54,7 @@ export default function DashboardPage() {
         const [productsRes, workersRes, opsRes] = await Promise.all([
           supabase.from('products').select('*'),
           supabase.from('workers').select('id'),
-          supabase.from('operations').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('operations').select('*').order('created_at', { ascending: false }).limit(500),
         ]);
 
         const products = productsRes.data || [];
@@ -45,6 +75,11 @@ export default function DashboardPage() {
 
         setLowStockProducts(products.filter(p => p.quantity <= p.low_stock_threshold));
         setRecentOps(operations.slice(0, 10));
+
+        // Build chart data
+        setAllOps(operations);
+        buildChartData(operations);
+
       } catch (err) {
         console.error('Dashboard xatolik:', err);
       } finally {
@@ -53,6 +88,10 @@ export default function DashboardPage() {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (allOps.length > 0) buildChartData(allOps, chartPeriod);
+  }, [chartPeriod]);
 
   if (loading) {
     return (
@@ -122,6 +161,56 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Operations Chart */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" />
+              Operatsiyalar statistikasi
+            </CardTitle>
+            <div className="flex gap-1 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setChartPeriod('week')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  chartPeriod === 'week' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Haftalik
+              </button>
+              <button
+                onClick={() => setChartPeriod('month')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  chartPeriod === 'month' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Oylik
+              </button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--background))' }}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Legend />
+                <Bar dataKey="kirim" name="Kirim" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="chiqim" name="Chiqim" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">Bu davr uchun ma'lumot yo'q</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Low Stock Warning */}
       {lowStockProducts.length > 0 && (
