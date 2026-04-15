@@ -1,0 +1,201 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Package, Users, ArrowLeftRight, AlertTriangle,
+  ArrowDownCircle, ArrowUpCircle, Boxes, BarChart3, TrendingUp
+} from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, Legend
+} from 'recharts';
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<any>(null);
+  const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [recentOps, setRecentOps] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productsRes, workersRes, opsRes] = await Promise.all([
+          supabase.from('products').select('*'),
+          supabase.from('workers').select('id'),
+          supabase.from('operations').select('*').order('created_at', { ascending: false }).limit(50),
+        ]);
+
+        const products = productsRes.data || [];
+        const workers = workersRes.data || [];
+        const operations = opsRes.data || [];
+
+        const today = new Date().toISOString().slice(0, 10);
+        const todayOps = operations.filter(o => o.created_at?.slice(0, 10) === today);
+
+        setStats({
+          total_products: products.length,
+          total_quantity: products.reduce((s, p) => s + (p.quantity || 0), 0),
+          total_workers: workers.length,
+          today_operations: todayOps.length,
+          today_in: todayOps.filter(o => o.action_type === 'IN').reduce((s, o) => s + o.quantity, 0),
+          today_out: todayOps.filter(o => o.action_type === 'OUT').reduce((s, o) => s + o.quantity, 0),
+        });
+
+        setLowStockProducts(products.filter(p => p.quantity <= p.low_stock_threshold));
+        setRecentOps(operations.slice(0, 10));
+      } catch (err) {
+        console.error('Dashboard xatolik:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!stats) return <p className="text-muted-foreground">Ma'lumot yuklanmadi</p>;
+
+  const statCards = [
+    { label: "Jami mahsulotlar", value: stats.total_products, icon: Package, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Jami soni", value: stats.total_quantity, icon: Boxes, color: "text-success", bg: "bg-success/10" },
+    { label: "Ishchilar", value: stats.total_workers, icon: Users, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Bugungi operatsiyalar", value: stats.today_operations, icon: ArrowLeftRight, color: "text-warning", bg: "bg-warning/10" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bosh sahifa</h1>
+        <p className="text-sm text-muted-foreground mt-1">Omborxona holati haqida umumiy ma'lumot</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((s, i) => (
+          <Card key={i} className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                  <p className="text-2xl font-bold mt-1">{s.value}</p>
+                </div>
+                <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
+                  <s.icon className={`w-5 h-5 ${s.color}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Today's IN/OUT */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="shadow-sm">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <ArrowDownCircle className="w-5 h-5 text-success" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun kirim</p>
+              <p className="text-xl font-bold">{stats.today_in}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+              <ArrowUpCircle className="w-5 h-5 text-warning" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun chiqim</p>
+              <p className="text-xl font-bold">{stats.today_out}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Low Stock Warning */}
+      {lowStockProducts.length > 0 && (
+        <Card className="shadow-sm border-destructive/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              Kam qolgan mahsulotlar ({lowStockProducts.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lowStockProducts.map(p => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium text-destructive">{p.name}</TableCell>
+                    <TableCell className="font-semibold text-destructive">{p.quantity}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Operations */}
+      {recentOps.length > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <ArrowLeftRight className="w-4 h-4 text-primary" />
+              So'nggi operatsiyalar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Turi</TableHead>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Mahsulot</TableHead>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Ishchi</TableHead>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
+                  <TableHead className="text-xs uppercase text-muted-foreground">Vaqt</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentOps.map(op => (
+                  <TableRow key={op.id}>
+                    <TableCell>
+                      <Badge className={op.action_type === 'IN' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}>
+                        {op.action_type === 'IN' ? 'Kirim' : 'Chiqim'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">{op.product_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{op.worker_name}</TableCell>
+                    <TableCell className="font-semibold">{op.quantity}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(op.created_at).toLocaleString('uz-UZ')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,128 @@
+import React, { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  LayoutDashboard, Package, Users, ArrowLeftRight,
+  ClipboardList, LogOut, Menu, Warehouse
+} from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+
+const navItems = [
+  { to: '/', icon: LayoutDashboard, label: 'Bosh sahifa' },
+  { to: '/mahsulotlar', icon: Package, label: 'Mahsulotlar' },
+  { to: '/ishchilar', icon: Users, label: 'Ishchilar' },
+  { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Operatsiyalar' },
+  { to: '/loglar', icon: ClipboardList, label: 'Loglar' },
+];
+
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <nav className="flex flex-col gap-1 px-3 py-4">
+      {navItems.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.to === '/'}
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground border border-primary/20'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`
+          }
+        >
+          <item.icon className="w-4 h-4 shrink-0" strokeWidth={2} />
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
+
+export default function AppLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col w-64 border-r border-border bg-card h-screen fixed left-0 top-0 z-30">
+        <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
+          <Warehouse className="w-6 h-6 text-primary" strokeWidth={2} />
+          <h1 className="text-lg font-bold tracking-tight text-foreground">
+            Omborxona
+          </h1>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <SidebarNav />
+        </div>
+        <div className="p-3 border-t border-border">
+          <div className="flex items-center gap-3 px-3 py-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+              {user?.name?.[0] || 'A'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Admin'}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Chiqish
+          </Button>
+        </div>
+      </aside>
+
+      {/* Header */}
+      <header className="lg:pl-64 h-14 border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-40 flex items-center px-4 lg:px-6">
+        <div className="lg:hidden">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0">
+              <SheetTitle className="sr-only">Menyu</SheetTitle>
+              <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
+                <Warehouse className="w-6 h-6 text-primary" />
+                <span className="text-lg font-bold text-foreground">Omborxona</span>
+              </div>
+              <SidebarNav onNavigate={() => setMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground hidden sm:block">{user?.name || 'Admin'}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden text-muted-foreground hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="lg:ml-64 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-3.5rem)]">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
