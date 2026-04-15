@@ -94,6 +94,17 @@ export default function ProductsPage() {
     }
   };
 
+  const downloadQrPng = () => {
+    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    if (!canvas || !qrProduct) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr_${qrProduct.product_code}.png`;
+    a.click();
+    toast.success("QR kod yuklab olindi");
+  };
+
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.product_code.toLowerCase().includes(search.toLowerCase())
