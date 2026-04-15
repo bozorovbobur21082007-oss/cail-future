@@ -331,6 +331,7 @@ export default function OperationsPage() {
                 </Button>
               </div>
             )}
+          </CardContent>
         </Card>
       )}
 
