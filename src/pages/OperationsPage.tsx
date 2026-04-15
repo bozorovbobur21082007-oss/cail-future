@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowDownCircle, ArrowUpCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
+import QrScanner from '@/components/QrScanner';
 
 interface Worker {
   id: string;
