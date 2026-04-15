@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
+  const [isSignup, setIsSignup] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,10 +22,16 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      if (isSignup) {
+        await signup(email, password, name);
+        // After signup, auto-login
+        await login(email, password);
+      } else {
+        await login(email, password);
+      }
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Email yoki parol noto\'g\'ri');
+      setError(err.message || 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
@@ -40,7 +48,7 @@ export default function LoginPage() {
             Aqlli Omborxona
           </CardTitle>
           <CardDescription>
-            Tizimga kirish uchun ma'lumotlaringizni kiriting
+            {isSignup ? "Yangi hisob yaratish" : "Tizimga kirish uchun ma'lumotlaringizni kiriting"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -48,6 +56,19 @@ export default function LoginPage() {
             {error && (
               <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                 {error}
+              </div>
+            )}
+            {isSignup && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Ism</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Ismingizni kiriting"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
             )}
             <div className="space-y-2">
@@ -74,9 +95,18 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {loading ? 'Kirilmoqda...' : 'Kirish'}
+              {loading ? (isSignup ? "Yaratilmoqda..." : "Kirilmoqda...") : (isSignup ? "Ro'yxatdan o'tish" : "Kirish")}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => { setIsSignup(!isSignup); setError(''); }}
+              className="text-sm text-primary hover:underline"
+            >
+              {isSignup ? "Hisobingiz bormi? Kirish" : "Hisobingiz yo'qmi? Ro'yxatdan o'tish"}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>
