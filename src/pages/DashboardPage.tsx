@@ -65,6 +65,29 @@ export default function DashboardPage() {
         const today = new Date().toISOString().slice(0, 10);
         const todayOps = operations.filter(o => o.created_at?.slice(0, 10) === today);
 
+        // Trend: this week vs last week
+        const now = new Date();
+        const startOfThisWeek = new Date(now);
+        startOfThisWeek.setDate(now.getDate() - now.getDay());
+        startOfThisWeek.setHours(0, 0, 0, 0);
+        const startOfLastWeek = new Date(startOfThisWeek);
+        startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+
+        const thisWeekOps = operations.filter(o => new Date(o.created_at) >= startOfThisWeek);
+        const lastWeekOps = operations.filter(o => {
+          const d = new Date(o.created_at);
+          return d >= startOfLastWeek && d < startOfThisWeek;
+        });
+
+        setTrends({
+          thisWeekOps: thisWeekOps.length,
+          lastWeekOps: lastWeekOps.length,
+          thisWeekIn: thisWeekOps.filter(o => o.action_type === 'IN').reduce((s, o) => s + o.quantity, 0),
+          lastWeekIn: lastWeekOps.filter(o => o.action_type === 'IN').reduce((s, o) => s + o.quantity, 0),
+          thisWeekOut: thisWeekOps.filter(o => o.action_type === 'OUT').reduce((s, o) => s + o.quantity, 0),
+          lastWeekOut: lastWeekOps.filter(o => o.action_type === 'OUT').reduce((s, o) => s + o.quantity, 0),
+        });
+
         setStats({
           total_products: products.length,
           total_quantity: products.reduce((s, p) => s + (p.quantity || 0), 0),
