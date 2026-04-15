@@ -162,6 +162,56 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Operations Chart */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" />
+              Operatsiyalar statistikasi
+            </CardTitle>
+            <div className="flex gap-1 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setChartPeriod('week')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  chartPeriod === 'week' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Haftalik
+              </button>
+              <button
+                onClick={() => setChartPeriod('month')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                  chartPeriod === 'month' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Oylik
+              </button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--background))' }}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Legend />
+                <Bar dataKey="kirim" name="Kirim" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="chiqim" name="Chiqim" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">Bu davr uchun ma'lumot yo'q</p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Low Stock Warning */}
       {lowStockProducts.length > 0 && (
         <Card className="shadow-sm border-destructive/20">
