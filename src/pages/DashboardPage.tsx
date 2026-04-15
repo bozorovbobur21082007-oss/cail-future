@@ -20,6 +20,33 @@ export default function DashboardPage() {
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
   const [loading, setLoading] = useState(true);
 
+  const buildChartData = (operations: any[], period: 'week' | 'month' = chartPeriod) => {
+    const now = new Date();
+    const days = period === 'week' ? 7 : 30;
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - days + 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    const dayMap: Record<string, { date: string; label: string; kirim: number; chiqim: number }> = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      const label = `${d.getDate()}/${d.getMonth() + 1}`;
+      dayMap[key] = { date: key, label, kirim: 0, chiqim: 0 };
+    }
+
+    operations.forEach(op => {
+      const day = op.created_at?.slice(0, 10);
+      if (dayMap[day]) {
+        if (op.action_type === 'IN') dayMap[day].kirim += op.quantity;
+        else dayMap[day].chiqim += op.quantity;
+      }
+    });
+
+    setChartData(Object.values(dayMap));
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
