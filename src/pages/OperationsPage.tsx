@@ -299,22 +299,38 @@ export default function OperationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Mahsulot ID</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={productInputRef}
-                  value={productCode}
-                  onChange={(e) => setProductCode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
-                  placeholder="QR kodni skanerlang..."
-                />
-                <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+            {showProductScanner ? (
+              <QrScanner
+                onScan={(result) => {
+                  setShowProductScanner(false);
+                  setProductCode(result);
+                  scanProduct(result);
+                }}
+                onClose={() => setShowProductScanner(false)}
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Mahsulot ID</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      ref={productInputRef}
+                      value={productCode}
+                      onChange={(e) => setProductCode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
+                      placeholder="QR kodni skanerlang..."
+                    />
+                    <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full gap-2" onClick={() => setShowProductScanner(true)}>
+                  <Camera className="w-4 h-4" />
+                  Kamera orqali skanerlash
                 </Button>
               </div>
-            </div>
-          </CardContent>
+            )}
         </Card>
       )}
 
