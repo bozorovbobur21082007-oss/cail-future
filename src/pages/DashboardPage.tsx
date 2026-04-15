@@ -47,6 +47,10 @@ export default function DashboardPage() {
 
         setLowStockProducts(products.filter(p => p.quantity <= p.low_stock_threshold));
         setRecentOps(operations.slice(0, 10));
+
+        // Build chart data
+        buildChartData(operations);
+
       } catch (err) {
         console.error('Dashboard xatolik:', err);
       } finally {
