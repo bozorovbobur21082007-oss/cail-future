@@ -77,6 +77,7 @@ export default function DashboardPage() {
         setRecentOps(operations.slice(0, 10));
 
         // Build chart data
+        setAllOps(operations);
         buildChartData(operations);
 
       } catch (err) {
@@ -87,6 +88,10 @@ export default function DashboardPage() {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (allOps.length > 0) buildChartData(allOps, chartPeriod);
+  }, [chartPeriod]);
 
   if (loading) {
     return (
