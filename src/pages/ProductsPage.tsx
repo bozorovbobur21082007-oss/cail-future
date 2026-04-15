@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface Product {
   id: string;
@@ -26,10 +27,13 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+  const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10 });
+  const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
     const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
@@ -88,6 +92,17 @@ export default function ProductsPage() {
     } catch (err: any) {
       toast.error(err.message || 'Xatolik');
     }
+  };
+
+  const downloadQrPng = () => {
+    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    if (!canvas || !qrProduct) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr_${qrProduct.product_code}.png`;
+    a.click();
+    toast.success("QR kod yuklab olindi");
   };
 
   const filtered = products.filter(p =>
@@ -163,6 +178,9 @@ export default function ProductsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
+                              <QrCode className="w-4 h-4 mr-2" /> QR kodni ko'rish
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEdit(p)}>
                               <Pencil className="w-4 h-4 mr-2" /> Tahrirlash
                             </DropdownMenuItem>
@@ -224,6 +242,41 @@ export default function ProductsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Bekor qilish</Button>
             <Button variant="destructive" onClick={handleDelete}>O'chirish</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Dialog */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5 text-primary" />
+              QR Kod
+            </DialogTitle>
+            <DialogDescription>
+              {qrProduct?.name} — {qrProduct?.product_code}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div id="qr-canvas" className="p-4 bg-card border border-border rounded-lg">
+              {qrProduct && (
+                <QRCodeCanvas
+                  value={qrProduct.product_code}
+                  size={200}
+                  level="M"
+                  includeMargin
+                />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Yopish</Button>
+            <Button onClick={downloadQrPng}>
+              <Download className="w-4 h-4 mr-2" />
+              PNG yuklash
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
