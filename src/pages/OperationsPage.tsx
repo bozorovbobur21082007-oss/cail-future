@@ -46,6 +46,8 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
+  const [showWorkerScanner, setShowWorkerScanner] = useState(false);
+  const [showProductScanner, setShowProductScanner] = useState(false);
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
