@@ -69,7 +69,7 @@ export default function WorkersPage() {
       setDialogOpen(false);
       fetchWorkers();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -84,7 +84,7 @@ export default function WorkersPage() {
       setDeleteDialogOpen(false);
       fetchWorkers();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     }
   };
 

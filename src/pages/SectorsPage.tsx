@@ -92,7 +92,7 @@ export default function SectorsPage() {
       setDialogOpen(false);
       fetchSectors();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi');
+      toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -107,7 +107,7 @@ export default function SectorsPage() {
       setDeleteDialogOpen(false);
       fetchSectors();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     }
   };
 

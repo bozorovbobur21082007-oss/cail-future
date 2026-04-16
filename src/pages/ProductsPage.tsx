@@ -91,7 +91,7 @@ export default function ProductsPage() {
       setDialogOpen(false);
       fetchProducts();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi');
+      toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +106,7 @@ export default function ProductsPage() {
       setDeleteDialogOpen(false);
       fetchProducts();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     }
   };
 

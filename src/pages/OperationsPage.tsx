@@ -162,7 +162,7 @@ export default function OperationsPage() {
       setScanError(null);
       setStep(2);
     } catch (err: any) {
-      toast.error(err.message || 'Operatsiya bajarilmadi');
+      toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
