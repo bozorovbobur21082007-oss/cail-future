@@ -67,10 +67,3 @@ export function getErrorMessage(error: unknown, fallback?: string): string {
   return fallback || "Kutilmagan xatolik yuz berdi. Qaytadan urinib ko'ring.";
 }
 
-/**
- * toast.error uchun tayyor wrapper
- */
-export function showError(error: unknown, fallback?: string) {
-  const { toast } = require('sonner');
-  toast.error(getErrorMessage(error, fallback));
-}
