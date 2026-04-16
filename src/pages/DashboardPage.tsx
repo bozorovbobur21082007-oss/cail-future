@@ -5,14 +5,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   Package, Users, ArrowLeftRight, AlertTriangle,
   ArrowDownCircle, ArrowUpCircle, Boxes, BarChart3, TrendingUp,
-  RotateCcw
+  RotateCcw, Trash2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Legend
 } from 'recharts';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
@@ -51,13 +57,27 @@ export default function DashboardPage() {
     setChartData(Object.values(dayMap));
   };
 
-  const resetStats = () => {
-    setStats(null);
-    setTrends({ thisWeekOps: 0, lastWeekOps: 0, thisWeekIn: 0, lastWeekIn: 0, thisWeekOut: 0, lastWeekOut: 0 });
-    setLowStockProducts([]);
-    setRecentOps([]);
-    setAllOps([]);
-    setChartData([]);
+  const [resetting, setResetting] = useState(false);
+
+  const resetStats = async () => {
+    setResetting(true);
+    try {
+      const { error } = await supabase.from('operations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+      
+      setStats(null);
+      setTrends({ thisWeekOps: 0, lastWeekOps: 0, thisWeekIn: 0, lastWeekIn: 0, thisWeekOut: 0, lastWeekOut: 0 });
+      setLowStockProducts([]);
+      setRecentOps([]);
+      setAllOps([]);
+      setChartData([]);
+      toast.success("Barcha operatsiyalar va loglar muvaffaqiyatli o'chirildi");
+    } catch (err) {
+      console.error(err);
+      toast.error("O'chirishda xatolik yuz berdi");
+    } finally {
+      setResetting(false);
+    }
   };
 
   useEffect(() => {
@@ -237,15 +257,33 @@ export default function DashboardPage() {
               Operatsiyalar statistikasi
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetStats}
-                className="gap-1.5 h-8 px-3 text-xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Qayta yuklash
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={resetting}
+                    className="gap-1.5 h-8 px-3 text-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {resetting ? "O'chirilmoqda..." : "Tozalash"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Barcha ma'lumotlarni o'chirish</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Barcha operatsiyalar (loglar) bazadan butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi. Davom etishni xohlaysizmi?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                    <AlertDialogAction onClick={resetStats} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Ha, o'chirish
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <div className="flex gap-1 bg-muted rounded-lg p-1">
                 <button
                   onClick={() => setChartPeriod('week')}
