@@ -6,11 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
+
+interface Sector { id: string; name: string; code: string; }
 
 interface Product {
   id: string;
@@ -19,10 +22,12 @@ interface Product {
   quantity: number;
   low_stock_threshold: number;
   created_at: string;
+  sector_id: string | null;
 }
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -32,16 +37,20 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10 });
+  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
-    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (error) {
+    const [prodRes, secRes] = await Promise.all([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('sectors').select('id, name, code'),
+    ]);
+    if (prodRes.error) {
       toast.error('Mahsulotlarni yuklashda xatolik');
     } else {
-      setProducts(data || []);
+      setProducts(prodRes.data || []);
     }
+    setSectors(secRes.data || []);
     setLoading(false);
   }, []);
 
@@ -49,26 +58,32 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10 });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold });
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    const payload = {
+      name: form.name,
+      quantity: form.quantity,
+      low_stock_threshold: form.low_stock_threshold,
+      sector_id: form.sector_id || null,
+    };
     try {
       if (editing) {
-        const { error } = await supabase.from('products').update(form).eq('id', editing.id);
+        const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Mahsulot yangilandi");
       } else {
-        const { error } = await supabase.from('products').insert(form);
+        const { error } = await supabase.from('products').insert(payload);
         if (error) throw error;
         toast.success("Mahsulot qo'shildi");
       }
@@ -136,20 +151,21 @@ export default function ProductsPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Holat</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Yaratilgan</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">Amallar</TableHead>
-              </TableRow>
+               <TableRow className="bg-muted/50">
+                 <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Holat</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Yaratilgan</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground text-right">Amallar</TableHead>
+               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {search ? "Natija topilmadi" : "Hali mahsulot mavjud emas"}
                   </TableCell>
                 </TableRow>
@@ -159,7 +175,16 @@ export default function ProductsPage() {
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{p.product_code}</TableCell>
+                       <TableCell className="font-mono text-xs text-muted-foreground">{p.product_code}</TableCell>
+                       <TableCell className="text-xs">
+                         {p.sector_id ? (
+                           <Badge variant="outline" className="text-[10px]">
+                             {sectors.find(s => s.id === p.sector_id)?.name || '—'}
+                           </Badge>
+                         ) : (
+                           <span className="text-muted-foreground">—</span>
+                         )}
+                       </TableCell>
                       <TableCell className={`font-semibold ${isLow ? 'text-destructive' : ''}`}>{p.quantity}</TableCell>
                       <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
                       <TableCell>
@@ -217,7 +242,17 @@ export default function ProductsPage() {
             </div>
             <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
-              <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} />
+               <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Sektor</Label>
+              <Select value={form.sector_id} onValueChange={(v) => setForm({ ...form, sector_id: v === 'none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="Sektorsiz" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sektorsiz</SelectItem>
+                  {sectors.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
