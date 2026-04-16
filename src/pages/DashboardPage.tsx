@@ -257,15 +257,33 @@ export default function DashboardPage() {
               Operatsiyalar statistikasi
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetStats}
-                className="gap-1.5 h-8 px-3 text-xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Qayta yuklash
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={resetting}
+                    className="gap-1.5 h-8 px-3 text-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {resetting ? "O'chirilmoqda..." : "Tozalash"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Barcha ma'lumotlarni o'chirish</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Barcha operatsiyalar (loglar) bazadan butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi. Davom etishni xohlaysizmi?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                    <AlertDialogAction onClick={resetStats} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Ha, o'chirish
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <div className="flex gap-1 bg-muted rounded-lg p-1">
                 <button
                   onClick={() => setChartPeriod('week')}
