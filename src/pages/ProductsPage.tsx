@@ -151,20 +151,21 @@ export default function ProductsPage() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Holat</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground">Yaratilgan</TableHead>
-                <TableHead className="text-xs uppercase text-muted-foreground text-right">Amallar</TableHead>
-              </TableRow>
+               <TableRow className="bg-muted/50">
+                 <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Holat</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Yaratilgan</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground text-right">Amallar</TableHead>
+               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {search ? "Natija topilmadi" : "Hali mahsulot mavjud emas"}
                   </TableCell>
                 </TableRow>
@@ -174,7 +175,16 @@ export default function ProductsPage() {
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{p.product_code}</TableCell>
+                       <TableCell className="font-mono text-xs text-muted-foreground">{p.product_code}</TableCell>
+                       <TableCell className="text-xs">
+                         {p.sector_id ? (
+                           <Badge variant="outline" className="text-[10px]">
+                             {sectors.find(s => s.id === p.sector_id)?.name || '—'}
+                           </Badge>
+                         ) : (
+                           <span className="text-muted-foreground">—</span>
+                         )}
+                       </TableCell>
                       <TableCell className={`font-semibold ${isLow ? 'text-destructive' : ''}`}>{p.quantity}</TableCell>
                       <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
                       <TableCell>
@@ -232,7 +242,17 @@ export default function ProductsPage() {
             </div>
             <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
-              <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} />
+               <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Sektor</Label>
+              <Select value={form.sector_id} onValueChange={(v) => setForm({ ...form, sector_id: v === 'none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="Sektorsiz" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sektorsiz</SelectItem>
+                  {sectors.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
