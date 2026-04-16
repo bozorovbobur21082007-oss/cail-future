@@ -51,6 +51,15 @@ export default function DashboardPage() {
     setChartData(Object.values(dayMap));
   };
 
+  const resetStats = () => {
+    setStats(null);
+    setTrends({ thisWeekOps: 0, lastWeekOps: 0, thisWeekIn: 0, lastWeekIn: 0, thisWeekOut: 0, lastWeekOut: 0 });
+    setLowStockProducts([]);
+    setRecentOps([]);
+    setAllOps([]);
+    setChartData([]);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
