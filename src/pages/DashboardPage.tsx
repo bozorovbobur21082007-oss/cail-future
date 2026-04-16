@@ -236,23 +236,34 @@ export default function DashboardPage() {
               <BarChart3 className="w-4 h-4 text-primary" />
               Operatsiyalar statistikasi
             </CardTitle>
-            <div className="flex gap-1 bg-muted rounded-lg p-1">
-              <button
-                onClick={() => setChartPeriod('week')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  chartPeriod === 'week' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetStats}
+                className="gap-1.5 h-8 px-3 text-xs"
               >
-                Haftalik
-              </button>
-              <button
-                onClick={() => setChartPeriod('month')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  chartPeriod === 'month' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Oylik
-              </button>
+                <RotateCcw className="w-3.5 h-3.5" />
+                Qayta yuklash
+              </Button>
+              <div className="flex gap-1 bg-muted rounded-lg p-1">
+                <button
+                  onClick={() => setChartPeriod('week')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    chartPeriod === 'week' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Haftalik
+                </button>
+                <button
+                  onClick={() => setChartPeriod('month')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    chartPeriod === 'month' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Oylik
+                </button>
+              </div>
             </div>
           </div>
         </CardHeader>
