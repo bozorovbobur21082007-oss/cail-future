@@ -6,11 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeCanvas } from 'qrcode.react';
+
+interface Sector { id: string; name: string; code: string; }
 
 interface Product {
   id: string;
@@ -19,10 +22,12 @@ interface Product {
   quantity: number;
   low_stock_threshold: number;
   created_at: string;
+  sector_id: string | null;
 }
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -32,7 +37,7 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10 });
+  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
