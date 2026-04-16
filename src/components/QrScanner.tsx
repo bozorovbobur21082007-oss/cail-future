@@ -50,8 +50,15 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
       });
 
     return () => {
-      scanner.stop().catch(() => {});
-      scanner.clear();
+      try {
+        const state = scanner.getState();
+        if (state === 2 || state === 3) { // SCANNING or PAUSED
+          scanner.stop().catch(() => {});
+        }
+      } catch {
+        // ignore
+      }
+      try { scanner.clear(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
