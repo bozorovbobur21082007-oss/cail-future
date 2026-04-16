@@ -41,12 +41,16 @@ export default function ProductsPage() {
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
-    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (error) {
+    const [prodRes, secRes] = await Promise.all([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('sectors').select('id, name, code'),
+    ]);
+    if (prodRes.error) {
       toast.error('Mahsulotlarni yuklashda xatolik');
     } else {
-      setProducts(data || []);
+      setProducts(prodRes.data || []);
     }
+    setSectors(secRes.data || []);
     setLoading(false);
   }, []);
 
@@ -54,26 +58,32 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10 });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold });
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    const payload = {
+      name: form.name,
+      quantity: form.quantity,
+      low_stock_threshold: form.low_stock_threshold,
+      sector_id: form.sector_id || null,
+    };
     try {
       if (editing) {
-        const { error } = await supabase.from('products').update(form).eq('id', editing.id);
+        const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Mahsulot yangilandi");
       } else {
-        const { error } = await supabase.from('products').insert(form);
+        const { error } = await supabase.from('products').insert(payload);
         if (error) throw error;
         toast.success("Mahsulot qo'shildi");
       }
