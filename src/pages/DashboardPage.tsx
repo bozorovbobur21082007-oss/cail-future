@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Package, Users, ArrowLeftRight, AlertTriangle,
-  ArrowDownCircle, ArrowUpCircle, Boxes, BarChart3, TrendingUp
+  ArrowDownCircle, ArrowUpCircle, Boxes, BarChart3, TrendingUp,
+  RotateCcw
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
