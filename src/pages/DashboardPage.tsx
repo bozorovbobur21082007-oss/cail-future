@@ -5,14 +5,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   Package, Users, ArrowLeftRight, AlertTriangle,
   ArrowDownCircle, ArrowUpCircle, Boxes, BarChart3, TrendingUp,
-  RotateCcw
+  RotateCcw, Trash2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Legend
 } from 'recharts';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
