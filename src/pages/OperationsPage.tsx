@@ -11,6 +11,7 @@ import {
   Loader2, UserCheck, Package, AlertTriangle, Info, Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 
 interface Worker {
@@ -161,7 +162,7 @@ export default function OperationsPage() {
       setScanError(null);
       setStep(2);
     } catch (err: any) {
-      toast.error(err.message || 'Operatsiya bajarilmadi');
+      toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

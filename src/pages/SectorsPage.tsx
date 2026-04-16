@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Progress } from '@/components/ui/progress';
 import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/errorMessages';
 
 interface Sector {
   id: string;
@@ -91,7 +92,7 @@ export default function SectorsPage() {
       setDialogOpen(false);
       fetchSectors();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi');
+      toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +107,7 @@ export default function SectorsPage() {
       setDeleteDialogOpen(false);
       fetchSectors();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     }
   };
 

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/errorMessages';
 
 interface Worker {
   id: string;
@@ -68,7 +69,7 @@ export default function WorkersPage() {
       setDialogOpen(false);
       fetchWorkers();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +84,7 @@ export default function WorkersPage() {
       setDeleteDialogOpen(false);
       fetchWorkers();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     }
   };
 

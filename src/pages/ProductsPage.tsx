@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
 
 interface Sector { id: string; name: string; code: string; }
@@ -90,7 +91,7 @@ export default function ProductsPage() {
       setDialogOpen(false);
       fetchProducts();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi');
+      toast.error(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -105,7 +106,7 @@ export default function ProductsPage() {
       setDeleteDialogOpen(false);
       fetchProducts();
     } catch (err: any) {
-      toast.error(err.message || 'Xatolik');
+      toast.error(getErrorMessage(err));
     }
   };
 
