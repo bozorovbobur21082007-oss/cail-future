@@ -11,6 +11,7 @@ import {
   Loader2, UserCheck, Package, AlertTriangle, Info, Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 
 interface Worker {
