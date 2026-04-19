@@ -323,6 +323,7 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
                <TableRow className="bg-muted/50">
+                 <TableHead className="text-xs uppercase text-muted-foreground w-10"></TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
@@ -336,15 +337,33 @@ export default function ProductsPage() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {search ? "Natija topilmadi" : "Hali mahsulot mavjud emas"}
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered.map((p) => {
                   const isLow = p.quantity <= p.low_stock_threshold;
+                  const hasNfc = !!p.nfc_id;
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
+                      <TableCell className="py-2">
+                        {hasNfc ? (
+                          <span
+                            title={`NFC: ${p.nfc_id}`}
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 text-primary"
+                          >
+                            <Radio className="w-3.5 h-3.5" />
+                          </span>
+                        ) : (
+                          <span
+                            title="QR / Barkod"
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
                        <TableCell className="font-mono text-xs text-muted-foreground">{p.product_code}</TableCell>
                        <TableCell className="text-xs">
