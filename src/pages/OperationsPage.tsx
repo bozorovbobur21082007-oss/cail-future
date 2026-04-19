@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
-  ScanLine, CheckCircle2, XCircle, ArrowUpCircle,
+  ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
   Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
