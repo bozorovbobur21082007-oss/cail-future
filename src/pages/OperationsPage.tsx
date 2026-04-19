@@ -479,21 +479,27 @@ export default function OperationsPage() {
       {batchLogs.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-muted-foreground">Sessiya logi ({batchLogs.length})</h3>
-          {batchLogs.map(log => (
-            <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border border-success/20 bg-success/5">
-              <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-              <div className="flex-1 flex items-center gap-2 text-sm">
-                <Badge className="bg-warning/10 text-warning border-warning/20 text-xs">
-                  Chiqim
-                </Badge>
-                <span className="font-medium truncate">{log.product_name}</span>
-                <span className="text-muted-foreground">x{log.quantity}</span>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {new Date(log.created_at).toLocaleTimeString('uz-UZ')}
-                </span>
+          {batchLogs.map(log => {
+            const isIn = log.action_type === 'IN';
+            return (
+              <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border border-success/20 bg-success/5">
+                <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+                <div className="flex-1 flex items-center gap-2 text-sm">
+                  <Badge className={isIn
+                    ? 'bg-success/10 text-success border-success/20 text-xs'
+                    : 'bg-warning/10 text-warning border-warning/20 text-xs'
+                  }>
+                    {isIn ? 'Kirim' : 'Chiqim'}
+                  </Badge>
+                  <span className="font-medium truncate">{log.product_name}</span>
+                  <span className="text-muted-foreground">x{log.quantity}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {new Date(log.created_at).toLocaleTimeString('uz-UZ')}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
