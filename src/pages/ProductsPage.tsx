@@ -479,6 +479,17 @@ export default function ProductsPage() {
               )}
             </div>
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
+            <div className="w-full space-y-2">
+              <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
+              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'small' | 'medium' | 'large')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
+                  <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
+                  <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Yopish</Button>
