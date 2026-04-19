@@ -2,16 +2,26 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ScanLine, Camera, Keyboard, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const [scannerMode, setScannerMode] = useScannerMode();
+  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
+  const { test } = useSoundFeedback();
 
   const handleToggle = (v: boolean) => {
     setScannerMode(v);
     toast.success(v ? 'Skaner gun rejimi yoqildi' : 'Skaner gun rejimi o\'chirildi');
+  };
+
+  const handleSoundToggle = (v: boolean) => {
+    setSoundEnabled(v);
+    if (v) test();
+    toast.success(v ? 'Tovush bilan tasdiqlash yoqildi' : 'Tovush o\'chirildi');
   };
 
   return (
