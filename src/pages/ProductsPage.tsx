@@ -185,15 +185,19 @@ export default function ProductsPage() {
     }
     const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
     const code = qrProduct.product_code;
+    const sectorCode = sectors.find(s => s.id === qrProduct.sector_id)?.code || '';
     const cfg = labelSizeConfig[labelSize];
     const isHorizontal = cfg.layout === 'horizontal';
+    const useCompact = compactLabel && isHorizontal;
 
     const horizontalCss = `
       .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
       .label img { width: ${cfg.qr}mm; height: ${cfg.qr}mm; flex-shrink: 0; display: block; }
       .text { flex: 1; min-width: 0; overflow: hidden; }
       .name { font-size: 7pt; font-weight: 700; line-height: 1.1; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .sector { font-family: monospace; font-size: 9pt; font-weight: 700; line-height: 1.1; letter-spacing: 0.5px; }
       .code { font-family: monospace; font-size: 6pt; color: #333; margin-top: 0.5mm; word-break: break-all; }
+      .code-big { font-family: monospace; font-size: 8pt; font-weight: 600; color: #111; margin-top: 1mm; word-break: break-all; }
       @media print {
         body { padding: 0; min-height: auto; display: block; }
         .label { border: none; padding: 0.5mm; border-radius: 0; }
@@ -213,8 +217,11 @@ export default function ProductsPage() {
       }
     `;
 
+    const compactInner = `<div class="text">${sectorCode ? `<div class="sector">${sectorCode}</div>` : ''}<div class="${sectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
+    const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+
     const labelHtml = isHorizontal
-      ? `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div></div>`
+      ? `<div class="label"><img src="${dataUrl}" alt="QR" />${useCompact ? compactInner : fullInner}</div>`
       : `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     printWindow.document.write(`
