@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
-  ScanLine, CheckCircle2, XCircle, ArrowUpCircle,
+  ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
   Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -46,6 +46,7 @@ export default function OperationsPage() {
   const [productCode, setProductCode] = useState('');
   const [verifiedProduct, setVerifiedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [actionType, setActionType] = useState<'IN' | 'OUT'>('OUT');
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
@@ -182,9 +183,11 @@ export default function OperationsPage() {
     setScanError(null);
     setLoading(true);
     try {
-      const newQty = verifiedProduct.quantity - quantity;
+      const newQty = actionType === 'OUT'
+        ? verifiedProduct.quantity - quantity
+        : verifiedProduct.quantity + quantity;
 
-      if (newQty < 0) {
+      if (actionType === 'OUT' && newQty < 0) {
         setScanError({ title: "Yetarli emas", detail: `Omborda faqat ${verifiedProduct.quantity} dona mavjud.` });
         setLoading(false);
         return;
@@ -198,19 +201,21 @@ export default function OperationsPage() {
         product_id: verifiedProduct.id,
         worker_name: verifiedWorker.full_name,
         product_name: verifiedProduct.name,
-        action_type: 'OUT',
+        action_type: actionType,
         quantity,
       }).select().single();
       if (opError) throw opError;
 
       sound.success();
-      toast.success(`Chiqim muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
+      const label = actionType === 'OUT' ? 'Chiqim' : 'Kirim (qaytarish)';
+      toast.success(`${label} muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 
       // Reset for next product scan
       setProductCode('');
       setVerifiedProduct(null);
       setQuantity(1);
+      setActionType('OUT');
       setScanError(null);
       setStep(2);
     } catch (err: any) {
@@ -234,9 +239,9 @@ export default function OperationsPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Chiqim operatsiyalari</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Operatsiyalar</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Mahsulotni ombordan chiqarish. Kirim uchun Mahsulotlar bo'limidan yangi mahsulot qo'shing.
+          Mahsulotni ombordan chiqarish (OUT) yoki qaytarish (IN). Tasdiqlash bosqichida amal turini tanlang.
         </p>
       </div>
 
@@ -383,7 +388,7 @@ export default function OperationsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-success" />
-              3-bosqich: Chiqimni tasdiqlash
+              3-bosqich: Operatsiyani tasdiqlash
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -397,37 +402,73 @@ export default function OperationsPage() {
                 <p className="font-medium">{verifiedProduct.name}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Omborda</p>
+                <p className="text-muted-foreground">Omborda hozir</p>
                 <p className="font-medium">{verifiedProduct.quantity} dona</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Amal turi</p>
-                <Badge className="bg-warning/10 text-warning border-warning/20 gap-1">
-                  <ArrowUpCircle className="w-3 h-3" /> Chiqim
-                </Badge>
+                <p className="text-muted-foreground">Yangi qoldiq</p>
+                <p className="font-medium">
+                  {actionType === 'OUT'
+                    ? Math.max(0, verifiedProduct.quantity - quantity)
+                    : verifiedProduct.quantity + quantity} dona
+                </p>
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label>Miqdor (chiqariladigan)</Label>
+              <Label>Amal turi</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={actionType === 'OUT' ? 'default' : 'outline'}
+                  onClick={() => setActionType('OUT')}
+                  className={actionType === 'OUT' ? 'bg-warning text-warning-foreground hover:bg-warning/90' : ''}
+                >
+                  <ArrowUpCircle className="w-4 h-4 mr-2" />
+                  Chiqim (OUT)
+                </Button>
+                <Button
+                  type="button"
+                  variant={actionType === 'IN' ? 'default' : 'outline'}
+                  onClick={() => setActionType('IN')}
+                  className={actionType === 'IN' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}
+                >
+                  <ArrowDownCircle className="w-4 h-4 mr-2" />
+                  Qaytarish (IN)
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {actionType === 'OUT'
+                  ? 'Mahsulot ombordan ishchiga beriladi.'
+                  : 'Ishchi mahsulotni omborga qaytarib topshiradi.'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Miqdor</Label>
               <Input
                 type="number"
                 min={1}
-                max={verifiedProduct.quantity}
+                max={actionType === 'OUT' ? verifiedProduct.quantity : undefined}
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => { setStep(2); setVerifiedProduct(null); setProductCode(''); }}>
+              <Button variant="outline" onClick={() => { setStep(2); setVerifiedProduct(null); setProductCode(''); setActionType('OUT'); }}>
                 Ortga
               </Button>
               <Button
                 onClick={executeOperation}
-                disabled={loading || verifiedProduct.quantity <= 0 || quantity > verifiedProduct.quantity}
+                disabled={
+                  loading ||
+                  quantity < 1 ||
+                  (actionType === 'OUT' && (verifiedProduct.quantity <= 0 || quantity > verifiedProduct.quantity))
+                }
                 className="flex-1"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Chiqim qilish
+                {actionType === 'OUT' ? 'Chiqim qilish' : 'Qaytarishni saqlash'}
               </Button>
             </div>
           </CardContent>
@@ -438,21 +479,27 @@ export default function OperationsPage() {
       {batchLogs.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-muted-foreground">Sessiya logi ({batchLogs.length})</h3>
-          {batchLogs.map(log => (
-            <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border border-success/20 bg-success/5">
-              <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-              <div className="flex-1 flex items-center gap-2 text-sm">
-                <Badge className="bg-warning/10 text-warning border-warning/20 text-xs">
-                  Chiqim
-                </Badge>
-                <span className="font-medium truncate">{log.product_name}</span>
-                <span className="text-muted-foreground">x{log.quantity}</span>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {new Date(log.created_at).toLocaleTimeString('uz-UZ')}
-                </span>
+          {batchLogs.map(log => {
+            const isIn = log.action_type === 'IN';
+            return (
+              <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border border-success/20 bg-success/5">
+                <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+                <div className="flex-1 flex items-center gap-2 text-sm">
+                  <Badge className={isIn
+                    ? 'bg-success/10 text-success border-success/20 text-xs'
+                    : 'bg-warning/10 text-warning border-warning/20 text-xs'
+                  }>
+                    {isIn ? 'Kirim' : 'Chiqim'}
+                  </Badge>
+                  <span className="font-medium truncate">{log.product_name}</span>
+                  <span className="text-muted-foreground">x{log.quantity}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {new Date(log.created_at).toLocaleTimeString('uz-UZ')}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
