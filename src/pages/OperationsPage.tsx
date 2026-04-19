@@ -335,7 +335,13 @@ export default function OperationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            {showProductScanner ? (
+            {showNfcScanner ? (
+              <NfcScanner
+                onScan={(uid) => scanByNfc(uid)}
+                onClose={() => setShowNfcScanner(false)}
+                title="Mahsulot NFC tegini skanerlang"
+              />
+            ) : showProductScanner ? (
               <QrScanner
                 onScan={(result) => {
                   setShowProductScanner(false);
@@ -361,10 +367,16 @@ export default function OperationsPage() {
                     </Button>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full gap-2" onClick={() => setShowProductScanner(true)}>
-                  <Camera className="w-4 h-4" />
-                  Kamera orqali skanerlash
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => setShowProductScanner(true)}>
+                    <Camera className="w-4 h-4" />
+                    Kamera (QR)
+                  </Button>
+                  <Button variant="outline" className="gap-2" onClick={() => setShowNfcScanner(true)}>
+                    <Radio className="w-4 h-4" />
+                    NFC skaner
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
