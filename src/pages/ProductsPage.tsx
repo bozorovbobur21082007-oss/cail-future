@@ -472,7 +472,11 @@ export default function ProductsPage() {
                       <TableCell className={`font-semibold ${isLow ? 'text-destructive' : ''}`}>{p.quantity}</TableCell>
                       <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
                       <TableCell>
-                        {isLow ? (
+                        {!p.approved ? (
+                          <Badge className="bg-warning/10 text-warning border-warning/20 text-xs gap-1">
+                            <Clock className="w-3 h-3" /> Tasdiq kutilmoqda
+                          </Badge>
+                        ) : isLow ? (
                           <Badge variant="destructive" className="text-xs">Kam</Badge>
                         ) : (
                           <Badge className="bg-success/10 text-success border-success/20 text-xs">Yetarli</Badge>
@@ -487,6 +491,11 @@ export default function ProductsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {!p.approved && (
+                              <DropdownMenuItem onClick={() => handleApprove(p)} className="text-success focus:text-success">
+                                <CheckCircle2 className="w-4 h-4 mr-2" /> Tasdiqlash
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
                               <QrCode className="w-4 h-4 mr-2" /> QR / Barkod yorliq
                             </DropdownMenuItem>
