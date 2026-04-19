@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useSoundFeedback } from '@/hooks/useSoundFeedback';
 
 interface Worker {
   id: string;
@@ -52,6 +53,7 @@ export default function OperationsPage() {
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [scannerMode] = useScannerMode();
+  const sound = useSoundFeedback();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -79,9 +81,11 @@ export default function OperationsPage() {
           detail: `"${badge}" badge ID bilan ishchi tizimda mavjud emas.`,
           hint: "Badge kartasini qayta skanerlang yoki admin tomonidan ishchi qo'shilganini tekshiring."
         });
+        sound.error();
         setWorkerBadge('');
       } else {
         setVerifiedWorker(data);
+        sound.success();
         toast.success(`Ishchi tasdiqlandi: ${data.full_name}`);
         setStep(2);
       }
@@ -111,6 +115,7 @@ export default function OperationsPage() {
           detail: `"${code}" ID bilan mahsulot bazada mavjud emas.`,
           hint: "Kod yoki NFC teg eskirgan, yoki mahsulot hali ombor tizimiga kiritilmagan."
         });
+        sound.error();
         setProductCode('');
       } else {
         setVerifiedProduct(data);
@@ -120,6 +125,9 @@ export default function OperationsPage() {
             detail: `"${data.name}" omborda qolmagan (0 dona).`,
             hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
           });
+          sound.error();
+        } else {
+          sound.success();
         }
         const via = data.nfc_id && data.nfc_id.toUpperCase() === code ? 'NFC' : 'kod';
         toast.success(`Mahsulot topildi (${via}): ${data.name} (${data.quantity} dona)`);
@@ -146,6 +154,7 @@ export default function OperationsPage() {
           detail: `"${id}" NFC ID bilan mahsulot topilmadi.`,
           hint: "Bu nakleyka biror mahsulotga biriktirilmagan. Avval Mahsulotlar bo'limida ro'yxatdan o'tkazing."
         });
+        sound.error();
       } else {
         setVerifiedProduct(data);
         if (data.quantity <= 0) {
@@ -154,6 +163,9 @@ export default function OperationsPage() {
             detail: `"${data.name}" omborda qolmagan (0 dona).`,
             hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
           });
+          sound.error();
+        } else {
+          sound.success();
         }
         toast.success(`NFC orqali topildi: ${data.name} (${data.quantity} dona)`);
         setStep(3);
@@ -191,6 +203,7 @@ export default function OperationsPage() {
       }).select().single();
       if (opError) throw opError;
 
+      sound.success();
       toast.success(`Chiqim muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 

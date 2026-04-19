@@ -2,16 +2,26 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ScanLine, Camera, Keyboard, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const [scannerMode, setScannerMode] = useScannerMode();
+  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
+  const { test } = useSoundFeedback();
 
   const handleToggle = (v: boolean) => {
     setScannerMode(v);
     toast.success(v ? 'Skaner gun rejimi yoqildi' : 'Skaner gun rejimi o\'chirildi');
+  };
+
+  const handleSoundToggle = (v: boolean) => {
+    setSoundEnabled(v);
+    if (v) test();
+    toast.success(v ? 'Tovush bilan tasdiqlash yoqildi' : 'Tovush o\'chirildi');
   };
 
   return (
@@ -88,6 +98,46 @@ export default function SettingsPage() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Volume2 className="w-4 h-4 text-primary" />
+            Tovush bilan tasdiqlash
+          </CardTitle>
+          <CardDescription>
+            Har bir muvaffaqiyatli skanerlashda qisqa "beep" ovozi chiqadi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="space-y-1 flex-1 min-w-0">
+              <Label htmlFor="sound-toggle" className="text-sm font-medium cursor-pointer">
+                Beep ovozini yoqish
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Skanerlash muvaffaqiyatli bo'lganda yuqori chastotali qisqa signal, xatolikda past signal eshitiladi.
+              </p>
+            </div>
+            <Switch
+              id="sound-toggle"
+              checked={soundEnabled}
+              onCheckedChange={handleSoundToggle}
+            />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => test()}
+            className="gap-2"
+          >
+            <Play className="w-4 h-4" />
+            Ovozni sinab ko'rish
+          </Button>
         </CardContent>
       </Card>
     </div>
