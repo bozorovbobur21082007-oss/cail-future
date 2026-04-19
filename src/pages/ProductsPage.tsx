@@ -434,40 +434,78 @@ export default function ProductsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Radio className="w-3.5 h-3.5 text-primary" />
-                NFC ID <span className="text-muted-foreground text-xs font-normal">(ixtiyoriy)</span>
-              </Label>
-              {showNfcScanner ? (
-                <NfcScanner
-                  onScan={(uid) => {
-                    setForm({ ...form, nfc_id: uid });
-                    setShowNfcScanner(false);
-                    toast.success(`NFC ID o'qildi: ${uid}`);
-                  }}
-                  onClose={() => setShowNfcScanner(false)}
-                />
-              ) : (
-                <>
-                  <div className="flex gap-2">
-                    <Input
-                      value={form.nfc_id}
-                      onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
-                      placeholder="NFC tegni skanerlang yoki kiriting..."
-                      className="font-mono"
-                    />
-                    <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
-                      <Radio className="w-4 h-4" />
-                    </Button>
+              <Label>Identifikatsiya turi</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setIdMethod('code'); setShowNfcScanner(false); }}
+                  className={`flex flex-col items-start gap-1 rounded-md border p-3 text-left transition ${
+                    idMethod === 'code'
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <QrCode className="w-4 h-4 text-primary" /> QR / Barkod
                   </div>
-                  {!editing && (
-                    <p className="text-[11px] text-muted-foreground">
-                      NFC nakleyka mavjud bo'lsa skanerlang. Aks holda QR kod orqali ishlatish mumkin.
-                    </p>
-                  )}
-                </>
-              )}
+                  <span className="text-[11px] text-muted-foreground leading-tight">
+                    Avtomatik kod yaratiladi, yorliqni chop etib mahsulotga yopishtirasiz.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIdMethod('nfc')}
+                  className={`flex flex-col items-start gap-1 rounded-md border p-3 text-left transition ${
+                    idMethod === 'nfc'
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Radio className="w-4 h-4 text-primary" /> NFC nakleyka
+                  </div>
+                  <span className="text-[11px] text-muted-foreground leading-tight">
+                    Mahsulotda NFC teg bor — uni skanerlab biriktirasiz.
+                  </span>
+                </button>
+              </div>
             </div>
+
+            {idMethod === 'nfc' && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5 text-primary" />
+                  NFC ID <span className="text-destructive text-xs font-normal">*majburiy</span>
+                </Label>
+                {showNfcScanner ? (
+                  <NfcScanner
+                    onScan={(uid) => {
+                      setForm({ ...form, nfc_id: uid });
+                      setShowNfcScanner(false);
+                      toast.success(`NFC ID o'qildi: ${uid}`);
+                    }}
+                    onClose={() => setShowNfcScanner(false)}
+                  />
+                ) : (
+                  <>
+                    <div className="flex gap-2">
+                      <Input
+                        value={form.nfc_id}
+                        onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
+                        placeholder="NFC tegni skanerlang yoki kiriting..."
+                        className="font-mono"
+                      />
+                      <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
+                        <Radio className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      NFC tegni telefon yoki RFID o'quvchiga tekkizing.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
               <Button type="submit" disabled={submitting}>
