@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio, Plus, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
+import QuickLabelDialog from '@/components/QuickLabelDialog';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundFeedback } from '@/hooks/useSoundFeedback';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Worker {
   id: string;
@@ -53,8 +55,10 @@ export default function OperationsPage() {
   
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [quickLabelOpen, setQuickLabelOpen] = useState(false);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
+  const { role } = useAuth();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
