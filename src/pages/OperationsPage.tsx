@@ -203,6 +203,7 @@ export default function OperationsPage() {
       }).select().single();
       if (opError) throw opError;
 
+      sound.success();
       toast.success(`Chiqim muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 
