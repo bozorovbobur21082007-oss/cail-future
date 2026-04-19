@@ -44,13 +44,14 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
-  const [labelSize, setLabelSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large'>('thermal_15x40');
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const labelSizeConfig = {
-    small: { mm: 40, label: 'Kichik (40×40mm)' },
-    medium: { mm: 60, label: "O'rta (60×60mm)" },
-    large: { mm: 80, label: 'Katta (80×80mm)' },
+    thermal_15x40: { label: 'Termal 15×40mm (yonma-yon)', layout: 'horizontal' as const, w: 40, h: 15, qr: 12 },
+    small: { label: 'Kichik 40×40mm', layout: 'vertical' as const, w: 40, h: 40, qr: 32 },
+    medium: { label: "O'rta 60×60mm", layout: 'vertical' as const, w: 60, h: 60, qr: 50 },
+    large: { label: 'Katta 80×80mm', layout: 'vertical' as const, w: 80, h: 80, qr: 70 },
   } as const;
 
   const fetchProducts = useCallback(async () => {
