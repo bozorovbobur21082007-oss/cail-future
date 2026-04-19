@@ -99,10 +99,6 @@ export default function ProductsPage() {
     e.preventDefault();
     const nfc = form.nfc_id.trim().toUpperCase();
     const trimmedName = form.name.trim();
-    if (!editing && !nfc) {
-      toast.error("Yangi mahsulot uchun NFC ID majburiy. NFC tegni skanerlang yoki qo'lda kiriting.");
-      return;
-    }
     setSubmitting(true);
     const payload = {
       name: trimmedName,
