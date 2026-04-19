@@ -35,6 +35,7 @@ export default function LogsPage() {
   const [filterWorker, setFilterWorker] = useState('');
   const [filterProduct, setFilterProduct] = useState('');
   const [filterAction, setFilterAction] = useState('');
+  const [filterSource, setFilterSource] = useState<'all' | 'worker' | 'admin'>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
