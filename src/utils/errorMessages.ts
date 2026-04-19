@@ -20,6 +20,7 @@ const ERROR_MAP: { pattern: RegExp; message: string }[] = [
   // Unique constraint
   { pattern: /duplicate key.*badge_id/i, message: "Bu Badge ID allaqachon boshqa ishchiga biriktirilgan." },
   { pattern: /duplicate key.*product_code/i, message: "Bu mahsulot kodi allaqachon mavjud." },
+  { pattern: /duplicate key.*nfc_id|products_nfc_id_unique/i, message: "Bu NFC ID allaqachon boshqa mahsulotga biriktirilgan. Boshqa teg ishlating." },
   { pattern: /duplicate key.*code/i, message: "Bu kod allaqachon mavjud. Boshqa kod tanlang." },
   { pattern: /duplicate key.*name/i, message: "Bu nom allaqachon mavjud. Boshqa nom kiriting." },
   { pattern: /duplicate key/i, message: "Bunday ma'lumot allaqachon bazada mavjud." },
