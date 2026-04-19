@@ -1,17 +1,58 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Camera, Keyboard, Info, Volume2, Play } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const [scannerMode, setScannerMode] = useScannerMode();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
   const { test } = useSoundFeedback();
+  const [workerPin, setWorkerPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinSaving, setPinSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setPinLoading(true);
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'worker_pin')
+        .maybeSingle();
+      if (data?.value) setWorkerPin(data.value);
+      setPinLoading(false);
+    })();
+  }, []);
+
+  const savePin = async () => {
+    const trimmed = newPin.trim();
+    if (trimmed.length < 3 || trimmed.length > 12) {
+      toast.error('PIN 3 dan 12 belgigacha bo\'lishi kerak');
+      return;
+    }
+    setPinSaving(true);
+    const { error } = await supabase
+      .from('app_settings')
+      .update({ value: trimmed })
+      .eq('key', 'worker_pin');
+    setPinSaving(false);
+    if (error) {
+      toast.error('Saqlashda xatolik: ' + error.message);
+      return;
+    }
+    setWorkerPin(trimmed);
+    setNewPin('');
+    toast.success('Ishchi PIN kodi yangilandi');
+  };
 
   const handleToggle = (v: boolean) => {
     setScannerMode(v);

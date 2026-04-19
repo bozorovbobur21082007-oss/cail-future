@@ -239,7 +239,7 @@ export default function OperationsPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Operatsiyalar</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kirim/Chiqim</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Mahsulotni ombordan chiqarish (OUT) yoki qaytarish (IN). Tasdiqlash bosqichida amal turini tanlang.
         </p>
