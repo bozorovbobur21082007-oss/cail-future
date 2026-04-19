@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -250,7 +250,18 @@ export default function ProductsPage() {
     }
   };
 
-  const getCodeCanvas = (): HTMLCanvasElement | null => {
+  const handleApprove = async (p: Product) => {
+    try {
+      const { error } = await supabase.from('products').update({ approved: true }).eq('id', p.id);
+      if (error) throw error;
+      toast.success(`"${p.name}" tasdiqlandi`);
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+
     return document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
   };
 
