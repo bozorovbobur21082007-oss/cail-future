@@ -5,23 +5,34 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Radio, X, Loader2, Smartphone, Keyboard, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useNfcReader } from '@/hooks/useNfc';
+import { toast } from 'sonner';
 
 interface Props {
   /** NFC ID o'qilganda chaqiriladi (UID, hex/string ko'rinishida). */
   onScan: (nfcId: string) => void;
   onClose: () => void;
-  /** RFID o'quvchi uchun input avtomatik focus bo'lsin (default true). */
+  /** RFID o'quvchi uchun input avtomatik focus bo'lsin (default false — tasodifan klaviatura yozuvlarini qabul qilmaslik uchun). */
   autoFocusHid?: boolean;
   title?: string;
 }
+
+/** NFC ID minimal uzunlik (4 baytlik UID = 8 hex belgisi). */
+const MIN_NFC_LEN = 6;
+/** Faqat NFC UID uchun mosil belgilar (hex + harf-raqam). */
+const VALID_NFC_RE = /^[A-Z0-9]+$/;
 
 /**
  * Ikki rejimda NFC qabul qilish:
  *  1) Telefon Web NFC (Android Chrome) — NDEFReader orqali UID o'qiladi
  *  2) USB/Bluetooth HID RFID o'quvchi — input'ga yozadi, Enter bosiladi
+ *
+ * MUHIM: HID input avtomatik focus QILINMAYDI default holatda, chunki
+ * tasodifan bosilgan klaviatura tugmalari NFC ID deb qabul qilinishi mumkin.
+ * Foydalanuvchi o'zi inputni bosib, keyin tegni o'qitishi kerak.
  */
-export default function NfcScanner({ onScan, onClose, autoFocusHid = true, title = "NFC tegni skanerlash" }: Props) {
+export default function NfcScanner({ onScan, onClose, autoFocusHid = false, title = "NFC tegni skanerlash" }: Props) {
   const [hidValue, setHidValue] = useState('');
+  const [hidActive, setHidActive] = useState(autoFocusHid);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { start, stop, scanning, support, error } = useNfcReader((uid) => {
@@ -29,21 +40,49 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = true, title
   });
 
   useEffect(() => {
-    if (autoFocusHid) {
+    if (autoFocusHid && hidActive) {
       const t = setTimeout(() => inputRef.current?.focus(), 150);
       return () => clearTimeout(t);
     }
-  }, [autoFocusHid]);
+  }, [autoFocusHid, hidActive]);
 
   useEffect(() => {
     return () => { stop(); };
   }, [stop]);
 
+  // Web NFC yoqilganda HID input focusdan olinadi — ikkala rejim bir vaqtda ishlamasligi uchun
+  useEffect(() => {
+    if (scanning) {
+      inputRef.current?.blur();
+      setHidActive(false);
+    }
+  }, [scanning]);
+
   const submitHid = () => {
-    const v = hidValue.trim();
+    const v = hidValue.trim().toUpperCase();
     if (!v) return;
-    onScan(v.toUpperCase());
+    if (v.length < MIN_NFC_LEN) {
+      toast.error(`NFC ID juda qisqa (kamida ${MIN_NFC_LEN} ta belgi). Tegni o'quvchiga to'liq yaqinlashtiring.`);
+      return;
+    }
+    if (!VALID_NFC_RE.test(v)) {
+      toast.error("NFC ID faqat raqam va harflardan iborat bo'lishi kerak.");
+      return;
+    }
+    onScan(v);
     setHidValue('');
+  };
+
+  const activateHid = () => {
+    setHidActive(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const startWebNfc = () => {
+    inputRef.current?.blur();
+    setHidActive(false);
+    setHidValue('');
+    start();
   };
 
   return (
@@ -64,19 +103,27 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = true, title
           <Label className="flex items-center gap-1.5 text-xs">
             <Keyboard className="w-3.5 h-3.5" /> USB/Bluetooth RFID o'quvchi
           </Label>
-          <div className="flex gap-2">
-            <Input
-              ref={inputRef}
-              value={hidValue}
-              onChange={(e) => setHidValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && submitHid()}
-              placeholder="Tegni o'quvchiga yaqinlashtiring..."
-              className="font-mono"
-            />
-            <Button onClick={submitHid} disabled={!hidValue.trim()} size="sm">OK</Button>
-          </div>
+          {!hidActive ? (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={activateHid} disabled={scanning}>
+              <Keyboard className="w-4 h-4" />
+              RFID o'quvchini yoqish
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={hidValue}
+                onChange={(e) => setHidValue(e.target.value.replace(/\s+/g, ''))}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), submitHid())}
+                onBlur={() => { if (!hidValue) setHidActive(false); }}
+                placeholder="Tegni o'quvchiga yaqinlashtiring..."
+                className="font-mono"
+              />
+              <Button onClick={submitHid} disabled={!hidValue.trim()} size="sm">OK</Button>
+            </div>
+          )}
           <p className="text-[11px] text-muted-foreground">
-            O'quvchi avtomatik tarzda NFC ID ni yozadi va Enter bosadi.
+            O'quvchi avtomatik tarzda NFC ID ni yozadi va Enter bosadi (kamida {MIN_NFC_LEN} ta belgi).
           </p>
         </div>
 
@@ -100,7 +147,7 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = true, title
                 Skanerlanmoqda... (to'xtatish)
               </Button>
             ) : (
-              <Button variant="outline" className="w-full gap-2" onClick={start}>
+              <Button variant="outline" className="w-full gap-2" onClick={startWebNfc}>
                 <Radio className="w-4 h-4" />
                 Telefon NFC'ni yoqish
               </Button>
