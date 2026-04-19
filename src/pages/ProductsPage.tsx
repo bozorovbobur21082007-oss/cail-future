@@ -91,12 +91,16 @@ export default function ProductsPage() {
   const openCreate = () => {
     setEditing(null);
     setForm({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+    setIdMethod('code');
+    setShowNfcScanner(false);
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
     setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
+    setIdMethod(p.nfc_id ? 'nfc' : 'code');
+    setShowNfcScanner(false);
     setDialogOpen(true);
   };
 
