@@ -277,6 +277,16 @@ export default function OperationsPage() {
         approved={role === 'admin'}
       />
 
+      {printLabelFor && (
+        <PrintLabelDialog
+          open={!!printLabelFor}
+          onOpenChange={(o) => !o && setPrintLabelFor(null)}
+          productCode={printLabelFor.code}
+          productName={printLabelFor.name}
+          contextHint={`+${printLabelFor.addedQty} dona qo'shildi`}
+        />
+      )}
+
       {/* Steps indicator */}
       <div className="flex items-center gap-2">
         {[1, 2, 3].map(s => (
