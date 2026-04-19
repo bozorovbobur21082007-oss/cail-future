@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Printer, QrCode, Barcode as BarcodeIcon } from 'lucide-react';
+import { Printer, QrCode, Barcode as BarcodeIcon, Minus, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import { toast } from 'sonner';
