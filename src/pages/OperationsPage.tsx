@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useSoundFeedback } from '@/hooks/useSoundFeedback';
 
 interface Worker {
   id: string;
@@ -52,6 +53,7 @@ export default function OperationsPage() {
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [scannerMode] = useScannerMode();
+  const sound = useSoundFeedback();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
