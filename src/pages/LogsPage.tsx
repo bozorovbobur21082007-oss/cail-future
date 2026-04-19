@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 
 interface Operation {
   id: string;
+  worker_id: string | null;
   worker_name: string;
   product_name: string;
   action_type: string;
@@ -130,7 +131,7 @@ export default function LogsPage() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Mahsulot</Label>
-                <Select value={filterProduct} onValueChange={(v) => { setFilterProduct(v === 'all' ? '' : v); setPage(1); }}>
+                <Select value={filterProduct || 'all'} onValueChange={(v) => { setFilterProduct(v === 'all' ? '' : v); setPage(1); }}>
                   <SelectTrigger><SelectValue placeholder="Barchasi" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Barchasi</SelectItem>
@@ -140,7 +141,7 @@ export default function LogsPage() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Amal turi</Label>
-                <Select value={filterAction} onValueChange={(v) => { setFilterAction(v === 'all' ? '' : v); setPage(1); }}>
+                <Select value={filterAction || 'all'} onValueChange={(v) => { setFilterAction(v === 'all' ? '' : v); setPage(1); }}>
                   <SelectTrigger><SelectValue placeholder="Barchasi" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Barchasi</SelectItem>
@@ -199,7 +200,15 @@ export default function LogsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{op.product_name}</TableCell>
-                        <TableCell className="text-muted-foreground">{op.worker_name}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {op.worker_id === null ? (
+                            <Badge variant="outline" className="text-xs font-normal">
+                              {op.worker_name || 'Admin (Mahsulotlar)'}
+                            </Badge>
+                          ) : (
+                            op.worker_name
+                          )}
+                        </TableCell>
                         <TableCell className="font-semibold">{op.quantity}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {new Date(op.created_at).toLocaleString('uz-UZ')}
