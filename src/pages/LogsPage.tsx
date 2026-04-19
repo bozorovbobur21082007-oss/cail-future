@@ -46,11 +46,12 @@ export default function LogsPage() {
     setLoading(true);
     let query = supabase.from('operations').select('*', { count: 'exact' });
 
-    if (filterWorker === '__admin__') {
+    if (filterSource === 'admin') {
       query = query.is('worker_id', null);
-    } else if (filterWorker) {
-      query = query.eq('worker_id', filterWorker);
+    } else if (filterSource === 'worker') {
+      query = query.not('worker_id', 'is', null);
     }
+    if (filterWorker) query = query.eq('worker_id', filterWorker);
     if (filterProduct) query = query.eq('product_id', filterProduct);
     if (filterAction) query = query.eq('action_type', filterAction);
     if (filterDateFrom) query = query.gte('created_at', `${filterDateFrom}T00:00:00`);
@@ -67,7 +68,7 @@ export default function LogsPage() {
       setTotal(count || 0);
     }
     setLoading(false);
-  }, [page, filterWorker, filterProduct, filterAction, filterDateFrom, filterDateTo]);
+  }, [page, filterWorker, filterProduct, filterAction, filterSource, filterDateFrom, filterDateTo]);
 
   const fetchMeta = useCallback(async () => {
     const [wRes, pRes] = await Promise.all([
