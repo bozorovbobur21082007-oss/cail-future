@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
 import { Camera, CameraOff, SwitchCamera } from 'lucide-react';
 
@@ -27,7 +27,16 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
       containerRef.current.appendChild(div);
     }
 
-    const scanner = new Html5Qrcode(scannerId);
+    const scanner = new Html5Qrcode(scannerId, {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+      ],
+      verbose: false,
+    });
     scannerRef.current = scanner;
 
     Html5Qrcode.getCameras()
