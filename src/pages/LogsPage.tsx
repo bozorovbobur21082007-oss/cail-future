@@ -22,7 +22,6 @@ interface Operation {
 }
 
 interface Worker { id: string; full_name: string; }
-interface Product { id: string; name: string; product_code: string; }
 
 export default function LogsPage() {
   const [operations, setOperations] = useState<Operation[]>([]);
@@ -30,12 +29,9 @@ export default function LogsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
 
   const [filterWorker, setFilterWorker] = useState('');
-  const [filterProduct, setFilterProduct] = useState('');
   const [filterAction, setFilterAction] = useState('');
-  const [filterSource, setFilterSource] = useState<'all' | 'worker' | 'admin'>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -46,13 +42,7 @@ export default function LogsPage() {
     setLoading(true);
     let query = supabase.from('operations').select('*', { count: 'exact' });
 
-    if (filterSource === 'admin') {
-      query = query.is('worker_id', null);
-    } else if (filterSource === 'worker') {
-      query = query.not('worker_id', 'is', null);
-    }
     if (filterWorker) query = query.eq('worker_id', filterWorker);
-    if (filterProduct) query = query.eq('product_id', filterProduct);
     if (filterAction) query = query.eq('action_type', filterAction);
     if (filterDateFrom) query = query.gte('created_at', `${filterDateFrom}T00:00:00`);
     if (filterDateTo) query = query.lte('created_at', `${filterDateTo}T23:59:59`);
@@ -68,15 +58,11 @@ export default function LogsPage() {
       setTotal(count || 0);
     }
     setLoading(false);
-  }, [page, filterWorker, filterProduct, filterAction, filterSource, filterDateFrom, filterDateTo]);
+  }, [page, filterWorker, filterAction, filterDateFrom, filterDateTo]);
 
   const fetchMeta = useCallback(async () => {
-    const [wRes, pRes] = await Promise.all([
-      supabase.from('workers').select('id, full_name'),
-      supabase.from('products').select('id, name, product_code'),
-    ]);
-    setWorkers(wRes.data || []);
-    setProducts(pRes.data || []);
+    const { data } = await supabase.from('workers').select('id, full_name');
+    setWorkers(data || []);
   }, []);
 
   useEffect(() => { fetchMeta(); }, [fetchMeta]);
@@ -84,9 +70,7 @@ export default function LogsPage() {
 
   const resetFilters = () => {
     setFilterWorker('');
-    setFilterProduct('');
     setFilterAction('');
-    setFilterSource('all');
     setFilterDateFrom('');
     setFilterDateTo('');
     setPage(1);
@@ -120,21 +104,7 @@ export default function LogsPage() {
       {showFilters && (
         <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs">Manba</Label>
-                <Select
-                  value={filterSource}
-                  onValueChange={(v) => { setFilterSource(v as 'all' | 'worker' | 'admin'); setPage(1); }}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Hammasi</SelectItem>
-                    <SelectItem value="worker">Ishchilar</SelectItem>
-                    <SelectItem value="admin">Admin (Mahsulotlar)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <Label className="text-xs">Ishchi</Label>
                 <Select value={filterWorker || 'all'} onValueChange={(v) => { setFilterWorker(v === 'all' ? '' : v); setPage(1); }}>
@@ -142,16 +112,6 @@ export default function LogsPage() {
                   <SelectContent>
                     <SelectItem value="all">Barchasi</SelectItem>
                     {workers.map(w => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Mahsulot</Label>
-                <Select value={filterProduct || 'all'} onValueChange={(v) => { setFilterProduct(v === 'all' ? '' : v); setPage(1); }}>
-                  <SelectTrigger><SelectValue placeholder="Barchasi" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Barchasi</SelectItem>
-                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
