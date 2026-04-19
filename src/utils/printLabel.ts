@@ -61,7 +61,8 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     .code { font-family: monospace; font-size: ${Math.max(6, Math.round(cfg.w / 8))}pt; color: #555; margin-top: 1mm; }
     @media print {
       body { padding: 0; min-height: auto; display: block; }
-      .label { border: none; padding: 2mm; border-radius: 0; }
+      .label { border: none; padding: 2mm; border-radius: 0; page-break-after: always; break-after: page; }
+      .label:last-child { page-break-after: auto; break-after: auto; }
       @page { size: ${cfg.w + 4}mm ${cfg.h + 14}mm; margin: 2mm; }
     }
   `;
