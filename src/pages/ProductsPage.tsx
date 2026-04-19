@@ -460,7 +460,13 @@ export default function ProductsPage() {
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    {search ? "Natija topilmadi" : "Hali mahsulot mavjud emas"}
+                    {search
+                      ? "Natija topilmadi"
+                      : statusFilter === 'pending'
+                        ? "Tasdiq kutayotgan mahsulot yo'q"
+                        : statusFilter === 'approved'
+                          ? "Tasdiqlangan mahsulot yo'q"
+                          : "Hali mahsulot mavjud emas"}
                   </TableCell>
                 </TableRow>
               ) : (
