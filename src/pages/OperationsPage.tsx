@@ -217,6 +217,15 @@ export default function OperationsPage() {
       toast.success(`${label} muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 
+      // IN bo'lsa — yorliq chop etish dialogini ochamiz (yangi qutiga yopishtirish uchun)
+      if (actionType === 'IN') {
+        setPrintLabelFor({
+          code: verifiedProduct.product_code,
+          name: verifiedProduct.name,
+          addedQty: quantity,
+        });
+      }
+
       // Reset for next product scan
       setProductCode('');
       setVerifiedProduct(null);
@@ -267,6 +276,16 @@ export default function OperationsPage() {
         onOpenChange={setQuickLabelOpen}
         approved={role === 'admin'}
       />
+
+      {printLabelFor && (
+        <PrintLabelDialog
+          open={!!printLabelFor}
+          onOpenChange={(o) => !o && setPrintLabelFor(null)}
+          productCode={printLabelFor.code}
+          productName={printLabelFor.name}
+          contextHint={`+${printLabelFor.addedQty} dona qo'shildi`}
+        />
+      )}
 
       {/* Steps indicator */}
       <div className="flex items-center gap-2">
