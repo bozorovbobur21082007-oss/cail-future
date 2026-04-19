@@ -55,14 +55,40 @@ export default function WorkersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedBadge = form.badge_id.trim();
+    const trimmedName = form.full_name.trim();
+    if (!trimmedBadge) {
+      toast.error("Badge ID kiritilmagan");
+      return;
+    }
     setSubmitting(true);
     try {
+      // Badge ID takrorlanmasligini oldindan tekshirish (do'stona xato xabari uchun)
+      const { data: existing, error: checkErr } = await supabase
+        .from('workers')
+        .select('id, full_name, badge_id')
+        .eq('badge_id', trimmedBadge)
+        .maybeSingle();
+      if (checkErr) {
+        toast.error("Badge ID ni tekshirishda xatolik: " + checkErr.message);
+        setSubmitting(false);
+        return;
+      }
+      if (existing && existing.id !== editing?.id) {
+        toast.error(
+          `Bu Badge ID allaqachon "${existing.full_name}" ishchisiga biriktirilgan. Boshqa ID ishlatishingiz kerak.`
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      const payload = { ...form, full_name: trimmedName, badge_id: trimmedBadge };
       if (editing) {
-        const { error } = await supabase.from('workers').update(form).eq('id', editing.id);
+        const { error } = await supabase.from('workers').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Ishchi yangilandi");
       } else {
-        const { error } = await supabase.from('workers').insert(form);
+        const { error } = await supabase.from('workers').insert(payload);
         if (error) throw error;
         toast.success("Ishchi qo'shildi");
       }
