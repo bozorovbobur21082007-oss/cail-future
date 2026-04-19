@@ -176,15 +176,19 @@ export default function ProductsPage() {
     }
   };
 
+  const getCodeCanvas = (): HTMLCanvasElement | null => {
+    return document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+  };
+
   const downloadQrPng = () => {
-    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    const canvas = getCodeCanvas();
     if (!canvas || !qrProduct) return;
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = `qr_${qrProduct.product_code}.png`;
+    a.download = `${codeFormat === 'qr' ? 'qr' : 'barcode'}_${qrProduct.product_code}.png`;
     a.click();
-    toast.success("QR kod yuklab olindi");
+    toast.success(codeFormat === 'qr' ? "QR kod yuklab olindi" : "Barkod yuklab olindi");
   };
 
   const printQr = () => {
