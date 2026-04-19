@@ -558,20 +558,31 @@ export default function ProductsPage() {
                       <Input
                         value={form.nfc_id}
                         onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
-                        placeholder={scannerMode ? "USB RFID o'quvchi bilan skanerlang..." : "NFC tegni skanerlang yoki kiriting..."}
+                        onKeyDown={(e) => {
+                          // USB RFID o'quvchi UID + Enter yuboradi.
+                          // Enter formni jo'natmasin — faqat UID qabul qilinganini tasdiqlaymiz.
+                          if (e.key === 'Enter' && form.nfc_id.trim()) {
+                            e.preventDefault();
+                            toast.success(`NFC ID qabul qilindi: ${form.nfc_id.trim().toUpperCase()}`);
+                          }
+                        }}
+                        placeholder="NFC tegni telefon, USB RFID o'quvchi yoki klaviatura orqali kiriting..."
                         className="font-mono"
-                        autoFocus={scannerMode}
+                        autoFocus
                       />
                       {!scannerMode && (
-                        <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowNfcScanner(true)}
+                          title="Telefon NFC orqali skanerlash"
+                        >
                           <Radio className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground">
-                      {scannerMode
-                        ? "USB RFID o'quvchiga kartani tekkizing — ID avtomatik to'ldiriladi."
-                        : "NFC tegni telefon yoki RFID o'quvchiga tekkizing."}
+                      USB RFID o'quvchiga kartani tekkizing — UID avtomatik kiritiladi. Telefon NFC uchun yondagi tugmani bosing.
                     </p>
                   </>
                 )}
