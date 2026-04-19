@@ -92,7 +92,7 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
     setIdMethod('code');
     setShowNfcScanner(false);
     setDialogOpen(true);
@@ -184,7 +184,7 @@ export default function ProductsPage() {
 
     const payload = {
       name: trimmedName,
-      quantity: editing ? form.quantity : 1,
+      quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
       nfc_id: idMethod === 'nfc' ? nfc : null,
@@ -221,9 +221,9 @@ export default function ProductsPage() {
           .select('id, name, quantity')
           .single();
         if (error) throw error;
-        // Yangi mahsulot uchun kirim logini yozamiz
-        if (inserted) {
-          await logOperation(inserted.id, inserted.name, 'IN', inserted.quantity || 1);
+        // Faqat admin boshlang'ich miqdor kiritgan bo'lsa, IN sifatida qaydlaymiz
+        if (inserted && (inserted.quantity || 0) > 0) {
+          await logOperation(inserted.id, inserted.name, 'IN', inserted.quantity);
         }
         toast.success("Mahsulot qo'shildi");
         setDialogOpen(false);
