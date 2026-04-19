@@ -40,7 +40,8 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
+  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+  const [showNfcScanner, setShowNfcScanner] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
@@ -61,24 +62,31 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nfc = form.nfc_id.trim().toUpperCase();
+    // Yangi mahsulotlar uchun NFC ID majburiy
+    if (!editing && !nfc) {
+      toast.error("Yangi mahsulot uchun NFC ID majburiy. NFC tegni skanerlang yoki qo'lda kiriting.");
+      return;
+    }
     setSubmitting(true);
     const payload = {
       name: form.name,
       quantity: form.quantity,
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
+      nfc_id: nfc || null,
     };
     try {
       if (editing) {
