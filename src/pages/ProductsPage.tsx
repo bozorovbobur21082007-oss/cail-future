@@ -44,7 +44,14 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [labelSize, setLabelSize] = useState<'small' | 'medium' | 'large'>('medium');
   const qrRef = useRef<HTMLCanvasElement>(null);
+
+  const labelSizeConfig = {
+    small: { mm: 40, label: 'Kichik (40×40mm)' },
+    medium: { mm: 60, label: "O'rta (60×60mm)" },
+    large: { mm: 80, label: 'Katta (80×80mm)' },
+  } as const;
 
   const fetchProducts = useCallback(async () => {
     const [prodRes, secRes] = await Promise.all([
