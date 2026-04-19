@@ -88,6 +88,7 @@ export type Database = {
       }
       products: {
         Row: {
+          approved: boolean
           created_at: string
           id: string
           low_stock_threshold: number
@@ -99,6 +100,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approved?: boolean
           created_at?: string
           id?: string
           low_stock_threshold?: number
@@ -110,6 +112,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approved?: boolean
           created_at?: string
           id?: string
           low_stock_threshold?: number
