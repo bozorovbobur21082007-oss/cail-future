@@ -15,10 +15,13 @@ export interface PrintLabelOptions {
   /** Yorliq o'lchami konfiguratsiyasi */
   size: { w: number; h: number; qr: number; layout: 'horizontal' | 'vertical'; label: string };
   compact?: boolean;
+  /** Nechta nusxa chop etilsin (1-50). Default: 1 */
+  copies?: number;
 }
 
 export function printLabel(opts: PrintLabelOptions): boolean {
-  const { productCode, productName, sectorCode, codeImageDataUrl, format, size, compact } = opts;
+  const { productCode, productName, sectorCode, codeImageDataUrl, format, size, compact, copies } = opts;
+  const copyCount = Math.max(1, Math.min(50, copies || 1));
   const printWindow = window.open('', '_blank', 'width=400,height=500');
   if (!printWindow) {
     toast.error("Brauzer chop etish oynasini bloklab qo'ydi. Pop-up ruxsatini bering.");
@@ -45,7 +48,8 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     .code-big { font-family: monospace; font-size: 8pt; font-weight: 600; color: #111; margin-top: 1mm; word-break: break-all; }
     @media print {
       body { padding: 0; min-height: auto; display: block; }
-      .label { border: none; padding: 0.5mm; border-radius: 0; }
+      .label { border: none; padding: 0.5mm; border-radius: 0; page-break-after: always; break-after: page; }
+      .label:last-child { page-break-after: auto; break-after: auto; }
       @page { size: ${cfg.w}mm ${cfg.h}mm; margin: 0; }
     }
   `;
@@ -57,7 +61,8 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     .code { font-family: monospace; font-size: ${Math.max(6, Math.round(cfg.w / 8))}pt; color: #555; margin-top: 1mm; }
     @media print {
       body { padding: 0; min-height: auto; display: block; }
-      .label { border: none; padding: 2mm; border-radius: 0; }
+      .label { border: none; padding: 2mm; border-radius: 0; page-break-after: always; break-after: page; }
+      .label:last-child { page-break-after: auto; break-after: auto; }
       @page { size: ${cfg.w + 4}mm ${cfg.h + 14}mm; margin: 2mm; }
     }
   `;
@@ -66,9 +71,10 @@ export function printLabel(opts: PrintLabelOptions): boolean {
   const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
   const altLabel = isBarcode ? 'Barkod' : 'QR';
-  const labelHtml = isHorizontal
+  const singleLabelHtml = isHorizontal
     ? `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
     : `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+  const labelHtml = Array.from({ length: copyCount }, () => singleLabelHtml).join('\n');
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -77,7 +83,7 @@ export function printLabel(opts: PrintLabelOptions): boolean {
         <title>${altLabel} — ${code}</title>
         <style>
           * { box-sizing: border-box; }
-          body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+          body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-height: 100vh; }
           ${isHorizontal ? horizontalCss : verticalCss}
         </style>
       </head>
@@ -96,7 +102,7 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     </html>
   `);
   printWindow.document.close();
-  toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
+  toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel}${copyCount > 1 ? `, ${copyCount} nusxa` : ''})`);
   return true;
 }
 

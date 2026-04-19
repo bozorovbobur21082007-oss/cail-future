@@ -284,6 +284,7 @@ export default function OperationsPage() {
           productCode={printLabelFor.code}
           productName={printLabelFor.name}
           contextHint={`+${printLabelFor.addedQty} dona qo'shildi`}
+          defaultCopies={printLabelFor.addedQty}
         />
       )}
 

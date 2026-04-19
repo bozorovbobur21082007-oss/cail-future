@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Printer, QrCode, Barcode as BarcodeIcon } from 'lucide-react';
+import { Printer, QrCode, Barcode as BarcodeIcon, Minus, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import { toast } from 'sonner';
@@ -15,7 +16,13 @@ interface PrintLabelDialogProps {
   productName: string;
   /** Qo'shimcha kontekst — masalan "+1 dona qo'shildi" */
   contextHint?: string;
+  /** Boshlang'ich nusxa soni (masalan IN miqdori). Default: 1 */
+  defaultCopies?: number;
 }
+
+const MIN_COPIES = 1;
+const MAX_COPIES = 10;
+const clampCopies = (n: number) => Math.max(MIN_COPIES, Math.min(MAX_COPIES, Math.floor(n) || MIN_COPIES));
 
 /**
  * Mavjud mahsulot uchun yorliq chop etish dialogi.
@@ -27,10 +34,17 @@ export default function PrintLabelDialog({
   productCode,
   productName,
   contextHint,
+  defaultCopies = 1,
 }: PrintLabelDialogProps) {
   const [format, setFormat] = useState<'qr' | 'barcode'>('qr');
+  const [copies, setCopies] = useState(() => clampCopies(defaultCopies));
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
+
+  // Dialog har ochilganda nusxa sonini default qiymatga qaytaramiz
+  useEffect(() => {
+    if (open) setCopies(clampCopies(defaultCopies));
+  }, [open, defaultCopies]);
 
   const handlePrint = () => {
     const canvas = format === 'qr' ? qrRef.current : barcodeRef.current;
@@ -45,6 +59,7 @@ export default function PrintLabelDialog({
       codeImageDataUrl: dataUrl,
       format,
       size: THERMAL_15X40,
+      copies,
     });
   };
 
@@ -112,6 +127,44 @@ export default function PrintLabelDialog({
             </div>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="copies-input" className="text-xs text-muted-foreground">Nusxa soni (1-{MAX_COPIES})</Label>
+              <span className="text-xs text-muted-foreground">Har bir quti uchun bittadan</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setCopies((c) => clampCopies(c - 1))}
+                disabled={copies <= MIN_COPIES}
+                aria-label="Kamaytirish"
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <Input
+                id="copies-input"
+                type="number"
+                min={MIN_COPIES}
+                max={MAX_COPIES}
+                value={copies}
+                onChange={(e) => setCopies(clampCopies(parseInt(e.target.value, 10)))}
+                className="text-center font-medium"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setCopies((c) => clampCopies(c + 1))}
+                disabled={copies >= MAX_COPIES}
+                aria-label="Oshirish"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
           <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
             Termal printer (15×40mm) uchun tayyor. Chop etib qutiga yopishtiring.
           </div>
@@ -121,7 +174,7 @@ export default function PrintLabelDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>O'tkazib yuborish</Button>
           <Button onClick={handlePrint} className="gap-2">
             <Printer className="w-4 h-4" />
-            Chop etish
+            {copies > 1 ? `Chop etish (${copies} nusxa)` : 'Chop etish'}
           </Button>
         </DialogFooter>
       </DialogContent>
