@@ -102,7 +102,7 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     </html>
   `);
   printWindow.document.close();
-  toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
+  toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel}${copyCount > 1 ? `, ${copyCount} nusxa` : ''})`);
   return true;
 }
 
