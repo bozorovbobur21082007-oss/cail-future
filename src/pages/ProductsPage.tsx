@@ -28,6 +28,7 @@ interface Product {
   created_at: string;
   sector_id: string | null;
   nfc_id: string | null;
+  approved: boolean;
 }
 
 export default function ProductsPage() {
