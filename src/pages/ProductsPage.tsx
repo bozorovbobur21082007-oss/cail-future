@@ -280,15 +280,23 @@ export default function ProductsPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Nomi</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder="masalan: Kompyuter" />
+              {!editing && (
+                <p className="text-[11px] text-muted-foreground">
+                  Agar shu nomdagi mahsulot mavjud bo'lsa, soni avtomatik 1 taga oshiriladi.
+                </p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label>Soni</Label>
-              <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} />
-            </div>
+            {editing && (
+              <div className="space-y-2">
+                <Label>Soni</Label>
+                <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} min={0} />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
-               <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} />
+               <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} min={1} />
+               <p className="text-[11px] text-muted-foreground">Soni shu chegaradan past tushsa, "Kam" deb belgilanadi.</p>
             </div>
             <div className="space-y-2">
               <Label>Sektor</Label>
