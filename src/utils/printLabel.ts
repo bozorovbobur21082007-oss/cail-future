@@ -83,7 +83,7 @@ export function printLabel(opts: PrintLabelOptions): boolean {
         <title>${altLabel} — ${code}</title>
         <style>
           * { box-sizing: border-box; }
-          body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+          body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-height: 100vh; }
           ${isHorizontal ? horizontalCss : verticalCss}
         </style>
       </head>
