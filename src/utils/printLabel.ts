@@ -48,7 +48,8 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     .code-big { font-family: monospace; font-size: 8pt; font-weight: 600; color: #111; margin-top: 1mm; word-break: break-all; }
     @media print {
       body { padding: 0; min-height: auto; display: block; }
-      .label { border: none; padding: 0.5mm; border-radius: 0; }
+      .label { border: none; padding: 0.5mm; border-radius: 0; page-break-after: always; break-after: page; }
+      .label:last-child { page-break-after: auto; break-after: auto; }
       @page { size: ${cfg.w}mm ${cfg.h}mm; margin: 0; }
     }
   `;
