@@ -513,16 +513,16 @@ export default function ProductsPage() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <QrCode className="w-5 h-5 text-primary" />
-              QR Kod
+              {codeFormat === 'qr' ? <QrCode className="w-5 h-5 text-primary" /> : <BarcodeIcon className="w-5 h-5 text-primary" />}
+              {codeFormat === 'qr' ? 'QR Kod' : 'Barkod (Code 128)'}
             </DialogTitle>
             <DialogDescription>
               {qrProduct?.name} — {qrProduct?.product_code}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
-            <div id="qr-canvas" className="p-4 bg-card border border-border rounded-lg">
-              {qrProduct && (
+            <div id="qr-canvas" className="p-4 bg-card border border-border rounded-lg flex items-center justify-center min-h-[200px]">
+              {qrProduct && codeFormat === 'qr' && (
                 <QRCodeCanvas
                   value={qrProduct.product_code}
                   size={200}
@@ -530,8 +530,32 @@ export default function ProductsPage() {
                   includeMargin
                 />
               )}
+              {qrProduct && codeFormat === 'barcode' && (
+                <Barcode
+                  value={qrProduct.product_code}
+                  format="CODE128"
+                  width={2}
+                  height={80}
+                  fontSize={16}
+                />
+              )}
             </div>
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
+            <div className="w-full space-y-2">
+              <Label className="text-xs text-muted-foreground">Kod formati</Label>
+              <Select value={codeFormat} onValueChange={(v) => setCodeFormat(v as 'qr' | 'barcode')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="qr">QR kod (kvadrat, 2D)</SelectItem>
+                  <SelectItem value="barcode">Barkod — Code 128 (yotiq, 1D)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                {codeFormat === 'qr'
+                  ? "Telefon va 2D imager skanerlar uchun. Kichik joyga ham sig'adi."
+                  : "Lazer skanerlar uchun ideal. 15×40mm kabi yotiq yorliqlarga juda mos keladi."}
+              </p>
+            </div>
             <div className="w-full space-y-2">
               <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
               <Select value={labelSize} onValueChange={(v) => setLabelSize(v as typeof labelSize)}>
