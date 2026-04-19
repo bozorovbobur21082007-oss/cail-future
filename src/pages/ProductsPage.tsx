@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
+import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
 
 interface Sector { id: string; name: string; code: string; }
@@ -46,6 +47,7 @@ export default function ProductsPage() {
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
+  const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('qr');
   const [customW, setCustomW] = useState(50);
   const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
@@ -174,21 +176,25 @@ export default function ProductsPage() {
     }
   };
 
+  const getCodeCanvas = (): HTMLCanvasElement | null => {
+    return document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+  };
+
   const downloadQrPng = () => {
-    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    const canvas = getCodeCanvas();
     if (!canvas || !qrProduct) return;
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = `qr_${qrProduct.product_code}.png`;
+    a.download = `${codeFormat === 'qr' ? 'qr' : 'barcode'}_${qrProduct.product_code}.png`;
     a.click();
-    toast.success("QR kod yuklab olindi");
+    toast.success(codeFormat === 'qr' ? "QR kod yuklab olindi" : "Barkod yuklab olindi");
   };
 
   const printQr = () => {
-    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    const canvas = getCodeCanvas();
     if (!canvas || !qrProduct) {
-      toast.error("QR kod topilmadi");
+      toast.error("Kod topilmadi");
       return;
     }
     const dataUrl = canvas.toDataURL('image/png');
@@ -203,10 +209,15 @@ export default function ProductsPage() {
     const cfg = labelSizeConfig[labelSize];
     const isHorizontal = cfg.layout === 'horizontal';
     const useCompact = compactLabel && isHorizontal;
+    const isBarcode = codeFormat === 'barcode';
+
+    // Barkod o'lchamlari: yonma-yon — kenglikning ~60%, balandlikning ~70%; vertikal — to'liq kenglik
+    const bcW = isHorizontal ? Math.round(cfg.w * 0.6) : Math.round(cfg.w * 0.85);
+    const bcH = isHorizontal ? Math.max(6, cfg.h - 4) : Math.max(8, Math.round(cfg.h * 0.45));
 
     const horizontalCss = `
       .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
-      .label img { width: ${cfg.qr}mm; height: ${cfg.qr}mm; flex-shrink: 0; display: block; }
+      .label img.code-img { ${isBarcode ? `width: ${bcW}mm; height: ${bcH}mm;` : `width: ${cfg.qr}mm; height: ${cfg.qr}mm;`} flex-shrink: 0; display: block; object-fit: contain; }
       .text { flex: 1; min-width: 0; overflow: hidden; }
       .name { font-size: 7pt; font-weight: 700; line-height: 1.1; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
       .sector { font-family: monospace; font-size: 9pt; font-weight: 700; line-height: 1.1; letter-spacing: 0.5px; }
@@ -221,7 +232,7 @@ export default function ProductsPage() {
 
     const verticalCss = `
       .label { border: 1px dashed #999; padding: 4mm; text-align: center; border-radius: 8px; width: ${cfg.w}mm; }
-      .label img { display: block; margin: 0 auto; width: ${cfg.qr}mm; height: ${cfg.qr}mm; }
+      .label img.code-img { display: block; margin: 0 auto; ${isBarcode ? `width: ${bcW}mm; height: ${bcH}mm;` : `width: ${cfg.qr}mm; height: ${cfg.qr}mm;`} object-fit: contain; }
       .name { font-size: ${Math.max(8, Math.round(cfg.w / 6))}pt; font-weight: 600; margin-top: 2mm; word-break: break-word; line-height: 1.2; }
       .code { font-family: monospace; font-size: ${Math.max(6, Math.round(cfg.w / 8))}pt; color: #555; margin-top: 1mm; }
       @media print {
@@ -234,15 +245,16 @@ export default function ProductsPage() {
     const compactInner = `<div class="text">${sectorCode ? `<div class="sector">${sectorCode}</div>` : ''}<div class="${sectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
     const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
+    const altLabel = isBarcode ? 'Barkod' : 'QR';
     const labelHtml = isHorizontal
-      ? `<div class="label"><img src="${dataUrl}" alt="QR" />${useCompact ? compactInner : fullInner}</div>`
-      : `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+      ? `<div class="label"><img class="code-img" src="${dataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
+      : `<div class="label"><img class="code-img" src="${dataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>QR — ${code}</title>
+          <title>${altLabel} — ${code}</title>
           <style>
             * { box-sizing: border-box; }
             body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
@@ -264,7 +276,7 @@ export default function ProductsPage() {
       </html>
     `);
     printWindow.document.close();
-    toast.success(`Chop etish oynasi ochildi (${cfg.label})`);
+    toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
   };
 
   const filtered = products.filter(p =>
@@ -351,7 +363,7 @@ export default function ProductsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
-                              <QrCode className="w-4 h-4 mr-2" /> QR kodni ko'rish
+                              <QrCode className="w-4 h-4 mr-2" /> QR / Barkod
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEdit(p)}>
                               <Pencil className="w-4 h-4 mr-2" /> Tahrirlash
@@ -501,16 +513,16 @@ export default function ProductsPage() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <QrCode className="w-5 h-5 text-primary" />
-              QR Kod
+              {codeFormat === 'qr' ? <QrCode className="w-5 h-5 text-primary" /> : <BarcodeIcon className="w-5 h-5 text-primary" />}
+              {codeFormat === 'qr' ? 'QR Kod' : 'Barkod (Code 128)'}
             </DialogTitle>
             <DialogDescription>
               {qrProduct?.name} — {qrProduct?.product_code}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
-            <div id="qr-canvas" className="p-4 bg-card border border-border rounded-lg">
-              {qrProduct && (
+            <div id="qr-canvas" className="p-4 bg-card border border-border rounded-lg flex items-center justify-center min-h-[200px]">
+              {qrProduct && codeFormat === 'qr' && (
                 <QRCodeCanvas
                   value={qrProduct.product_code}
                   size={200}
@@ -518,8 +530,32 @@ export default function ProductsPage() {
                   includeMargin
                 />
               )}
+              {qrProduct && codeFormat === 'barcode' && (
+                <Barcode
+                  value={qrProduct.product_code}
+                  format="CODE128"
+                  width={2}
+                  height={80}
+                  fontSize={16}
+                />
+              )}
             </div>
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
+            <div className="w-full space-y-2">
+              <Label className="text-xs text-muted-foreground">Kod formati</Label>
+              <Select value={codeFormat} onValueChange={(v) => setCodeFormat(v as 'qr' | 'barcode')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="qr">QR kod (kvadrat, 2D)</SelectItem>
+                  <SelectItem value="barcode">Barkod — Code 128 (yotiq, 1D)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                {codeFormat === 'qr'
+                  ? "Telefon va 2D imager skanerlar uchun. Kichik joyga ham sig'adi."
+                  : "Lazer skanerlar uchun ideal. 15×40mm kabi yotiq yorliqlarga juda mos keladi."}
+              </p>
+            </div>
             <div className="w-full space-y-2">
               <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
               <Select value={labelSize} onValueChange={(v) => setLabelSize(v as typeof labelSize)}>
