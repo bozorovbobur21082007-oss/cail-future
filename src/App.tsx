@@ -11,6 +11,7 @@ import WorkersPage from "@/pages/WorkersPage";
 import OperationsPage from "@/pages/OperationsPage";
 import LogsPage from "@/pages/LogsPage";
 import SectorsPage from "@/pages/SectorsPage";
+import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="operatsiyalar" element={<OperationsPage />} />
               <Route path="loglar" element={<LogsPage />} />
               <Route path="sektorlar" element={<SectorsPage />} />
+              <Route path="sozlamalar" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

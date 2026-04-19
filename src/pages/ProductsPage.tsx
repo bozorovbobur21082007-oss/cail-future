@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
+import { useScannerMode } from '@/hooks/useScannerMode';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -46,6 +47,7 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [idMethod, setIdMethod] = useState<'code' | 'nfc'>('code');
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [scannerMode] = useScannerMode();
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
   const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('qr');
@@ -540,7 +542,7 @@ export default function ProductsPage() {
                   <Radio className="w-3.5 h-3.5 text-primary" />
                   NFC ID <span className="text-destructive text-xs font-normal">*majburiy</span>
                 </Label>
-                {showNfcScanner ? (
+                {!scannerMode && showNfcScanner ? (
                   <NfcScanner
                     onScan={(uid) => {
                       setForm({ ...form, nfc_id: uid });
@@ -555,15 +557,20 @@ export default function ProductsPage() {
                       <Input
                         value={form.nfc_id}
                         onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
-                        placeholder="NFC tegni skanerlang yoki kiriting..."
+                        placeholder={scannerMode ? "USB RFID o'quvchi bilan skanerlang..." : "NFC tegni skanerlang yoki kiriting..."}
                         className="font-mono"
+                        autoFocus={scannerMode}
                       />
-                      <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
-                        <Radio className="w-4 h-4" />
-                      </Button>
+                      {!scannerMode && (
+                        <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
+                          <Radio className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                     <p className="text-[11px] text-muted-foreground">
-                      NFC tegni telefon yoki RFID o'quvchiga tekkizing.
+                      {scannerMode
+                        ? "USB RFID o'quvchiga kartani tekkizing — ID avtomatik to'ldiriladi."
+                        : "NFC tegni telefon yoki RFID o'quvchiga tekkizing."}
                     </p>
                   </>
                 )}
