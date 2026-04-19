@@ -513,12 +513,20 @@ export default function ProductsPage() {
                 </p>
               )}
             </div>
-            {editing && (
-              <div className="space-y-2">
-                <Label>Soni</Label>
-                <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })} min={0} />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>{editing ? 'Soni' : "Boshlang'ich miqdor (ixtiyoriy)"}</Label>
+              <Input
+                type="number"
+                value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
+                min={0}
+              />
+              {!editing && (
+                <p className="text-[11px] text-muted-foreground">
+                  Default 0 — ishchilar Kirim/Chiqim sahifasida IN orqali to'ldiradi. Agar omborda allaqachon mavjud tovar bo'lsa, miqdorni shu yerda kiritishingiz mumkin.
+                </p>
+              )}
+            </div>
             <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
                <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} min={1} />
