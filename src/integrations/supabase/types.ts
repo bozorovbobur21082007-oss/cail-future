@@ -68,6 +68,7 @@ export type Database = {
           id: string
           low_stock_threshold: number
           name: string
+          nfc_id: string | null
           product_code: string
           quantity: number
           sector_id: string | null
@@ -78,6 +79,7 @@ export type Database = {
           id?: string
           low_stock_threshold?: number
           name: string
+          nfc_id?: string | null
           product_code?: string
           quantity?: number
           sector_id?: string | null
@@ -88,6 +90,7 @@ export type Database = {
           id?: string
           low_stock_threshold?: number
           name?: string
+          nfc_id?: string | null
           product_code?: string
           quantity?: number
           sector_id?: string | null

@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
+import NfcScanner from '@/components/NfcScanner';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -24,6 +25,7 @@ interface Product {
   low_stock_threshold: number;
   created_at: string;
   sector_id: string | null;
+  nfc_id: string | null;
 }
 
 export default function ProductsPage() {
@@ -38,7 +40,8 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
+  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+  const [showNfcScanner, setShowNfcScanner] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const fetchProducts = useCallback(async () => {
@@ -59,24 +62,31 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nfc = form.nfc_id.trim().toUpperCase();
+    // Yangi mahsulotlar uchun NFC ID majburiy
+    if (!editing && !nfc) {
+      toast.error("Yangi mahsulot uchun NFC ID majburiy. NFC tegni skanerlang yoki qo'lda kiriting.");
+      return;
+    }
     setSubmitting(true);
     const payload = {
       name: form.name,
       quantity: form.quantity,
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
+      nfc_id: nfc || null,
     };
     try {
       if (editing) {
@@ -254,6 +264,41 @@ export default function ProductsPage() {
                   {sectors.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Radio className="w-3.5 h-3.5 text-primary" />
+                NFC ID {!editing && <span className="text-destructive">*</span>}
+              </Label>
+              {showNfcScanner ? (
+                <NfcScanner
+                  onScan={(uid) => {
+                    setForm({ ...form, nfc_id: uid });
+                    setShowNfcScanner(false);
+                    toast.success(`NFC ID o'qildi: ${uid}`);
+                  }}
+                  onClose={() => setShowNfcScanner(false)}
+                />
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      value={form.nfc_id}
+                      onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
+                      placeholder="NFC tegni skanerlang yoki kiriting..."
+                      className="font-mono"
+                    />
+                    <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
+                      <Radio className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {!editing && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Mahsulotga yopishtirilgan NFC nakleykani skanerlang.
+                    </p>
+                  )}
+                </>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>

@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowDownCircle, ArrowUpCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info, Camera
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
+import NfcScanner from '@/components/NfcScanner';
 
 interface Worker {
   id: string;
@@ -49,6 +50,7 @@ export default function OperationsPage() {
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
   const [showWorkerScanner, setShowWorkerScanner] = useState(false);
   const [showProductScanner, setShowProductScanner] = useState(false);
+  const [showNfcScanner, setShowNfcScanner] = useState(false);
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +123,39 @@ export default function OperationsPage() {
       setLoading(false);
     }
   }, [productCode, loading, actionType]);
+
+  const scanByNfc = useCallback(async (nfcId: string) => {
+    const id = nfcId.trim().toUpperCase();
+    if (!id || loading) return;
+    setShowNfcScanner(false);
+    setScanError(null);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from('products').select('*').eq('nfc_id', id).single();
+      if (error || !data) {
+        setScanError({
+          title: "NFC teg ro'yxatdan o'tmagan",
+          detail: `"${id}" NFC ID bilan mahsulot topilmadi.`,
+          hint: "Bu nakleyka biror mahsulotga biriktirilmagan. Avval Mahsulotlar bo'limida ro'yxatdan o'tkazing."
+        });
+      } else {
+        setVerifiedProduct(data);
+        if (actionType === 'OUT' && data.quantity <= 0) {
+          setScanError({
+            title: "Mahsulot tugagan",
+            detail: `"${data.name}" omborda qolmagan (0 dona).`,
+            hint: "Avval kirim qiling yoki boshqa mahsulotni tanlang."
+          });
+        }
+        toast.success(`NFC orqali topildi: ${data.name} (${data.quantity} dona)`);
+        setStep(3);
+      }
+    } catch {
+      setScanError({ title: "Server xatosi", detail: "Ma'lumotlar bazasiga ulanishda xatolik." });
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, actionType]);
 
   const executeOperation = async () => {
     if (!verifiedWorker || !verifiedProduct) return;
@@ -300,7 +335,13 @@ export default function OperationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            {showProductScanner ? (
+            {showNfcScanner ? (
+              <NfcScanner
+                onScan={(uid) => scanByNfc(uid)}
+                onClose={() => setShowNfcScanner(false)}
+                title="Mahsulot NFC tegini skanerlang"
+              />
+            ) : showProductScanner ? (
               <QrScanner
                 onScan={(result) => {
                   setShowProductScanner(false);
@@ -326,10 +367,16 @@ export default function OperationsPage() {
                     </Button>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full gap-2" onClick={() => setShowProductScanner(true)}>
-                  <Camera className="w-4 h-4" />
-                  Kamera orqali skanerlash
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => setShowProductScanner(true)}>
+                    <Camera className="w-4 h-4" />
+                    Kamera (QR)
+                  </Button>
+                  <Button variant="outline" className="gap-2" onClick={() => setShowNfcScanner(true)}>
+                    <Radio className="w-4 h-4" />
+                    NFC skaner
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
