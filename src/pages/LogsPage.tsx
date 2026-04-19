@@ -44,7 +44,11 @@ export default function LogsPage() {
     setLoading(true);
     let query = supabase.from('operations').select('*', { count: 'exact' });
 
-    if (filterWorker) query = query.eq('worker_id', filterWorker);
+    if (filterWorker === '__admin__') {
+      query = query.is('worker_id', null);
+    } else if (filterWorker) {
+      query = query.eq('worker_id', filterWorker);
+    }
     if (filterProduct) query = query.eq('product_id', filterProduct);
     if (filterAction) query = query.eq('action_type', filterAction);
     if (filterDateFrom) query = query.gte('created_at', `${filterDateFrom}T00:00:00`);
@@ -115,10 +119,11 @@ export default function LogsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-1">
                 <Label className="text-xs">Ishchi</Label>
-                <Select value={filterWorker} onValueChange={(v) => { setFilterWorker(v === 'all' ? '' : v); setPage(1); }}>
+                <Select value={filterWorker || 'all'} onValueChange={(v) => { setFilterWorker(v === 'all' ? '' : v); setPage(1); }}>
                   <SelectTrigger><SelectValue placeholder="Barchasi" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Barchasi</SelectItem>
+                    <SelectItem value="__admin__">Admin (Mahsulotlar)</SelectItem>
                     {workers.map(w => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
