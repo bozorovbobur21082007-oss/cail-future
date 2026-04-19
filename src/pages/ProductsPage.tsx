@@ -36,11 +36,13 @@ export default function ProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
 
@@ -62,7 +64,7 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+    setForm({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
     setDialogOpen(true);
   };
 
@@ -72,18 +74,39 @@ export default function ProductsPage() {
     setDialogOpen(true);
   };
 
+  const performMerge = async () => {
+    if (!mergeTarget) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ quantity: mergeTarget.quantity + 1 })
+        .eq('id', mergeTarget.id);
+      if (error) throw error;
+      toast.success(`"${mergeTarget.name}" soni 1 taga oshirildi (${mergeTarget.quantity + 1} ta)`);
+      setMergeDialogOpen(false);
+      setDialogOpen(false);
+      setMergeTarget(null);
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nfc = form.nfc_id.trim().toUpperCase();
-    // Yangi mahsulotlar uchun NFC ID majburiy
+    const trimmedName = form.name.trim();
     if (!editing && !nfc) {
       toast.error("Yangi mahsulot uchun NFC ID majburiy. NFC tegni skanerlang yoki qo'lda kiriting.");
       return;
     }
     setSubmitting(true);
     const payload = {
-      name: form.name,
-      quantity: form.quantity,
+      name: trimmedName,
+      quantity: editing ? form.quantity : 1,
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
       nfc_id: nfc || null,
@@ -93,13 +116,25 @@ export default function ProductsPage() {
         const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Mahsulot yangilandi");
+        setDialogOpen(false);
+        fetchProducts();
       } else {
+        // Bir xil nomdagi mahsulot bor-yo'qligini tekshirish
+        const existing = products.find(
+          p => p.name.trim().toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (existing) {
+          setMergeTarget(existing);
+          setMergeDialogOpen(true);
+          setSubmitting(false);
+          return;
+        }
         const { error } = await supabase.from('products').insert(payload);
         if (error) throw error;
         toast.success("Mahsulot qo'shildi");
+        setDialogOpen(false);
+        fetchProducts();
       }
-      setDialogOpen(false);
-      fetchProducts();
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {
