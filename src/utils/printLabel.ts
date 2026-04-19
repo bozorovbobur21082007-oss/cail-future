@@ -20,7 +20,8 @@ export interface PrintLabelOptions {
 }
 
 export function printLabel(opts: PrintLabelOptions): boolean {
-  const { productCode, productName, sectorCode, codeImageDataUrl, format, size, compact } = opts;
+  const { productCode, productName, sectorCode, codeImageDataUrl, format, size, compact, copies } = opts;
+  const copyCount = Math.max(1, Math.min(50, copies || 1));
   const printWindow = window.open('', '_blank', 'width=400,height=500');
   if (!printWindow) {
     toast.error("Brauzer chop etish oynasini bloklab qo'ydi. Pop-up ruxsatini bering.");
