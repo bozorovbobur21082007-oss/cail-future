@@ -44,7 +44,14 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [labelSize, setLabelSize] = useState<'small' | 'medium' | 'large'>('medium');
   const qrRef = useRef<HTMLCanvasElement>(null);
+
+  const labelSizeConfig = {
+    small: { mm: 40, label: 'Kichik (40×40mm)' },
+    medium: { mm: 60, label: "O'rta (60×60mm)" },
+    large: { mm: 80, label: 'Katta (80×80mm)' },
+  } as const;
 
   const fetchProducts = useCallback(async () => {
     const [prodRes, secRes] = await Promise.all([
@@ -176,6 +183,8 @@ export default function ProductsPage() {
     }
     const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
     const code = qrProduct.product_code;
+    const sizeMm = labelSizeConfig[labelSize].mm;
+    const qrSizeMm = sizeMm - 8;
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -184,14 +193,14 @@ export default function ProductsPage() {
           <style>
             * { box-sizing: border-box; }
             body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-            .label { border: 1px dashed #999; padding: 16px; text-align: center; border-radius: 8px; }
-            .label img { display: block; margin: 0 auto; width: 220px; height: 220px; }
-            .name { font-size: 14px; font-weight: 600; margin-top: 8px; }
-            .code { font-family: monospace; font-size: 12px; color: #555; margin-top: 4px; }
+            .label { border: 1px dashed #999; padding: 4mm; text-align: center; border-radius: 8px; width: ${sizeMm}mm; }
+            .label img { display: block; margin: 0 auto; width: ${qrSizeMm}mm; height: ${qrSizeMm}mm; }
+            .name { font-size: ${Math.max(8, Math.round(sizeMm / 6))}pt; font-weight: 600; margin-top: 2mm; word-break: break-word; line-height: 1.2; }
+            .code { font-family: monospace; font-size: ${Math.max(6, Math.round(sizeMm / 8))}pt; color: #555; margin-top: 1mm; }
             @media print {
-              body { padding: 0; min-height: auto; }
-              .label { border: none; padding: 8px; }
-              @page { margin: 8mm; }
+              body { padding: 0; min-height: auto; display: block; }
+              .label { border: none; padding: 2mm; border-radius: 0; }
+              @page { size: ${sizeMm + 4}mm ${sizeMm + 14}mm; margin: 2mm; }
             }
           </style>
         </head>
@@ -214,7 +223,7 @@ export default function ProductsPage() {
       </html>
     `);
     printWindow.document.close();
-    toast.success("Chop etish oynasi ochildi");
+    toast.success(`Chop etish oynasi ochildi (${labelSizeConfig[labelSize].label})`);
   };
 
   const filtered = products.filter(p =>
@@ -470,6 +479,17 @@ export default function ProductsPage() {
               )}
             </div>
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
+            <div className="w-full space-y-2">
+              <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
+              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'small' | 'medium' | 'large')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
+                  <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
+                  <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Yopish</Button>
