@@ -242,12 +242,29 @@ export default function OperationsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kirim/Chiqim</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span> tanlang. Tasdiqlash bosqichida amal turi tanlanadi.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kirim/Chiqim</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span>.
+          </p>
+        </div>
+        <Button
+          onClick={() => setQuickLabelOpen(true)}
+          variant="outline"
+          className="gap-2 shrink-0"
+        >
+          <Printer className="w-4 h-4" />
+          <span className="hidden sm:inline">Yangi mahsulot + yorliq</span>
+          <span className="sm:hidden">Yangi yorliq</span>
+        </Button>
       </div>
+
+      <QuickLabelDialog
+        open={quickLabelOpen}
+        onOpenChange={setQuickLabelOpen}
+        approved={role === 'admin'}
+      />
 
       {/* Steps indicator */}
       <div className="flex items-center gap-2">
