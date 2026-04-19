@@ -265,6 +265,41 @@ export default function ProductsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Radio className="w-3.5 h-3.5 text-primary" />
+                NFC ID {!editing && <span className="text-destructive">*</span>}
+              </Label>
+              {showNfcScanner ? (
+                <NfcScanner
+                  onScan={(uid) => {
+                    setForm({ ...form, nfc_id: uid });
+                    setShowNfcScanner(false);
+                    toast.success(`NFC ID o'qildi: ${uid}`);
+                  }}
+                  onClose={() => setShowNfcScanner(false)}
+                />
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      value={form.nfc_id}
+                      onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
+                      placeholder="NFC tegni skanerlang yoki kiriting..."
+                      className="font-mono"
+                    />
+                    <Button type="button" variant="outline" onClick={() => setShowNfcScanner(true)}>
+                      <Radio className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {!editing && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Mahsulotga yopishtirilgan NFC nakleykani skanerlang.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
               <Button type="submit" disabled={submitting}>
