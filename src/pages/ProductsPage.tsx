@@ -365,8 +365,13 @@ export default function ProductsPage() {
     toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
   };
 
+  const pendingCount = products.filter(p => !p.approved).length;
+
   const filtered = products.filter(p => {
+    if (statusFilter === 'pending' && p.approved) return false;
+    if (statusFilter === 'approved' && !p.approved) return false;
     const q = search.toLowerCase();
+    if (!q) return true;
     return (
       p.name.toLowerCase().includes(q) ||
       p.product_code.toLowerCase().includes(q) ||
