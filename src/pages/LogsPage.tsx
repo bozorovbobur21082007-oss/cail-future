@@ -86,6 +86,7 @@ export default function LogsPage() {
     setFilterWorker('');
     setFilterProduct('');
     setFilterAction('');
+    setFilterSource('all');
     setFilterDateFrom('');
     setFilterDateTo('');
     setPage(1);
@@ -119,14 +120,27 @@ export default function LogsPage() {
       {showFilters && (
         <Card className="shadow-sm">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs">Manba</Label>
+                <Select
+                  value={filterSource}
+                  onValueChange={(v) => { setFilterSource(v as 'all' | 'worker' | 'admin'); setPage(1); }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Hammasi</SelectItem>
+                    <SelectItem value="worker">Ishchilar</SelectItem>
+                    <SelectItem value="admin">Admin (Mahsulotlar)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">Ishchi</Label>
                 <Select value={filterWorker || 'all'} onValueChange={(v) => { setFilterWorker(v === 'all' ? '' : v); setPage(1); }}>
                   <SelectTrigger><SelectValue placeholder="Barchasi" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Barchasi</SelectItem>
-                    <SelectItem value="__admin__">Admin (Mahsulotlar)</SelectItem>
                     {workers.map(w => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
