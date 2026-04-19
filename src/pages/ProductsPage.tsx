@@ -500,9 +500,10 @@ export default function ProductsPage() {
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
             <div className="w-full space-y-2">
               <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
-              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'small' | 'medium' | 'large')}>
+              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'thermal_15x40' | 'small' | 'medium' | 'large')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="thermal_15x40">{labelSizeConfig.thermal_15x40.label}</SelectItem>
                   <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
                   <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
                   <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
