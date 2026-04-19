@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Filter, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, Download, ArrowDownToLine, ArrowUpFromLine, TrendingUp, TrendingDown } from 'lucide-react';
 import { exportCSV, exportPDF } from '@/utils/exportLogs';
 import { toast } from 'sonner';
 
@@ -23,6 +23,8 @@ interface Operation {
 
 interface Worker { id: string; full_name: string; }
 
+type StatPeriod = 'today' | 'week' | 'month' | 'all';
+
 export default function LogsPage() {
   const [operations, setOperations] = useState<Operation[]>([]);
   const [total, setTotal] = useState(0);
@@ -35,6 +37,10 @@ export default function LogsPage() {
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+
+  const [statPeriod, setStatPeriod] = useState<StatPeriod>('today');
+  const [stats, setStats] = useState({ inQty: 0, outQty: 0, inCount: 0, outCount: 0 });
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const limit = 20;
 
@@ -65,8 +71,48 @@ export default function LogsPage() {
     setWorkers(data || []);
   }, []);
 
+  const periodRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    if (statPeriod === 'today') {
+      start.setHours(0, 0, 0, 0);
+    } else if (statPeriod === 'week') {
+      start.setDate(now.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+    } else if (statPeriod === 'month') {
+      start.setDate(now.getDate() - 29);
+      start.setHours(0, 0, 0, 0);
+    } else {
+      return null;
+    }
+    return start.toISOString();
+  }, [statPeriod]);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    let query = supabase.from('operations').select('action_type, quantity');
+    if (periodRange) query = query.gte('created_at', periodRange);
+    const { data, error } = await query;
+    if (error) {
+      toast.error("Statistikani yuklashda xatolik");
+      setStatsLoading(false);
+      return;
+    }
+    let inQty = 0, outQty = 0, inCount = 0, outCount = 0;
+    (data || []).forEach((op: { action_type: string; quantity: number }) => {
+      if (op.action_type === 'IN') { inQty += op.quantity; inCount++; }
+      else if (op.action_type === 'OUT') { outQty += op.quantity; outCount++; }
+    });
+    setStats({ inQty, outQty, inCount, outCount });
+    setStatsLoading(false);
+  }, [periodRange]);
+
   useEffect(() => { fetchMeta(); }, [fetchMeta]);
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  // Re-fetch stats when new operations are inserted (after filter changes too — keeps stats fresh)
+  useEffect(() => { fetchStats(); }, [operations.length, fetchStats]);
 
   const resetFilters = () => {
     setFilterWorker('');
@@ -77,6 +123,13 @@ export default function LogsPage() {
   };
 
   const totalPages = Math.ceil(total / limit);
+  const net = stats.inQty - stats.outQty;
+  const periodLabel: Record<StatPeriod, string> = {
+    today: 'Bugun',
+    week: "So'nggi 7 kun",
+    month: "So'nggi 30 kun",
+    all: 'Hammasi',
+  };
 
   return (
     <div className="space-y-6">
@@ -98,6 +151,87 @@ export default function LogsPage() {
             <Download className="w-4 h-4 mr-2" />
             PDF
           </Button>
+        </div>
+      </div>
+
+      {/* Statistika kartochkalari */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Statistika · <span className="text-foreground normal-case">{periodLabel[statPeriod]}</span>
+          </h2>
+          <div className="flex gap-1 rounded-md border border-border bg-muted/30 p-1">
+            {(['today', 'week', 'month', 'all'] as StatPeriod[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setStatPeriod(p)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  statPeriod === p
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {periodLabel[p]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card className="shadow-sm border-success/20">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Jami kirim</p>
+                  <p className="text-2xl font-bold text-success">
+                    {statsLoading ? '—' : `+${stats.inQty.toLocaleString('uz-UZ')}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{stats.inCount} ta operatsiya</p>
+                </div>
+                <div className="w-10 h-10 rounded-md bg-success/10 flex items-center justify-center">
+                  <ArrowDownToLine className="w-5 h-5 text-success" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-warning/20">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Jami chiqim</p>
+                  <p className="text-2xl font-bold text-warning">
+                    {statsLoading ? '—' : `−${stats.outQty.toLocaleString('uz-UZ')}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{stats.outCount} ta operatsiya</p>
+                </div>
+                <div className="w-10 h-10 rounded-md bg-warning/10 flex items-center justify-center">
+                  <ArrowUpFromLine className="w-5 h-5 text-warning" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={`shadow-sm ${net >= 0 ? 'border-primary/20' : 'border-destructive/20'}`}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Sof o'zgarish</p>
+                  <p className={`text-2xl font-bold ${net >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                    {statsLoading ? '—' : `${net >= 0 ? '+' : ''}${net.toLocaleString('uz-UZ')}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {net >= 0 ? 'Ombor zaxirasi oshdi' : 'Ombor zaxirasi kamaydi'}
+                  </p>
+                </div>
+                <div className={`w-10 h-10 rounded-md flex items-center justify-center ${net >= 0 ? 'bg-primary/10' : 'bg-destructive/10'}`}>
+                  {net >= 0
+                    ? <TrendingUp className="w-5 h-5 text-primary" />
+                    : <TrendingDown className="w-5 h-5 text-destructive" />}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
