@@ -47,6 +47,7 @@ export default function ProductsPage() {
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
+  const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('qr');
   const [customW, setCustomW] = useState(50);
   const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
