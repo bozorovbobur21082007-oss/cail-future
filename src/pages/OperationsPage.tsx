@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ScanLine, CheckCircle2, XCircle, ArrowDownCircle, ArrowUpCircle,
+  ScanLine, CheckCircle2, XCircle, ArrowUpCircle,
   Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +26,7 @@ interface Product {
   product_code: string;
   name: string;
   quantity: number;
+  nfc_id: string | null;
 }
 
 interface BatchLog {
@@ -43,7 +43,6 @@ export default function OperationsPage() {
   const [verifiedWorker, setVerifiedWorker] = useState<Worker | null>(null);
   const [productCode, setProductCode] = useState('');
   const [verifiedProduct, setVerifiedProduct] = useState<Product | null>(null);
-  const [actionType, setActionType] = useState('OUT');
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
@@ -107,11 +106,11 @@ export default function OperationsPage() {
         setProductCode('');
       } else {
         setVerifiedProduct(data);
-        if (actionType === 'OUT' && data.quantity <= 0) {
+        if (data.quantity <= 0) {
           setScanError({
             title: "Mahsulot tugagan",
             detail: `"${data.name}" omborda qolmagan (0 dona).`,
-            hint: "Avval kirim qiling yoki boshqa mahsulotni tanlang."
+            hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
           });
         }
         toast.success(`Mahsulot topildi: ${data.name} (${data.quantity} dona)`);
@@ -122,7 +121,7 @@ export default function OperationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [productCode, loading, actionType]);
+  }, [productCode, loading]);
 
   const scanByNfc = useCallback(async (nfcId: string) => {
     const id = nfcId.trim().toUpperCase();
@@ -140,11 +139,11 @@ export default function OperationsPage() {
         });
       } else {
         setVerifiedProduct(data);
-        if (actionType === 'OUT' && data.quantity <= 0) {
+        if (data.quantity <= 0) {
           setScanError({
             title: "Mahsulot tugagan",
             detail: `"${data.name}" omborda qolmagan (0 dona).`,
-            hint: "Avval kirim qiling yoki boshqa mahsulotni tanlang."
+            hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
           });
         }
         toast.success(`NFC orqali topildi: ${data.name} (${data.quantity} dona)`);
@@ -155,19 +154,16 @@ export default function OperationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [loading, actionType]);
+  }, [loading]);
 
   const executeOperation = async () => {
     if (!verifiedWorker || !verifiedProduct) return;
     setScanError(null);
     setLoading(true);
     try {
-      // Update product quantity
-      const newQty = actionType === 'IN'
-        ? verifiedProduct.quantity + quantity
-        : verifiedProduct.quantity - quantity;
+      const newQty = verifiedProduct.quantity - quantity;
 
-      if (actionType === 'OUT' && newQty < 0) {
+      if (newQty < 0) {
         setScanError({ title: "Yetarli emas", detail: `Omborda faqat ${verifiedProduct.quantity} dona mavjud.` });
         setLoading(false);
         return;
@@ -176,18 +172,17 @@ export default function OperationsPage() {
       const { error: updateError } = await supabase.from('products').update({ quantity: newQty }).eq('id', verifiedProduct.id);
       if (updateError) throw updateError;
 
-      // Create operation record
       const { data: opData, error: opError } = await supabase.from('operations').insert({
         worker_id: verifiedWorker.id,
         product_id: verifiedProduct.id,
         worker_name: verifiedWorker.full_name,
         product_name: verifiedProduct.name,
-        action_type: actionType,
+        action_type: 'OUT',
         quantity,
       }).select().single();
       if (opError) throw opError;
 
-      toast.success(`${actionType === 'IN' ? 'Kirim' : 'Chiqim'} muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
+      toast.success(`Chiqim muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 
       // Reset for next product scan
@@ -217,8 +212,10 @@ export default function OperationsPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Operatsiyalar</h1>
-        <p className="text-sm text-muted-foreground mt-1">Kirim va chiqim operatsiyalarini bajarish</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Chiqim operatsiyalari</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Mahsulotni ombordan chiqarish. Kirim uchun Mahsulotlar bo'limidan yangi mahsulot qo'shing.
+        </p>
       </div>
 
       {/* Steps indicator */}
@@ -314,27 +311,13 @@ export default function OperationsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
-              2-bosqich: Mahsulotni skanerlash
+              2-bosqich: Chiqariladigan mahsulotni skanerlash
             </CardTitle>
             <p className="text-xs text-muted-foreground">
               Ishchi: <span className="font-medium text-foreground">{verifiedWorker.full_name}</span>
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Amal turi</Label>
-              <Select value={actionType} onValueChange={setActionType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="IN">
-                    <span className="flex items-center gap-2"><ArrowDownCircle className="w-4 h-4 text-success" /> Kirim</span>
-                  </SelectItem>
-                  <SelectItem value="OUT">
-                    <span className="flex items-center gap-2"><ArrowUpCircle className="w-4 h-4 text-warning" /> Chiqim</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             {showNfcScanner ? (
               <NfcScanner
                 onScan={(uid) => scanByNfc(uid)}
@@ -389,7 +372,7 @@ export default function OperationsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-success" />
-              3-bosqich: Tasdiqlash
+              3-bosqich: Chiqimni tasdiqlash
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -408,22 +391,32 @@ export default function OperationsPage() {
               </div>
               <div>
                 <p className="text-muted-foreground">Amal turi</p>
-                <Badge className={actionType === 'IN' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}>
-                  {actionType === 'IN' ? 'Kirim' : 'Chiqim'}
+                <Badge className="bg-warning/10 text-warning border-warning/20 gap-1">
+                  <ArrowUpCircle className="w-3 h-3" /> Chiqim
                 </Badge>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Miqdor</Label>
-              <Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)} />
+              <Label>Miqdor (chiqariladigan)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={verifiedProduct.quantity}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              />
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setStep(2); setVerifiedProduct(null); setProductCode(''); }}>
                 Ortga
               </Button>
-              <Button onClick={executeOperation} disabled={loading} className="flex-1">
+              <Button
+                onClick={executeOperation}
+                disabled={loading || verifiedProduct.quantity <= 0 || quantity > verifiedProduct.quantity}
+                className="flex-1"
+              >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {actionType === 'IN' ? 'Kirim qilish' : 'Chiqim qilish'}
+                Chiqim qilish
               </Button>
             </div>
           </CardContent>
@@ -438,8 +431,8 @@ export default function OperationsPage() {
             <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg border border-success/20 bg-success/5">
               <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
               <div className="flex-1 flex items-center gap-2 text-sm">
-                <Badge className={log.action_type === 'IN' ? 'bg-success/10 text-success border-success/20 text-xs' : 'bg-warning/10 text-warning border-warning/20 text-xs'}>
-                  {log.action_type === 'IN' ? 'Kirim' : 'Chiqim'}
+                <Badge className="bg-warning/10 text-warning border-warning/20 text-xs">
+                  Chiqim
                 </Badge>
                 <span className="font-medium truncate">{log.product_name}</span>
                 <span className="text-muted-foreground">x{log.quantity}</span>
