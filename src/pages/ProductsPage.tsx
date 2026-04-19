@@ -261,7 +261,7 @@ export default function ProductsPage() {
     }
   };
 
-
+  const getCodeCanvas = (): HTMLCanvasElement | null => {
     return document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
   };
 
