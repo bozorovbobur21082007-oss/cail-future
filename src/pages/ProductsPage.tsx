@@ -129,13 +129,20 @@ export default function ProductsPage() {
     e.preventDefault();
     const nfc = form.nfc_id.trim().toUpperCase();
     const trimmedName = form.name.trim();
+
+    // Identifikatsiya turini tekshirish
+    if (idMethod === 'nfc' && !nfc) {
+      toast.error("NFC ID kiritilmagan. NFC tegni skanerlang yoki QR/Barkod usulini tanlang.");
+      return;
+    }
+
     setSubmitting(true);
     const payload = {
       name: trimmedName,
       quantity: editing ? form.quantity : 1,
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
-      nfc_id: nfc || null,
+      nfc_id: idMethod === 'nfc' ? nfc : null,
     };
     try {
       if (editing) {
