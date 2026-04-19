@@ -354,7 +354,32 @@ export default function ProductsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
+      {/* Merge Confirmation Dialog */}
+      <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mavjud mahsulot topildi</DialogTitle>
+            <DialogDescription>
+              <strong>"{mergeTarget?.name}"</strong> nomli mahsulot allaqachon mavjud (hozir {mergeTarget?.quantity} ta).
+              Uning soniga +1 qo'shilsinmi?
+              <br /><br />
+              <span className="text-xs text-muted-foreground">
+                Eslatma: NFC ID birlashtirilmaydi — har bir nakleyka alohida bo'lgani uchun, agar har bir mahsulotning o'z NFC tegi bo'lishini xohlasangiz, "Yangi alohida saqlash" ni tanlang.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => { setMergeDialogOpen(false); setMergeTarget(null); }}>
+              Bekor qilish
+            </Button>
+            <Button onClick={performMerge} disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Sonini oshirish (+1)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
