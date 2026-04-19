@@ -390,7 +390,24 @@ export default function ProductsPage() {
                         )}
                       </TableCell>
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
-                       <TableCell className="font-mono text-xs text-muted-foreground">{hasNfc ? p.nfc_id : p.product_code}</TableCell>
+                       <TableCell className="font-mono text-xs text-muted-foreground">
+                         <button
+                           type="button"
+                           title="Nusxa olish"
+                           onClick={async () => {
+                             const value = hasNfc ? (p.nfc_id || '') : p.product_code;
+                             try {
+                               await navigator.clipboard.writeText(value);
+                               toast.success('Nusxa olindi');
+                             } catch {
+                               toast.error("Nusxa olib bo'lmadi");
+                             }
+                           }}
+                           className="hover:text-foreground hover:underline underline-offset-2 transition-colors cursor-pointer"
+                         >
+                           {hasNfc ? p.nfc_id : p.product_code}
+                         </button>
+                       </TableCell>
                        <TableCell className="text-xs">
                          {p.sector_id ? (
                            <Badge variant="outline" className="text-[10px]">
