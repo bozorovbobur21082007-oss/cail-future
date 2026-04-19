@@ -475,11 +475,9 @@ export default function ProductsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {!hasNfc && (
-                              <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
-                                <QrCode className="w-4 h-4 mr-2" /> QR / Barkod
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
+                              <QrCode className="w-4 h-4 mr-2" /> QR / Barkod yorliq
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEdit(p)}>
                               <Pencil className="w-4 h-4 mr-2" /> Tahrirlash
                             </DropdownMenuItem>
