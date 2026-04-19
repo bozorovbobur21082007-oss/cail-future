@@ -45,6 +45,7 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large'>('thermal_15x40');
+  const [compactLabel, setCompactLabel] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const labelSizeConfig = {
