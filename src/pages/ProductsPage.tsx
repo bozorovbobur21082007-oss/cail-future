@@ -137,6 +137,28 @@ export default function ProductsPage() {
     }
 
     setSubmitting(true);
+
+    // NFC ID takrorlanmasligini oldindan tekshirish (do'stona xato xabari uchun)
+    if (idMethod === 'nfc' && nfc) {
+      const { data: existingNfc, error: checkErr } = await supabase
+        .from('products')
+        .select('id, name, product_code')
+        .eq('nfc_id', nfc)
+        .maybeSingle();
+      if (checkErr) {
+        toast.error("NFC ID ni tekshirishda xatolik: " + checkErr.message);
+        setSubmitting(false);
+        return;
+      }
+      if (existingNfc && existingNfc.id !== editing?.id) {
+        toast.error(
+          `Bu NFC ID allaqachon "${existingNfc.name}" (${existingNfc.product_code}) mahsulotiga biriktirilgan. Boshqa teg ishlatishingiz kerak.`
+        );
+        setSubmitting(false);
+        return;
+      }
+    }
+
     const payload = {
       name: trimmedName,
       quantity: editing ? form.quantity : 1,
