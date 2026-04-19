@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 interface AuthUser {
   id: string;
@@ -8,23 +8,37 @@ interface AuthUser {
   name: string;
 }
 
+type Role = 'admin' | 'worker' | null;
+
 interface AuthContextType {
   user: AuthUser | null;
+  role: Role;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  loginAsWorker: (pin: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const WORKER_FLAG_KEY = 'worker_session';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [role, setRole] = useState<Role>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (session: Session | null) => {
     if (!session?.user) {
-      setUser(null);
+      // Check if worker session is active
+      const isWorker = sessionStorage.getItem(WORKER_FLAG_KEY) === '1';
+      if (isWorker) {
+        setUser({ id: 'worker', email: '', name: 'Ishchi' });
+        setRole('worker');
+      } else {
+        setUser(null);
+        setRole(null);
+      }
       setLoading(false);
       return;
     }
@@ -39,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: data?.email || session.user.email || '',
       name: data?.name || '',
     });
+    setRole('admin');
     setLoading(false);
   };
 
@@ -55,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    sessionStorage.removeItem(WORKER_FLAG_KEY);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
@@ -63,18 +79,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name }, emailRedirectTo: window.location.origin },
     });
     if (error) throw error;
   };
 
+  const loginAsWorker = async (pin: string) => {
+    const { data, error } = await supabase.functions.invoke('verify-worker-pin', {
+      body: { pin },
+    });
+    if (error) throw new Error('Server bilan aloqa xatosi');
+    if (!data?.valid) throw new Error("Noto'g'ri PIN kod");
+
+    sessionStorage.setItem(WORKER_FLAG_KEY, '1');
+    setUser({ id: 'worker', email: '', name: 'Ishchi' });
+    setRole('worker');
+    setLoading(false);
+  };
+
   const logout = async () => {
-    await supabase.auth.signOut();
+    sessionStorage.removeItem(WORKER_FLAG_KEY);
+    if (role === 'admin') {
+      await supabase.auth.signOut();
+    }
     setUser(null);
+    setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, signup }}>
+    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker }}>
       {children}
     </AuthContext.Provider>
   );

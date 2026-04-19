@@ -16,29 +16,29 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+function Spinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function ProtectedRoute({ children, allowWorker = false }: { children: React.ReactNode; allowWorker?: boolean }) {
+  const { user, role, loading } = useAuth();
+  if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace />;
+  // Worker can only access pages where allowWorker is true
+  if (role === 'worker' && !allowWorker) return <Navigate to="/operatsiyalar" replace />;
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  const { user, role, loading } = useAuth();
+  if (loading) return <Spinner />;
+  if (user) {
+    return <Navigate to={role === 'worker' ? '/operatsiyalar' : '/'} replace />;
   }
-  if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -49,14 +49,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route index element={<DashboardPage />} />
-              <Route path="mahsulotlar" element={<ProductsPage />} />
-              <Route path="ishchilar" element={<WorkersPage />} />
-              <Route path="operatsiyalar" element={<OperationsPage />} />
-              <Route path="loglar" element={<LogsPage />} />
-              <Route path="sektorlar" element={<SectorsPage />} />
-              <Route path="sozlamalar" element={<SettingsPage />} />
+            <Route path="/" element={<ProtectedRoute allowWorker><AppLayout /></ProtectedRoute>}>
+              <Route index element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="mahsulotlar" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+              <Route path="ishchilar" element={<ProtectedRoute><WorkersPage /></ProtectedRoute>} />
+              <Route path="operatsiyalar" element={<ProtectedRoute allowWorker><OperationsPage /></ProtectedRoute>} />
+              <Route path="loglar" element={<ProtectedRoute><LogsPage /></ProtectedRoute>} />
+              <Route path="sektorlar" element={<ProtectedRoute><SectorsPage /></ProtectedRoute>} />
+              <Route path="sozlamalar" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
