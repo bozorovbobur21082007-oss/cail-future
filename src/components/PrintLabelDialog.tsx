@@ -127,6 +127,44 @@ export default function PrintLabelDialog({
             </div>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="copies-input" className="text-xs text-muted-foreground">Nusxa soni (1-{MAX_COPIES})</Label>
+              <span className="text-xs text-muted-foreground">Har bir quti uchun bittadan</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setCopies((c) => clampCopies(c - 1))}
+                disabled={copies <= MIN_COPIES}
+                aria-label="Kamaytirish"
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <Input
+                id="copies-input"
+                type="number"
+                min={MIN_COPIES}
+                max={MAX_COPIES}
+                value={copies}
+                onChange={(e) => setCopies(clampCopies(parseInt(e.target.value, 10)))}
+                className="text-center font-medium"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setCopies((c) => clampCopies(c + 1))}
+                disabled={copies >= MAX_COPIES}
+                aria-label="Oshirish"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
           <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
             Termal printer (15×40mm) uchun tayyor. Chop etib qutiga yopishtiring.
           </div>
@@ -136,7 +174,7 @@ export default function PrintLabelDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>O'tkazib yuborish</Button>
           <Button onClick={handlePrint} className="gap-2">
             <Printer className="w-4 h-4" />
-            Chop etish
+            {copies > 1 ? `Chop etish (${copies} nusxa)` : 'Chop etish'}
           </Button>
         </DialogFooter>
       </DialogContent>
