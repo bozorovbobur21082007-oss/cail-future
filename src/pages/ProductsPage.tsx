@@ -333,7 +333,7 @@ export default function ProductsPage() {
                   </div>
                   {!editing && (
                     <p className="text-[11px] text-muted-foreground">
-                      Mahsulotga yopishtirilgan NFC nakleykani skanerlang.
+                      NFC nakleyka mavjud bo'lsa skanerlang. Aks holda QR kod orqali ishlatish mumkin.
                     </p>
                   )}
                 </>
