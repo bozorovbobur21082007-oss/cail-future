@@ -14,6 +14,13 @@ export function useNfcReader(onRead: (serial: string) => void) {
   const [support, setSupport] = useState<NfcSupport>('unknown');
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const startedAtRef = useRef<number>(0);
+  const lastReadRef = useRef<{ uid: string; at: number } | null>(null);
+
+  /** Skaner boshlangandan keyin shu ms ichida kelgan o'qishlar tashlab yuboriladi (kesh/g'oyibona o'qishlar). */
+  const STARTUP_GUARD_MS = 1000;
+  /** Bir xil UID ni shu ms ichida takror qabul qilmaymiz (debounce). */
+  const DEDUPE_MS = 2500;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -32,6 +39,8 @@ export function useNfcReader(onRead: (serial: string) => void) {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       await reader.scan({ signal: ctrl.signal });
+      startedAtRef.current = Date.now();
+      lastReadRef.current = null;
       setScanning(true);
 
       reader.onreadingerror = () => {
@@ -39,9 +48,21 @@ export function useNfcReader(onRead: (serial: string) => void) {
       };
 
       reader.onreading = (event: any) => {
+        const now = Date.now();
+        // 1) Startup guard — skaner endigina yoqilganda kelgan keshlangan o'qishni tashlash
+        if (now - startedAtRef.current < STARTUP_GUARD_MS) {
+          return;
+        }
         const serial: string = event.serialNumber || '';
         const cleaned = serial.replace(/:/g, '').toUpperCase();
-        if (cleaned) onRead(cleaned);
+        if (!cleaned) return;
+        // 2) Dedupe — bir xil UID juda tez takrorlanishini oldini olish
+        const last = lastReadRef.current;
+        if (last && last.uid === cleaned && now - last.at < DEDUPE_MS) {
+          return;
+        }
+        lastReadRef.current = { uid: cleaned, at: now };
+        onRead(cleaned);
       };
     } catch (e: any) {
       const msg = e?.message || String(e);
