@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
 import QuickLabelDialog from '@/components/QuickLabelDialog';
+import PrintLabelDialog from '@/components/PrintLabelDialog';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,6 +57,7 @@ export default function OperationsPage() {
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [quickLabelOpen, setQuickLabelOpen] = useState(false);
+  const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
   const { role } = useAuth();
