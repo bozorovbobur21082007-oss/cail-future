@@ -319,7 +319,8 @@ export default function ProductsPage() {
     const q = search.toLowerCase();
     return (
       p.name.toLowerCase().includes(q) ||
-      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : p.product_code.toLowerCase().includes(q))
+      p.product_code.toLowerCase().includes(q) ||
+      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : false)
     );
   });
 
