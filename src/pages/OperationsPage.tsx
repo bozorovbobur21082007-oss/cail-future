@@ -306,13 +306,13 @@ export default function OperationsPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {showNfcScanner ? (
+            {!scannerMode && showNfcScanner ? (
               <NfcScanner
                 onScan={(uid) => scanByNfc(uid)}
                 onClose={() => setShowNfcScanner(false)}
                 title="Mahsulot NFC tegini skanerlang"
               />
-            ) : showProductScanner ? (
+            ) : !scannerMode && showProductScanner ? (
               <QrScanner
                 onScan={(result) => {
                   setShowProductScanner(false);
@@ -331,23 +331,26 @@ export default function OperationsPage() {
                       value={productCode}
                       onChange={(e) => setProductCode(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
-                      placeholder="QR kodni skanerlang..."
+                      placeholder={scannerMode ? "Skaner gun bilan skanerlang..." : "QR kodni skanerlang..."}
+                      autoFocus={scannerMode}
                     />
                     <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="gap-2" onClick={() => setShowProductScanner(true)}>
-                    <Camera className="w-4 h-4" />
-                    Kamera (QR)
-                  </Button>
-                  <Button variant="outline" className="gap-2" onClick={() => setShowNfcScanner(true)}>
-                    <Radio className="w-4 h-4" />
-                    NFC skaner
-                  </Button>
-                </div>
+                {!scannerMode && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="gap-2" onClick={() => setShowProductScanner(true)}>
+                      <Camera className="w-4 h-4" />
+                      Kamera (QR)
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={() => setShowNfcScanner(true)}>
+                      <Radio className="w-4 h-4" />
+                      NFC skaner
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
