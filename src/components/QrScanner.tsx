@@ -77,7 +77,15 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
     scanner
       .start(
         cameraId,
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          fps: 10,
+          qrbox: (vw, vh) => {
+            // Kvadrat (QR) va kenglik bo'yicha cho'zilgan (barkod) — ikkalasini ham qoplaydi
+            const w = Math.floor(Math.min(vw, vh) * 0.9);
+            const h = Math.floor(Math.min(vh * 0.6, w));
+            return { width: w, height: h };
+          },
+        },
         (decodedText) => {
           if (!scannedRef.current) {
             scannedRef.current = true;
