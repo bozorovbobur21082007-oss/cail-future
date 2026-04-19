@@ -307,7 +307,7 @@ export default function ProductsPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <Radio className="w-3.5 h-3.5 text-primary" />
-                NFC ID {!editing && <span className="text-destructive">*</span>}
+                NFC ID <span className="text-muted-foreground text-xs font-normal">(ixtiyoriy)</span>
               </Label>
               {showNfcScanner ? (
                 <NfcScanner
