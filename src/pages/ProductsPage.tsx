@@ -471,11 +471,15 @@ export default function ProductsPage() {
             </div>
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Yopish</Button>
-            <Button onClick={downloadQrPng}>
+            <Button variant="outline" onClick={downloadQrPng}>
               <Download className="w-4 h-4 mr-2" />
-              PNG yuklash
+              PNG
+            </Button>
+            <Button onClick={printQr}>
+              <Printer className="w-4 h-4 mr-2" />
+              Chop etish
             </Button>
           </DialogFooter>
         </DialogContent>
