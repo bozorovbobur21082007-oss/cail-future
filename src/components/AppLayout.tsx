@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Package, Users, ArrowLeftRight,
-  ClipboardList, LogOut, Menu, Warehouse, MapPin
+  ClipboardList, LogOut, Menu, Warehouse, MapPin, Settings
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/ishchilar', icon: Users, label: 'Ishchilar' },
   { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Chiqim' },
   { to: '/loglar', icon: ClipboardList, label: 'Loglar' },
+  { to: '/sozlamalar', icon: Settings, label: 'Sozlamalar' },
 ];
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
