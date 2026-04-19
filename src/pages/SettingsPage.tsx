@@ -100,6 +100,46 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Volume2 className="w-4 h-4 text-primary" />
+            Tovush bilan tasdiqlash
+          </CardTitle>
+          <CardDescription>
+            Har bir muvaffaqiyatli skanerlashda qisqa "beep" ovozi chiqadi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="space-y-1 flex-1 min-w-0">
+              <Label htmlFor="sound-toggle" className="text-sm font-medium cursor-pointer">
+                Beep ovozini yoqish
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Skanerlash muvaffaqiyatli bo'lganda yuqori chastotali qisqa signal, xatolikda past signal eshitiladi.
+              </p>
+            </div>
+            <Switch
+              id="sound-toggle"
+              checked={soundEnabled}
+              onCheckedChange={handleSoundToggle}
+            />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => test()}
+            className="gap-2"
+          >
+            <Play className="w-4 h-4" />
+            Ovozni sinab ko'rish
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
