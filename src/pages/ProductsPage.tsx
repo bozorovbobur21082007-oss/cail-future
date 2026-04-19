@@ -44,6 +44,7 @@ export default function ProductsPage() {
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
+  const [idMethod, setIdMethod] = useState<'code' | 'nfc'>('code');
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
