@@ -44,15 +44,29 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
-  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large'>('thermal_15x40');
+  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
+  const [customW, setCustomW] = useState(50);
+  const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
+
+  // Maxsus o'lcham: kenglik balandlikdan ≥1.5× katta bo'lsa yonma-yon, aks holda vertical.
+  const customConfig = (() => {
+    const w = Math.max(15, Math.min(200, customW || 0));
+    const h = Math.max(10, Math.min(200, customH || 0));
+    const layout: 'horizontal' | 'vertical' = w >= h * 1.5 ? 'horizontal' : 'vertical';
+    const qr = layout === 'horizontal'
+      ? Math.max(8, Math.min(h - 2, w * 0.35))
+      : Math.max(10, Math.min(w - 4, h * 0.6));
+    return { label: `Maxsus ${w}×${h}mm`, layout, w, h, qr: Math.round(qr) };
+  })();
 
   const labelSizeConfig = {
     thermal_15x40: { label: 'Termal 15×40mm (yonma-yon)', layout: 'horizontal' as const, w: 40, h: 15, qr: 12 },
     small: { label: 'Kichik 40×40mm', layout: 'vertical' as const, w: 40, h: 40, qr: 32 },
     medium: { label: "O'rta 60×60mm", layout: 'vertical' as const, w: 60, h: 60, qr: 50 },
     large: { label: 'Katta 80×80mm', layout: 'vertical' as const, w: 80, h: 80, qr: 70 },
+    custom: customConfig,
   } as const;
 
   const fetchProducts = useCallback(async () => {
@@ -508,16 +522,48 @@ export default function ProductsPage() {
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
             <div className="w-full space-y-2">
               <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
-              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'thermal_15x40' | 'small' | 'medium' | 'large')}>
+              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as typeof labelSize)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="thermal_15x40">{labelSizeConfig.thermal_15x40.label}</SelectItem>
                   <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
                   <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
                   <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
+                  <SelectItem value="custom">Maxsus o'lcham…</SelectItem>
                 </SelectContent>
               </Select>
-              {labelSize === 'thermal_15x40' && (
+              {labelSize === 'custom' && (
+                <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Kenglik (mm)</Label>
+                      <Input
+                        type="number"
+                        min={15}
+                        max={200}
+                        value={customW}
+                        onChange={(e) => setCustomW(parseInt(e.target.value) || 0)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Balandlik (mm)</Label>
+                      <Input
+                        type="number"
+                        min={10}
+                        max={200}
+                        value={customH}
+                        onChange={(e) => setCustomH(parseInt(e.target.value) || 0)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Joylashuv: <span className="font-medium text-foreground">{customConfig.layout === 'horizontal' ? 'Yonma-yon (QR chapda)' : 'Tepa-pastdan (QR yuqorida)'}</span> · QR ≈ {customConfig.qr}mm
+                  </p>
+                </div>
+              )}
+              {(labelSizeConfig[labelSize].layout === 'horizontal') && (
                 <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
                   <input
                     type="checkbox"
