@@ -45,6 +45,7 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large'>('thermal_15x40');
+  const [compactLabel, setCompactLabel] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const labelSizeConfig = {
@@ -184,15 +185,19 @@ export default function ProductsPage() {
     }
     const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
     const code = qrProduct.product_code;
+    const sectorCode = sectors.find(s => s.id === qrProduct.sector_id)?.code || '';
     const cfg = labelSizeConfig[labelSize];
     const isHorizontal = cfg.layout === 'horizontal';
+    const useCompact = compactLabel && isHorizontal;
 
     const horizontalCss = `
       .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
       .label img { width: ${cfg.qr}mm; height: ${cfg.qr}mm; flex-shrink: 0; display: block; }
       .text { flex: 1; min-width: 0; overflow: hidden; }
       .name { font-size: 7pt; font-weight: 700; line-height: 1.1; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .sector { font-family: monospace; font-size: 9pt; font-weight: 700; line-height: 1.1; letter-spacing: 0.5px; }
       .code { font-family: monospace; font-size: 6pt; color: #333; margin-top: 0.5mm; word-break: break-all; }
+      .code-big { font-family: monospace; font-size: 8pt; font-weight: 600; color: #111; margin-top: 1mm; word-break: break-all; }
       @media print {
         body { padding: 0; min-height: auto; display: block; }
         .label { border: none; padding: 0.5mm; border-radius: 0; }
@@ -212,8 +217,11 @@ export default function ProductsPage() {
       }
     `;
 
+    const compactInner = `<div class="text">${sectorCode ? `<div class="sector">${sectorCode}</div>` : ''}<div class="${sectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
+    const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+
     const labelHtml = isHorizontal
-      ? `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div></div>`
+      ? `<div class="label"><img src="${dataUrl}" alt="QR" />${useCompact ? compactInner : fullInner}</div>`
       : `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     printWindow.document.write(`
@@ -509,6 +517,22 @@ export default function ProductsPage() {
                   <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
                 </SelectContent>
               </Select>
+              {labelSize === 'thermal_15x40' && (
+                <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={compactLabel}
+                    onChange={(e) => setCompactLabel(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+                  />
+                  <span className="text-xs leading-tight">
+                    <span className="font-medium">Kompakt rejim</span>
+                    <span className="block text-muted-foreground">
+                      Nom o'rniga sektor kodi va mahsulot ID ko'rsatiladi (uzun nomlar uchun qulay)
+                    </span>
+                  </span>
+                </label>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
