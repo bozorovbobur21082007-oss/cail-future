@@ -217,38 +217,63 @@ export default function DashboardPage() {
       </div>
 
       {/* Today's IN/OUT */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="shadow-sm">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <ArrowDownCircle className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun kirim</p>
-              <div className="flex items-center">
-                <p className="text-xl font-bold">{stats.today_in}</p>
-                <TrendBadge current={trends.thisWeekIn} previous={trends.lastWeekIn} />
-              </div>
-              <p className="text-[10px] text-muted-foreground">haftalik trend</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <ArrowUpCircle className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun chiqim</p>
-              <div className="flex items-center">
-                <p className="text-xl font-bold">{stats.today_out}</p>
-                <TrendBadge current={trends.thisWeekOut} previous={trends.lastWeekOut} />
-              </div>
-              <p className="text-[10px] text-muted-foreground">haftalik trend</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <TooltipProvider delayDuration={200}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Card className="shadow-sm cursor-help">
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <ArrowDownCircle className="w-5 h-5 text-success" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun kirim</p>
+                      <Info className="w-3 h-3 text-muted-foreground/60" />
+                    </div>
+                    <div className="flex items-center">
+                      <p className="text-xl font-bold">{stats.today_in}</p>
+                      <TrendBadge current={trends.thisWeekIn} previous={trends.lastWeekIn} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">haftalik trend</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+              Bugun ombor zaxirasiga <strong>kelgan/qo'shilgan</strong> mahsulotlar soni.
+              Mahsulot qo'shilganda, takroriy nom bilan birlashtirilganda yoki miqdor oshirilganda hisoblanadi.
+            </TooltipContent>
+          </UITooltip>
+
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <Card className="shadow-sm cursor-help">
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <ArrowUpCircle className="w-5 h-5 text-warning" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bugun chiqim</p>
+                      <Info className="w-3 h-3 text-muted-foreground/60" />
+                    </div>
+                    <div className="flex items-center">
+                      <p className="text-xl font-bold">{stats.today_out}</p>
+                      <TrendBadge current={trends.thisWeekOut} previous={trends.lastWeekOut} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">haftalik trend</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+              Bugun ombordan <strong>chiqarilgan</strong> mahsulotlar soni.
+              Chiqim sahifasida ishchi tomonidan tasdiqlangan har bir operatsiya hisoblanadi.
+            </TooltipContent>
+          </UITooltip>
+        </div>
+      </TooltipProvider>
 
       {/* Operations Chart */}
       <Card className="shadow-sm">
