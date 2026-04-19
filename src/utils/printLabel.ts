@@ -69,9 +69,10 @@ export function printLabel(opts: PrintLabelOptions): boolean {
   const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
   const altLabel = isBarcode ? 'Barkod' : 'QR';
-  const labelHtml = isHorizontal
+  const singleLabelHtml = isHorizontal
     ? `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
     : `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+  const labelHtml = Array.from({ length: copyCount }, () => singleLabelHtml).join('\n');
 
   printWindow.document.write(`
     <!DOCTYPE html>
