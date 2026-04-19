@@ -388,7 +388,7 @@ export default function OperationsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-success" />
-              3-bosqich: Chiqimni tasdiqlash
+              3-bosqich: Operatsiyani tasdiqlash
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -402,37 +402,73 @@ export default function OperationsPage() {
                 <p className="font-medium">{verifiedProduct.name}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Omborda</p>
+                <p className="text-muted-foreground">Omborda hozir</p>
                 <p className="font-medium">{verifiedProduct.quantity} dona</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Amal turi</p>
-                <Badge className="bg-warning/10 text-warning border-warning/20 gap-1">
-                  <ArrowUpCircle className="w-3 h-3" /> Chiqim
-                </Badge>
+                <p className="text-muted-foreground">Yangi qoldiq</p>
+                <p className="font-medium">
+                  {actionType === 'OUT'
+                    ? Math.max(0, verifiedProduct.quantity - quantity)
+                    : verifiedProduct.quantity + quantity} dona
+                </p>
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label>Miqdor (chiqariladigan)</Label>
+              <Label>Amal turi</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={actionType === 'OUT' ? 'default' : 'outline'}
+                  onClick={() => setActionType('OUT')}
+                  className={actionType === 'OUT' ? 'bg-warning text-warning-foreground hover:bg-warning/90' : ''}
+                >
+                  <ArrowUpCircle className="w-4 h-4 mr-2" />
+                  Chiqim (OUT)
+                </Button>
+                <Button
+                  type="button"
+                  variant={actionType === 'IN' ? 'default' : 'outline'}
+                  onClick={() => setActionType('IN')}
+                  className={actionType === 'IN' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}
+                >
+                  <ArrowDownCircle className="w-4 h-4 mr-2" />
+                  Qaytarish (IN)
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {actionType === 'OUT'
+                  ? 'Mahsulot ombordan ishchiga beriladi.'
+                  : 'Ishchi mahsulotni omborga qaytarib topshiradi.'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Miqdor</Label>
               <Input
                 type="number"
                 min={1}
-                max={verifiedProduct.quantity}
+                max={actionType === 'OUT' ? verifiedProduct.quantity : undefined}
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => { setStep(2); setVerifiedProduct(null); setProductCode(''); }}>
+              <Button variant="outline" onClick={() => { setStep(2); setVerifiedProduct(null); setProductCode(''); setActionType('OUT'); }}>
                 Ortga
               </Button>
               <Button
                 onClick={executeOperation}
-                disabled={loading || verifiedProduct.quantity <= 0 || quantity > verifiedProduct.quantity}
+                disabled={
+                  loading ||
+                  quantity < 1 ||
+                  (actionType === 'OUT' && (verifiedProduct.quantity <= 0 || quantity > verifiedProduct.quantity))
+                }
                 className="flex-1"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Chiqim qilish
+                {actionType === 'OUT' ? 'Chiqim qilish' : 'Qaytarishni saqlash'}
               </Button>
             </div>
           </CardContent>
