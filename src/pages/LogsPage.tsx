@@ -30,12 +30,9 @@ export default function LogsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [workers, setWorkers] = useState<Worker[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
 
   const [filterWorker, setFilterWorker] = useState('');
-  const [filterProduct, setFilterProduct] = useState('');
   const [filterAction, setFilterAction] = useState('');
-  const [filterSource, setFilterSource] = useState<'all' | 'worker' | 'admin'>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -71,12 +68,8 @@ export default function LogsPage() {
   }, [page, filterWorker, filterProduct, filterAction, filterSource, filterDateFrom, filterDateTo]);
 
   const fetchMeta = useCallback(async () => {
-    const [wRes, pRes] = await Promise.all([
-      supabase.from('workers').select('id, full_name'),
-      supabase.from('products').select('id, name, product_code'),
-    ]);
-    setWorkers(wRes.data || []);
-    setProducts(pRes.data || []);
+    const { data } = await supabase.from('workers').select('id, full_name');
+    setWorkers(data || []);
   }, []);
 
   useEffect(() => { fetchMeta(); }, [fetchMeta]);
@@ -84,9 +77,7 @@ export default function LogsPage() {
 
   const resetFilters = () => {
     setFilterWorker('');
-    setFilterProduct('');
     setFilterAction('');
-    setFilterSource('all');
     setFilterDateFrom('');
     setFilterDateTo('');
     setPage(1);
