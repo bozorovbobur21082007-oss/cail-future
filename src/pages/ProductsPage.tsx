@@ -549,20 +549,34 @@ export default function ProductsPage() {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>{editing ? 'Soni' : "Boshlang'ich miqdor (ixtiyoriy)"}</Label>
-              <Input
-                type="number"
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
-                min={0}
-              />
-              {!editing && (
+            {editing ? (
+              <div className="space-y-2">
+                <Label>Soni (faqat o'qish uchun)</Label>
+                <Input
+                  type="number"
+                  value={form.quantity}
+                  readOnly
+                  disabled
+                  className="bg-muted/50 cursor-not-allowed"
+                />
                 <p className="text-[11px] text-muted-foreground">
-                  Default 0 — ishchilar Kirim/Chiqim sahifasida IN orqali to'ldiradi. Agar omborda allaqachon mavjud tovar bo'lsa, miqdorni shu yerda kiritishingiz mumkin.
+                  Mahsulot soni faqat <span className="font-medium text-foreground">Kirim/Chiqim</span> sahifasida IN/OUT operatsiyalar orqali o'zgaradi. Bu omborxona tarixini to'g'ri saqlash uchun.
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Boshlang'ich miqdor (ixtiyoriy)</Label>
+                <Input
+                  type="number"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
+                  min={0}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Default 0 — ishchilar Kirim/Chiqim sahifasida IN orqali to'ldiradi. Agar omborda allaqachon mavjud tovar bo'lsa, boshlang'ich miqdorni shu yerda kiritishingiz mumkin (IN log sifatida yoziladi).
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
                <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} min={1} />
