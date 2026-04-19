@@ -44,13 +44,14 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
-  const [labelSize, setLabelSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large'>('thermal_15x40');
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const labelSizeConfig = {
-    small: { mm: 40, label: 'Kichik (40×40mm)' },
-    medium: { mm: 60, label: "O'rta (60×60mm)" },
-    large: { mm: 80, label: 'Katta (80×80mm)' },
+    thermal_15x40: { label: 'Termal 15×40mm (yonma-yon)', layout: 'horizontal' as const, w: 40, h: 15, qr: 12 },
+    small: { label: 'Kichik 40×40mm', layout: 'vertical' as const, w: 40, h: 40, qr: 32 },
+    medium: { label: "O'rta 60×60mm", layout: 'vertical' as const, w: 60, h: 60, qr: 50 },
+    large: { label: 'Katta 80×80mm', layout: 'vertical' as const, w: 80, h: 80, qr: 70 },
   } as const;
 
   const fetchProducts = useCallback(async () => {
@@ -183,8 +184,38 @@ export default function ProductsPage() {
     }
     const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
     const code = qrProduct.product_code;
-    const sizeMm = labelSizeConfig[labelSize].mm;
-    const qrSizeMm = sizeMm - 8;
+    const cfg = labelSizeConfig[labelSize];
+    const isHorizontal = cfg.layout === 'horizontal';
+
+    const horizontalCss = `
+      .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
+      .label img { width: ${cfg.qr}mm; height: ${cfg.qr}mm; flex-shrink: 0; display: block; }
+      .text { flex: 1; min-width: 0; overflow: hidden; }
+      .name { font-size: 7pt; font-weight: 700; line-height: 1.1; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .code { font-family: monospace; font-size: 6pt; color: #333; margin-top: 0.5mm; word-break: break-all; }
+      @media print {
+        body { padding: 0; min-height: auto; display: block; }
+        .label { border: none; padding: 0.5mm; border-radius: 0; }
+        @page { size: ${cfg.w}mm ${cfg.h}mm; margin: 0; }
+      }
+    `;
+
+    const verticalCss = `
+      .label { border: 1px dashed #999; padding: 4mm; text-align: center; border-radius: 8px; width: ${cfg.w}mm; }
+      .label img { display: block; margin: 0 auto; width: ${cfg.qr}mm; height: ${cfg.qr}mm; }
+      .name { font-size: ${Math.max(8, Math.round(cfg.w / 6))}pt; font-weight: 600; margin-top: 2mm; word-break: break-word; line-height: 1.2; }
+      .code { font-family: monospace; font-size: ${Math.max(6, Math.round(cfg.w / 8))}pt; color: #555; margin-top: 1mm; }
+      @media print {
+        body { padding: 0; min-height: auto; display: block; }
+        .label { border: none; padding: 2mm; border-radius: 0; }
+        @page { size: ${cfg.w + 4}mm ${cfg.h + 14}mm; margin: 2mm; }
+      }
+    `;
+
+    const labelHtml = isHorizontal
+      ? `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div></div>`
+      : `<div class="label"><img src="${dataUrl}" alt="QR" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -193,23 +224,11 @@ export default function ProductsPage() {
           <style>
             * { box-sizing: border-box; }
             body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-            .label { border: 1px dashed #999; padding: 4mm; text-align: center; border-radius: 8px; width: ${sizeMm}mm; }
-            .label img { display: block; margin: 0 auto; width: ${qrSizeMm}mm; height: ${qrSizeMm}mm; }
-            .name { font-size: ${Math.max(8, Math.round(sizeMm / 6))}pt; font-weight: 600; margin-top: 2mm; word-break: break-word; line-height: 1.2; }
-            .code { font-family: monospace; font-size: ${Math.max(6, Math.round(sizeMm / 8))}pt; color: #555; margin-top: 1mm; }
-            @media print {
-              body { padding: 0; min-height: auto; display: block; }
-              .label { border: none; padding: 2mm; border-radius: 0; }
-              @page { size: ${sizeMm + 4}mm ${sizeMm + 14}mm; margin: 2mm; }
-            }
+            ${isHorizontal ? horizontalCss : verticalCss}
           </style>
         </head>
         <body>
-          <div class="label">
-            <img src="${dataUrl}" alt="QR" />
-            <div class="name">${safeName}</div>
-            <div class="code">${code}</div>
-          </div>
+          ${labelHtml}
           <script>
             window.onload = function() {
               setTimeout(function() {
@@ -223,7 +242,7 @@ export default function ProductsPage() {
       </html>
     `);
     printWindow.document.close();
-    toast.success(`Chop etish oynasi ochildi (${labelSizeConfig[labelSize].label})`);
+    toast.success(`Chop etish oynasi ochildi (${cfg.label})`);
   };
 
   const filtered = products.filter(p =>
@@ -481,9 +500,10 @@ export default function ProductsPage() {
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
             <div className="w-full space-y-2">
               <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
-              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'small' | 'medium' | 'large')}>
+              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'thermal_15x40' | 'small' | 'medium' | 'large')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="thermal_15x40">{labelSizeConfig.thermal_15x40.label}</SelectItem>
                   <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
                   <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
                   <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
