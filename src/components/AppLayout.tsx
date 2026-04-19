@@ -13,7 +13,7 @@ const navItems = [
   { to: '/mahsulotlar', icon: Package, label: 'Mahsulotlar' },
   { to: '/sektorlar', icon: MapPin, label: 'Sektorlar' },
   { to: '/ishchilar', icon: Users, label: 'Ishchilar' },
-  { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Chiqim' },
+  { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Kirim/Chiqim' },
   { to: '/loglar', icon: ClipboardList, label: 'Loglar' },
   { to: '/sozlamalar', icon: Settings, label: 'Sozlamalar' },
 ];
@@ -44,7 +44,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export default function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, role, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -52,6 +52,33 @@ export default function AppLayout() {
     await logout();
     navigate('/login');
   };
+
+  // Worker mode — minimal layout, only shows the Outlet (operations page)
+  if (role === 'worker') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="h-14 border-b border-border bg-card sticky top-0 z-40 flex items-center px-4">
+          <div className="flex items-center gap-2">
+            <Warehouse className="w-5 h-5 text-primary" strokeWidth={2} />
+            <span className="text-base font-bold text-foreground">Ishchi rejimi</span>
+          </div>
+          <div className="flex-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Chiqish
+          </Button>
+        </header>
+        <main className="p-4 sm:p-6 min-h-[calc(100vh-3.5rem)]">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
