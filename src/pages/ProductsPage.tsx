@@ -99,10 +99,6 @@ export default function ProductsPage() {
     e.preventDefault();
     const nfc = form.nfc_id.trim().toUpperCase();
     const trimmedName = form.name.trim();
-    if (!editing && !nfc) {
-      toast.error("Yangi mahsulot uchun NFC ID majburiy. NFC tegni skanerlang yoki qo'lda kiriting.");
-      return;
-    }
     setSubmitting(true);
     const payload = {
       name: trimmedName,
@@ -311,7 +307,7 @@ export default function ProductsPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <Radio className="w-3.5 h-3.5 text-primary" />
-                NFC ID {!editing && <span className="text-destructive">*</span>}
+                NFC ID <span className="text-muted-foreground text-xs font-normal">(ixtiyoriy)</span>
               </Label>
               {showNfcScanner ? (
                 <NfcScanner
@@ -337,7 +333,7 @@ export default function ProductsPage() {
                   </div>
                   {!editing && (
                     <p className="text-[11px] text-muted-foreground">
-                      Mahsulotga yopishtirilgan NFC nakleykani skanerlang.
+                      NFC nakleyka mavjud bo'lsa skanerlang. Aks holda QR kod orqali ishlatish mumkin.
                     </p>
                   )}
                 </>
