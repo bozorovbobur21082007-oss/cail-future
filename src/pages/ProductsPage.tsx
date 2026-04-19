@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -160,6 +160,61 @@ export default function ProductsPage() {
     a.download = `qr_${qrProduct.product_code}.png`;
     a.click();
     toast.success("QR kod yuklab olindi");
+  };
+
+  const printQr = () => {
+    const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
+    if (!canvas || !qrProduct) {
+      toast.error("QR kod topilmadi");
+      return;
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    const printWindow = window.open('', '_blank', 'width=400,height=500');
+    if (!printWindow) {
+      toast.error("Brauzer chop etish oynasini bloklab qo'ydi. Pop-up ruxsatini bering.");
+      return;
+    }
+    const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
+    const code = qrProduct.product_code;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>QR — ${code}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+            .label { border: 1px dashed #999; padding: 16px; text-align: center; border-radius: 8px; }
+            .label img { display: block; margin: 0 auto; width: 220px; height: 220px; }
+            .name { font-size: 14px; font-weight: 600; margin-top: 8px; }
+            .code { font-family: monospace; font-size: 12px; color: #555; margin-top: 4px; }
+            @media print {
+              body { padding: 0; min-height: auto; }
+              .label { border: none; padding: 8px; }
+              @page { margin: 8mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="label">
+            <img src="${dataUrl}" alt="QR" />
+            <div class="name">${safeName}</div>
+            <div class="code">${code}</div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.focus();
+                window.print();
+                window.onafterprint = function() { window.close(); };
+              }, 200);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    toast.success("Chop etish oynasi ochildi");
   };
 
   const filtered = products.filter(p =>
@@ -416,11 +471,15 @@ export default function ProductsPage() {
             </div>
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Yopish</Button>
-            <Button onClick={downloadQrPng}>
+            <Button variant="outline" onClick={downloadQrPng}>
               <Download className="w-4 h-4 mr-2" />
-              PNG yuklash
+              PNG
+            </Button>
+            <Button onClick={printQr}>
+              <Printer className="w-4 h-4 mr-2" />
+              Chop etish
             </Button>
           </DialogFooter>
         </DialogContent>
