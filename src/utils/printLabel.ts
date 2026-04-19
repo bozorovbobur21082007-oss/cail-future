@@ -15,6 +15,8 @@ export interface PrintLabelOptions {
   /** Yorliq o'lchami konfiguratsiyasi */
   size: { w: number; h: number; qr: number; layout: 'horizontal' | 'vertical'; label: string };
   compact?: boolean;
+  /** Nechta nusxa chop etilsin (1-50). Default: 1 */
+  copies?: number;
 }
 
 export function printLabel(opts: PrintLabelOptions): boolean {
