@@ -36,6 +36,7 @@ export default function ProductsPage() {
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
@@ -364,8 +365,13 @@ export default function ProductsPage() {
     toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
   };
 
+  const pendingCount = products.filter(p => !p.approved).length;
+
   const filtered = products.filter(p => {
+    if (statusFilter === 'pending' && p.approved) return false;
+    if (statusFilter === 'approved' && !p.approved) return false;
     const q = search.toLowerCase();
+    if (!q) return true;
     return (
       p.name.toLowerCase().includes(q) ||
       p.product_code.toLowerCase().includes(q) ||
@@ -395,19 +401,43 @@ export default function ProductsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-        {(() => {
-          const pendingCount = products.filter(p => !p.approved).length;
-          if (pendingCount === 0) return null;
-          return (
-            <Badge
-              className="bg-warning/10 text-warning border-warning/20 gap-1.5 cursor-pointer hover:bg-warning/20 transition-colors"
-              onClick={() => setSearch('')}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              {pendingCount} ta tasdiq kutilmoqda
-            </Badge>
-          );
-        })()}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            type="button"
+            size="sm"
+            variant={statusFilter === 'all' ? 'default' : 'outline'}
+            onClick={() => setStatusFilter('all')}
+          >
+            Hammasi
+            <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{products.length}</Badge>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={statusFilter === 'pending' ? 'default' : 'outline'}
+            onClick={() => setStatusFilter('pending')}
+            className={statusFilter === 'pending' ? 'bg-warning text-warning-foreground hover:bg-warning/90' : pendingCount > 0 ? 'border-warning/40 text-warning hover:bg-warning/10' : ''}
+          >
+            <Clock className="w-3.5 h-3.5 mr-1.5" />
+            Tasdiq kutilmoqda
+            {pendingCount > 0 && (
+              <Badge
+                className={`ml-2 h-5 px-1.5 text-[10px] ${statusFilter === 'pending' ? 'bg-warning-foreground/20 text-warning-foreground' : 'bg-warning text-warning-foreground'}`}
+              >
+                {pendingCount}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={statusFilter === 'approved' ? 'default' : 'outline'}
+            onClick={() => setStatusFilter('approved')}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+            Tasdiqlangan
+          </Button>
+        </div>
       </div>
 
       <Card className="shadow-sm">
@@ -430,7 +460,13 @@ export default function ProductsPage() {
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    {search ? "Natija topilmadi" : "Hali mahsulot mavjud emas"}
+                    {search
+                      ? "Natija topilmadi"
+                      : statusFilter === 'pending'
+                        ? "Tasdiq kutayotgan mahsulot yo'q"
+                        : statusFilter === 'approved'
+                          ? "Tasdiqlangan mahsulot yo'q"
+                          : "Hali mahsulot mavjud emas"}
                   </TableCell>
                 </TableRow>
               ) : (
