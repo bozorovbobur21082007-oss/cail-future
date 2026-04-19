@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
+import { useScannerMode } from '@/hooks/useScannerMode';
 
 interface Worker {
   id: string;
@@ -50,6 +51,7 @@ export default function OperationsPage() {
   
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [scannerMode] = useScannerMode();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
