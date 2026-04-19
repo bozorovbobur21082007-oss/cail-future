@@ -16,7 +16,13 @@ interface PrintLabelDialogProps {
   productName: string;
   /** Qo'shimcha kontekst — masalan "+1 dona qo'shildi" */
   contextHint?: string;
+  /** Boshlang'ich nusxa soni (masalan IN miqdori). Default: 1 */
+  defaultCopies?: number;
 }
+
+const MIN_COPIES = 1;
+const MAX_COPIES = 10;
+const clampCopies = (n: number) => Math.max(MIN_COPIES, Math.min(MAX_COPIES, Math.floor(n) || MIN_COPIES));
 
 /**
  * Mavjud mahsulot uchun yorliq chop etish dialogi.
@@ -28,10 +34,17 @@ export default function PrintLabelDialog({
   productCode,
   productName,
   contextHint,
+  defaultCopies = 1,
 }: PrintLabelDialogProps) {
   const [format, setFormat] = useState<'qr' | 'barcode'>('qr');
+  const [copies, setCopies] = useState(() => clampCopies(defaultCopies));
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
+
+  // Dialog har ochilganda nusxa sonini default qiymatga qaytaramiz
+  useEffect(() => {
+    if (open) setCopies(clampCopies(defaultCopies));
+  }, [open, defaultCopies]);
 
   const handlePrint = () => {
     const canvas = format === 'qr' ? qrRef.current : barcodeRef.current;
@@ -46,6 +59,7 @@ export default function PrintLabelDialog({
       codeImageDataUrl: dataUrl,
       format,
       size: THERMAL_15X40,
+      copies,
     });
   };
 
