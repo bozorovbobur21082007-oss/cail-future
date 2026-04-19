@@ -363,7 +363,7 @@ export default function ProductsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
-                              <QrCode className="w-4 h-4 mr-2" /> QR kodni ko'rish
+                              <QrCode className="w-4 h-4 mr-2" /> QR / Barkod
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEdit(p)}>
                               <Pencil className="w-4 h-4 mr-2" /> Tahrirlash
