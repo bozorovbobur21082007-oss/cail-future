@@ -106,16 +106,37 @@ export default function ProductsPage() {
     setDialogOpen(true);
   };
 
+  const logOperation = async (
+    productId: string,
+    productName: string,
+    actionType: 'IN' | 'OUT',
+    qty: number,
+  ) => {
+    if (qty <= 0) return;
+    const { error } = await supabase.from('operations').insert({
+      product_id: productId,
+      product_name: productName,
+      worker_id: null,
+      worker_name: 'Admin (Mahsulotlar)',
+      action_type: actionType,
+      quantity: qty,
+    });
+    if (error) console.error('Operation log xatolik:', error);
+  };
+
   const performMerge = async () => {
     if (!mergeTarget) return;
     setSubmitting(true);
     try {
+      const newQty = mergeTarget.quantity + 1;
       const { error } = await supabase
         .from('products')
-        .update({ quantity: mergeTarget.quantity + 1 })
+        .update({ quantity: newQty })
         .eq('id', mergeTarget.id);
       if (error) throw error;
-      toast.success(`"${mergeTarget.name}" soni 1 taga oshirildi (${mergeTarget.quantity + 1} ta)`);
+      // Kirim logini yozamiz
+      await logOperation(mergeTarget.id, mergeTarget.name, 'IN', 1);
+      toast.success(`"${mergeTarget.name}" soni 1 taga oshirildi (${newQty} ta)`);
       setMergeDialogOpen(false);
       setDialogOpen(false);
       setMergeTarget(null);
@@ -170,8 +191,16 @@ export default function ProductsPage() {
     };
     try {
       if (editing) {
+        const oldQty = editing.quantity;
+        const newQty = form.quantity;
         const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
         if (error) throw error;
+        // Miqdor o'zgarsa — tegishli IN/OUT log yozamiz (admin qo'lda tahrir)
+        if (newQty > oldQty) {
+          await logOperation(editing.id, trimmedName, 'IN', newQty - oldQty);
+        } else if (newQty < oldQty) {
+          await logOperation(editing.id, trimmedName, 'OUT', oldQty - newQty);
+        }
         toast.success("Mahsulot yangilandi");
         setDialogOpen(false);
         fetchProducts();
@@ -186,8 +215,16 @@ export default function ProductsPage() {
           setSubmitting(false);
           return;
         }
-        const { error } = await supabase.from('products').insert(payload);
+        const { data: inserted, error } = await supabase
+          .from('products')
+          .insert(payload)
+          .select('id, name, quantity')
+          .single();
         if (error) throw error;
+        // Yangi mahsulot uchun kirim logini yozamiz
+        if (inserted) {
+          await logOperation(inserted.id, inserted.name, 'IN', inserted.quantity || 1);
+        }
         toast.success("Mahsulot qo'shildi");
         setDialogOpen(false);
         fetchProducts();
