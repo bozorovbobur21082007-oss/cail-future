@@ -74,6 +74,61 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      <Card className="shadow-sm border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-primary" />
+            Ishchi PIN kodi
+          </CardTitle>
+          <CardDescription>
+            Barcha ishchilar shu PIN orqali tizimga kiradi. Ishchi rejimida faqat Kirim/Chiqim sahifasi ochiladi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Joriy PIN</p>
+                <p className="text-2xl font-mono font-bold tracking-widest">
+                  {pinLoading ? '...' : showPin ? workerPin : '•'.repeat(workerPin.length || 4)}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPin(!showPin)}
+                title={showPin ? 'Yashirish' : "Ko'rsatish"}
+              >
+                {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="new-pin">Yangi PIN kod</Label>
+            <div className="flex gap-2">
+              <Input
+                id="new-pin"
+                type="text"
+                inputMode="numeric"
+                placeholder="Yangi PIN (3-12 belgi)"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value)}
+                maxLength={12}
+                className="font-mono tracking-widest"
+              />
+              <Button onClick={savePin} disabled={pinSaving || !newPin.trim()}>
+                {pinSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Saqlash'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              PIN o'zgartirilgandan so'ng eski PIN bilan kirgan ishchilar tizimda qoladi, lekin yangi kirishlar uchun yangi PIN ishlatiladi.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
