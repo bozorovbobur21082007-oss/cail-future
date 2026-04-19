@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ScanLine, CheckCircle2, XCircle, ArrowDownCircle, ArrowUpCircle,
+  ScanLine, CheckCircle2, XCircle, ArrowUpCircle,
   Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
