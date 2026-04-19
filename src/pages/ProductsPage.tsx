@@ -313,10 +313,13 @@ export default function ProductsPage() {
     toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
   };
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.product_code.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter(p => {
+    const q = search.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : p.product_code.toLowerCase().includes(q))
+    );
+  });
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
