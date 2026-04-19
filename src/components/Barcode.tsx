@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import JsBarcode from 'jsbarcode';
 
 interface BarcodeProps {
@@ -16,9 +16,10 @@ interface BarcodeProps {
 
 /**
  * Code 128 (va boshqa) barkod renderer.
- * Canvas qaytaradi — print/download uchun toDataURL() ishlatilishi mumkin.
+ * forwardRef orqali canvas elementga tashqaridan murojaat qilish mumkin
+ * (masalan toDataURL() yordamida PNG yuklab olish uchun).
  */
-export default function Barcode({
+const Barcode = forwardRef<HTMLCanvasElement, BarcodeProps>(({
   value,
   format = 'CODE128',
   width = 2,
@@ -29,8 +30,10 @@ export default function Barcode({
   background = '#ffffff',
   lineColor = '#000000',
   className,
-}: BarcodeProps) {
+}, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useImperativeHandle(ref, () => canvasRef.current as HTMLCanvasElement, []);
 
   useEffect(() => {
     if (!canvasRef.current || !value) return;
@@ -51,4 +54,8 @@ export default function Barcode({
   }, [value, format, width, height, displayValue, fontSize, margin, background, lineColor]);
 
   return <canvas ref={canvasRef} className={className} />;
-}
+});
+
+Barcode.displayName = 'Barcode';
+
+export default Barcode;
