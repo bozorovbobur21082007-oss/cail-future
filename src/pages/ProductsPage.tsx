@@ -390,9 +390,24 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        </div>
+        {(() => {
+          const pendingCount = products.filter(p => !p.approved).length;
+          if (pendingCount === 0) return null;
+          return (
+            <Badge
+              className="bg-warning/10 text-warning border-warning/20 gap-1.5 cursor-pointer hover:bg-warning/20 transition-colors"
+              onClick={() => setSearch('')}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              {pendingCount} ta tasdiq kutilmoqda
+            </Badge>
+          );
+        })()}
       </div>
 
       <Card className="shadow-sm">
