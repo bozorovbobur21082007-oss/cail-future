@@ -1,1 +1,4 @@
 project_id = "pkrmowguxlphrfbvalzl"
+
+[functions.verify-worker-pin]
+verify_jwt = false
