@@ -44,15 +44,29 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [showNfcScanner, setShowNfcScanner] = useState(false);
-  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large'>('thermal_15x40');
+  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
+  const [customW, setCustomW] = useState(50);
+  const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
+
+  // Maxsus o'lcham: kenglik balandlikdan ≥1.5× katta bo'lsa yonma-yon, aks holda vertical.
+  const customConfig = (() => {
+    const w = Math.max(15, Math.min(200, customW || 0));
+    const h = Math.max(10, Math.min(200, customH || 0));
+    const layout: 'horizontal' | 'vertical' = w >= h * 1.5 ? 'horizontal' : 'vertical';
+    const qr = layout === 'horizontal'
+      ? Math.max(8, Math.min(h - 2, w * 0.35))
+      : Math.max(10, Math.min(w - 4, h * 0.6));
+    return { label: `Maxsus ${w}×${h}mm`, layout, w, h, qr: Math.round(qr) };
+  })();
 
   const labelSizeConfig = {
     thermal_15x40: { label: 'Termal 15×40mm (yonma-yon)', layout: 'horizontal' as const, w: 40, h: 15, qr: 12 },
     small: { label: 'Kichik 40×40mm', layout: 'vertical' as const, w: 40, h: 40, qr: 32 },
     medium: { label: "O'rta 60×60mm", layout: 'vertical' as const, w: 60, h: 60, qr: 50 },
     large: { label: 'Katta 80×80mm', layout: 'vertical' as const, w: 80, h: 80, qr: 70 },
+    custom: customConfig,
   } as const;
 
   const fetchProducts = useCallback(async () => {
