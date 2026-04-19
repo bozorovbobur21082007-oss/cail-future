@@ -38,7 +38,7 @@ export default function SectorsPage() {
   const fetchSectors = useCallback(async () => {
     const [sectorsRes, productsRes] = await Promise.all([
       supabase.from('sectors').select('*').order('created_at', { ascending: false }),
-      supabase.from('products').select('id, sector_id'),
+      supabase.from('products').select('id, sector_id, quantity'),
     ]);
 
     if (sectorsRes.error) {
@@ -50,7 +50,7 @@ export default function SectorsPage() {
     const products = productsRes.data || [];
     const countMap: Record<string, number> = {};
     products.forEach(p => {
-      if (p.sector_id) countMap[p.sector_id] = (countMap[p.sector_id] || 0) + 1;
+      if (p.sector_id) countMap[p.sector_id] = (countMap[p.sector_id] || 0) + (p.quantity || 0);
     });
 
     const enriched = (sectorsRes.data || []).map(s => ({
