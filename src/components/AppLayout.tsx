@@ -13,7 +13,7 @@ const navItems = [
   { to: '/mahsulotlar', icon: Package, label: 'Mahsulotlar' },
   { to: '/sektorlar', icon: MapPin, label: 'Sektorlar' },
   { to: '/ishchilar', icon: Users, label: 'Ishchilar' },
-  { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Operatsiyalar' },
+  { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Chiqim' },
   { to: '/loglar', icon: ClipboardList, label: 'Loglar' },
 ];
 
