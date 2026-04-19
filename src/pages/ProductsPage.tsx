@@ -517,6 +517,22 @@ export default function ProductsPage() {
                   <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
                 </SelectContent>
               </Select>
+              {labelSize === 'thermal_15x40' && (
+                <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={compactLabel}
+                    onChange={(e) => setCompactLabel(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+                  />
+                  <span className="text-xs leading-tight">
+                    <span className="font-medium">Kompakt rejim</span>
+                    <span className="block text-muted-foreground">
+                      Nom o'rniga sektor kodi va mahsulot ID ko'rsatiladi (uzun nomlar uchun qulay)
+                    </span>
+                  </span>
+                </label>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
