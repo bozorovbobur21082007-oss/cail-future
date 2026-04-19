@@ -522,16 +522,48 @@ export default function ProductsPage() {
             <p className="text-sm text-muted-foreground font-mono">{qrProduct?.product_code}</p>
             <div className="w-full space-y-2">
               <Label className="text-xs text-muted-foreground">Yorliq o'lchami (chop etish uchun)</Label>
-              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as 'thermal_15x40' | 'small' | 'medium' | 'large')}>
+              <Select value={labelSize} onValueChange={(v) => setLabelSize(v as typeof labelSize)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="thermal_15x40">{labelSizeConfig.thermal_15x40.label}</SelectItem>
                   <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
                   <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
                   <SelectItem value="large">{labelSizeConfig.large.label}</SelectItem>
+                  <SelectItem value="custom">Maxsus o'lcham…</SelectItem>
                 </SelectContent>
               </Select>
-              {labelSize === 'thermal_15x40' && (
+              {labelSize === 'custom' && (
+                <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Kenglik (mm)</Label>
+                      <Input
+                        type="number"
+                        min={15}
+                        max={200}
+                        value={customW}
+                        onChange={(e) => setCustomW(parseInt(e.target.value) || 0)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Balandlik (mm)</Label>
+                      <Input
+                        type="number"
+                        min={10}
+                        max={200}
+                        value={customH}
+                        onChange={(e) => setCustomH(parseInt(e.target.value) || 0)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Joylashuv: <span className="font-medium text-foreground">{customConfig.layout === 'horizontal' ? 'Yonma-yon (QR chapda)' : 'Tepa-pastdan (QR yuqorida)'}</span> · QR ≈ {customConfig.qr}mm
+                  </p>
+                </div>
+              )}
+              {(labelSizeConfig[labelSize].layout === 'horizontal') && (
                 <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
                   <input
                     type="checkbox"
