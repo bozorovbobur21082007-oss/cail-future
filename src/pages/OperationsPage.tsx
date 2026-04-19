@@ -46,7 +46,7 @@ export default function OperationsPage() {
   const [productCode, setProductCode] = useState('');
   const [verifiedProduct, setVerifiedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [actionType, setActionType] = useState<'IN' | 'OUT'>('OUT');
+  const [actionType, setActionType] = useState<'IN' | 'OUT'>('IN');
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
@@ -215,7 +215,7 @@ export default function OperationsPage() {
       setProductCode('');
       setVerifiedProduct(null);
       setQuantity(1);
-      setActionType('OUT');
+      setActionType('IN');
       setScanError(null);
       setStep(2);
     } catch (err: any) {
