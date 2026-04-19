@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio, Plus, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
+import QuickLabelDialog from '@/components/QuickLabelDialog';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundFeedback } from '@/hooks/useSoundFeedback';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Worker {
   id: string;
@@ -53,8 +55,10 @@ export default function OperationsPage() {
   
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [quickLabelOpen, setQuickLabelOpen] = useState(false);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
+  const { role } = useAuth();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -238,12 +242,29 @@ export default function OperationsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kirim/Chiqim</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span> tanlang. Tasdiqlash bosqichida amal turi tanlanadi.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kirim/Chiqim</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span>.
+          </p>
+        </div>
+        <Button
+          onClick={() => setQuickLabelOpen(true)}
+          variant="outline"
+          className="gap-2 shrink-0"
+        >
+          <Printer className="w-4 h-4" />
+          <span className="hidden sm:inline">Yangi mahsulot + yorliq</span>
+          <span className="sm:hidden">Yangi yorliq</span>
+        </Button>
       </div>
+
+      <QuickLabelDialog
+        open={quickLabelOpen}
+        onOpenChange={setQuickLabelOpen}
+        approved={role === 'admin'}
+      />
 
       {/* Steps indicator */}
       <div className="flex items-center gap-2">

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -28,6 +28,7 @@ interface Product {
   created_at: string;
   sector_id: string | null;
   nfc_id: string | null;
+  approved: boolean;
 }
 
 export default function ProductsPage() {
@@ -249,7 +250,18 @@ export default function ProductsPage() {
     }
   };
 
-  const getCodeCanvas = (): HTMLCanvasElement | null => {
+  const handleApprove = async (p: Product) => {
+    try {
+      const { error } = await supabase.from('products').update({ approved: true }).eq('id', p.id);
+      if (error) throw error;
+      toast.success(`"${p.name}" tasdiqlandi`);
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+
     return document.querySelector('#qr-canvas canvas') as HTMLCanvasElement | null;
   };
 
@@ -378,9 +390,24 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        </div>
+        {(() => {
+          const pendingCount = products.filter(p => !p.approved).length;
+          if (pendingCount === 0) return null;
+          return (
+            <Badge
+              className="bg-warning/10 text-warning border-warning/20 gap-1.5 cursor-pointer hover:bg-warning/20 transition-colors"
+              onClick={() => setSearch('')}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              {pendingCount} ta tasdiq kutilmoqda
+            </Badge>
+          );
+        })()}
       </div>
 
       <Card className="shadow-sm">
@@ -460,7 +487,11 @@ export default function ProductsPage() {
                       <TableCell className={`font-semibold ${isLow ? 'text-destructive' : ''}`}>{p.quantity}</TableCell>
                       <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
                       <TableCell>
-                        {isLow ? (
+                        {!p.approved ? (
+                          <Badge className="bg-warning/10 text-warning border-warning/20 text-xs gap-1">
+                            <Clock className="w-3 h-3" /> Tasdiq kutilmoqda
+                          </Badge>
+                        ) : isLow ? (
                           <Badge variant="destructive" className="text-xs">Kam</Badge>
                         ) : (
                           <Badge className="bg-success/10 text-success border-success/20 text-xs">Yetarli</Badge>
@@ -475,6 +506,11 @@ export default function ProductsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {!p.approved && (
+                              <DropdownMenuItem onClick={() => handleApprove(p)} className="text-success focus:text-success">
+                                <CheckCircle2 className="w-4 h-4 mr-2" /> Tasdiqlash
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => { setQrProduct(p); setQrDialogOpen(true); }}>
                               <QrCode className="w-4 h-4 mr-2" /> QR / Barkod yorliq
                             </DropdownMenuItem>
