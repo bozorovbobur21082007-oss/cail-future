@@ -46,7 +46,7 @@ export default function OperationsPage() {
   const [productCode, setProductCode] = useState('');
   const [verifiedProduct, setVerifiedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [actionType, setActionType] = useState<'IN' | 'OUT'>('OUT');
+  const [actionType, setActionType] = useState<'IN' | 'OUT'>('IN');
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
@@ -207,7 +207,7 @@ export default function OperationsPage() {
       if (opError) throw opError;
 
       sound.success();
-      const label = actionType === 'OUT' ? 'Chiqim' : 'Kirim (qaytarish)';
+      const label = actionType === 'OUT' ? 'Chiqim' : 'Kirim';
       toast.success(`${label} muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 
@@ -215,7 +215,7 @@ export default function OperationsPage() {
       setProductCode('');
       setVerifiedProduct(null);
       setQuantity(1);
-      setActionType('OUT');
+      setActionType('IN');
       setScanError(null);
       setStep(2);
     } catch (err: any) {
@@ -241,7 +241,7 @@ export default function OperationsPage() {
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kirim/Chiqim</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Mahsulotni ombordan chiqarish (OUT) yoki qaytarish (IN). Tasdiqlash bosqichida amal turini tanlang.
+          Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span> tanlang. Tasdiqlash bosqichida amal turi tanlanadi.
         </p>
       </div>
 
@@ -324,10 +324,10 @@ export default function OperationsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
-              2-bosqich: Chiqariladigan mahsulotni skanerlash
+              2-bosqich: Mahsulotni skanerlash
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Ishchi: <span className="font-medium text-foreground">{verifiedWorker.full_name}</span>
+              Ishchi: <span className="font-medium text-foreground">{verifiedWorker.full_name}</span> · Amal turini keyingi bosqichda tanlaysiz
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -420,6 +420,15 @@ export default function OperationsPage() {
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
+                  variant={actionType === 'IN' ? 'default' : 'outline'}
+                  onClick={() => setActionType('IN')}
+                  className={actionType === 'IN' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}
+                >
+                  <ArrowDownCircle className="w-4 h-4 mr-2" />
+                  Kirim (IN)
+                </Button>
+                <Button
+                  type="button"
                   variant={actionType === 'OUT' ? 'default' : 'outline'}
                   onClick={() => setActionType('OUT')}
                   className={actionType === 'OUT' ? 'bg-warning text-warning-foreground hover:bg-warning/90' : ''}
@@ -427,20 +436,11 @@ export default function OperationsPage() {
                   <ArrowUpCircle className="w-4 h-4 mr-2" />
                   Chiqim (OUT)
                 </Button>
-                <Button
-                  type="button"
-                  variant={actionType === 'IN' ? 'default' : 'outline'}
-                  onClick={() => setActionType('IN')}
-                  className={actionType === 'IN' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}
-                >
-                  <ArrowDownCircle className="w-4 h-4 mr-2" />
-                  Qaytarish (IN)
-                </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                {actionType === 'OUT'
-                  ? 'Mahsulot ombordan ishchiga beriladi.'
-                  : 'Ishchi mahsulotni omborga qaytarib topshiradi.'}
+                {actionType === 'IN'
+                  ? 'Yangi tovar omborga keldi — zaxiraga qo\'shiladi.'
+                  : 'Tovar ombordan olinadi — zaxiradan chiqariladi.'}
               </p>
             </div>
 
