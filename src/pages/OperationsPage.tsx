@@ -46,6 +46,7 @@ export default function OperationsPage() {
   const [productCode, setProductCode] = useState('');
   const [verifiedProduct, setVerifiedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [actionType, setActionType] = useState<'IN' | 'OUT'>('OUT');
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState<{ title: string; detail: string; hint?: string } | null>(null);
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
@@ -182,9 +183,11 @@ export default function OperationsPage() {
     setScanError(null);
     setLoading(true);
     try {
-      const newQty = verifiedProduct.quantity - quantity;
+      const newQty = actionType === 'OUT'
+        ? verifiedProduct.quantity - quantity
+        : verifiedProduct.quantity + quantity;
 
-      if (newQty < 0) {
+      if (actionType === 'OUT' && newQty < 0) {
         setScanError({ title: "Yetarli emas", detail: `Omborda faqat ${verifiedProduct.quantity} dona mavjud.` });
         setLoading(false);
         return;
@@ -198,19 +201,21 @@ export default function OperationsPage() {
         product_id: verifiedProduct.id,
         worker_name: verifiedWorker.full_name,
         product_name: verifiedProduct.name,
-        action_type: 'OUT',
+        action_type: actionType,
         quantity,
       }).select().single();
       if (opError) throw opError;
 
       sound.success();
-      toast.success(`Chiqim muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
+      const label = actionType === 'OUT' ? 'Chiqim' : 'Kirim (qaytarish)';
+      toast.success(`${label} muvaffaqiyatli: ${verifiedProduct.name} x${quantity}`);
       setBatchLogs(prev => [opData, ...prev].slice(0, 20));
 
       // Reset for next product scan
       setProductCode('');
       setVerifiedProduct(null);
       setQuantity(1);
+      setActionType('OUT');
       setScanError(null);
       setStep(2);
     } catch (err: any) {
@@ -234,9 +239,9 @@ export default function OperationsPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Chiqim operatsiyalari</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Operatsiyalar</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Mahsulotni ombordan chiqarish. Kirim uchun Mahsulotlar bo'limidan yangi mahsulot qo'shing.
+          Mahsulotni ombordan chiqarish (OUT) yoki qaytarish (IN). Tasdiqlash bosqichida amal turini tanlang.
         </p>
       </div>
 
