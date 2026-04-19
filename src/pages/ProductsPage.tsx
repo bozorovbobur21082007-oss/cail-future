@@ -319,7 +319,8 @@ export default function ProductsPage() {
     const q = search.toLowerCase();
     return (
       p.name.toLowerCase().includes(q) ||
-      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : p.product_code.toLowerCase().includes(q))
+      p.product_code.toLowerCase().includes(q) ||
+      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : false)
     );
   });
 
@@ -342,7 +343,7 @@ export default function ProductsPage() {
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Qidirish (nomi yoki ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
       </div>
 
       <Card className="shadow-sm">

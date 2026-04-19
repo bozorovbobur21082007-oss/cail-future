@@ -98,12 +98,18 @@ export default function OperationsPage() {
     setScanError(null);
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('products').select('*').eq('product_code', code).single();
+      // Ham product_code, ham nfc_id bo'yicha qidiramiz —
+      // shunda USB barkod skaner ham, USB RFID o'quvchi ham bir xil maydonga ishlay oladi.
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .or(`product_code.eq.${code},nfc_id.eq.${code}`)
+        .maybeSingle();
       if (error || !data) {
         setScanError({
           title: "Mahsulot topilmadi",
           detail: `"${code}" ID bilan mahsulot bazada mavjud emas.`,
-          hint: "QR kod eskirgan yoki mahsulot hali ombor tizimiga kiritilmagan."
+          hint: "Kod yoki NFC teg eskirgan, yoki mahsulot hali ombor tizimiga kiritilmagan."
         });
         setProductCode('');
       } else {
@@ -115,7 +121,8 @@ export default function OperationsPage() {
             hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
           });
         }
-        toast.success(`Mahsulot topildi: ${data.name} (${data.quantity} dona)`);
+        const via = data.nfc_id && data.nfc_id.toUpperCase() === code ? 'NFC' : 'kod';
+        toast.success(`Mahsulot topildi (${via}): ${data.name} (${data.quantity} dona)`);
         setStep(3);
       }
     } catch {
@@ -331,7 +338,7 @@ export default function OperationsPage() {
                       value={productCode}
                       onChange={(e) => setProductCode(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
-                      placeholder={scannerMode ? "Skaner gun bilan skanerlang..." : "QR kodni skanerlang..."}
+                      placeholder={scannerMode ? "Skaner gun yoki RFID bilan skanerlang..." : "QR/Barkod yoki NFC ID..."}
                       autoFocus={scannerMode}
                     />
                     <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
