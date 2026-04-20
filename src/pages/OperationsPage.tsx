@@ -92,6 +92,7 @@ export default function OperationsPage() {
         setWorkerBadge('');
       } else {
         setVerifiedWorker(data);
+        if (role === 'worker') setWorkerName(data.full_name);
         sound.success();
         toast.success(`Ishchi tasdiqlandi: ${data.full_name}`);
         setStep(2);
