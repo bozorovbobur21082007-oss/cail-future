@@ -102,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     sessionStorage.removeItem(WORKER_FLAG_KEY);
+    sessionStorage.removeItem(WORKER_NAME_KEY);
     if (role === 'admin') {
       await supabase.auth.signOut();
     }
@@ -109,8 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null);
   };
 
+  const setWorkerName = (name: string) => {
+    if (!name) return;
+    sessionStorage.setItem(WORKER_NAME_KEY, name);
+    setUser((prev) => (prev ? { ...prev, name } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker }}>
+    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker, setWorkerName }}>
       {children}
     </AuthContext.Provider>
   );
