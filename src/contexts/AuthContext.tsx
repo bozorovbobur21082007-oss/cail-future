@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if worker session is active
       const isWorker = sessionStorage.getItem(WORKER_FLAG_KEY) === '1';
       if (isWorker) {
-        setUser({ id: 'worker', email: '', name: 'Ishchi' });
+        const savedName = sessionStorage.getItem(WORKER_NAME_KEY) || 'Ishchi';
+        setUser({ id: 'worker', email: '', name: savedName });
         setRole('worker');
       } else {
         setUser(null);
