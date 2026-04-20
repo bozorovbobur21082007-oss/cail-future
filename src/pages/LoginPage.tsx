@@ -182,6 +182,9 @@ export default function LoginPage() {
           )}
         </CardContent>
       </Card>
+      <div className="mt-4 flex justify-center">
+        <InstallPwaButton />
+      </div>
     </div>
   );
 }
