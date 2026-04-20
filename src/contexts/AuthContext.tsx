@@ -18,10 +18,12 @@ interface AuthContextType {
   logout: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   loginAsWorker: (pin: string) => Promise<void>;
+  setWorkerName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const WORKER_FLAG_KEY = 'worker_session';
+const WORKER_NAME_KEY = 'worker_name';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
