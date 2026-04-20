@@ -60,7 +60,7 @@ export default function OperationsPage() {
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
-  const { role } = useAuth();
+  const { role, setWorkerName } = useAuth();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +92,7 @@ export default function OperationsPage() {
         setWorkerBadge('');
       } else {
         setVerifiedWorker(data);
+        if (role === 'worker') setWorkerName(data.full_name);
         sound.success();
         toast.success(`Ishchi tasdiqlandi: ${data.full_name}`);
         setStep(2);

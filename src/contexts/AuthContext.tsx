@@ -18,10 +18,12 @@ interface AuthContextType {
   logout: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   loginAsWorker: (pin: string) => Promise<void>;
+  setWorkerName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const WORKER_FLAG_KEY = 'worker_session';
+const WORKER_NAME_KEY = 'worker_name';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -33,7 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if worker session is active
       const isWorker = sessionStorage.getItem(WORKER_FLAG_KEY) === '1';
       if (isWorker) {
-        setUser({ id: 'worker', email: '', name: 'Ishchi' });
+        const savedName = sessionStorage.getItem(WORKER_NAME_KEY) || 'Ishchi';
+        setUser({ id: 'worker', email: '', name: savedName });
         setRole('worker');
       } else {
         setUser(null);
@@ -99,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     sessionStorage.removeItem(WORKER_FLAG_KEY);
+    sessionStorage.removeItem(WORKER_NAME_KEY);
     if (role === 'admin') {
       await supabase.auth.signOut();
     }
@@ -106,8 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null);
   };
 
+  const setWorkerName = (name: string) => {
+    if (!name) return;
+    sessionStorage.setItem(WORKER_NAME_KEY, name);
+    setUser((prev) => (prev ? { ...prev, name } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker }}>
+    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker, setWorkerName }}>
       {children}
     </AuthContext.Provider>
   );
