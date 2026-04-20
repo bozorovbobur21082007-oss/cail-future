@@ -124,13 +124,15 @@ export default function AppLayout() {
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
+            <SheetContent side="left" className="w-64 p-0 flex flex-col">
               <SheetTitle className="sr-only">Menyu</SheetTitle>
-              <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
+              <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border shrink-0">
                 <Warehouse className="w-6 h-6 text-primary" />
                 <span className="text-lg font-bold text-foreground">Omborxona</span>
               </div>
-              <SidebarNav onNavigate={() => setMobileOpen(false)} />
+              <div className="flex-1 overflow-y-auto">
+                <SidebarNav onNavigate={() => setMobileOpen(false)} />
+              </div>
             </SheetContent>
           </Sheet>
         </div>
