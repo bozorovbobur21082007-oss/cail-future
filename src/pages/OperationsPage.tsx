@@ -60,7 +60,7 @@ export default function OperationsPage() {
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
-  const { role } = useAuth();
+  const { role, setWorkerName } = useAuth();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
