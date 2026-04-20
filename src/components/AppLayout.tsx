@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import InstallPwaButton from '@/components/InstallPwaButton';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Bosh sahifa' },
@@ -63,15 +64,18 @@ export default function AppLayout() {
             <span className="text-base font-bold text-foreground">Ishchi rejimi</span>
           </div>
           <div className="flex-1" />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Chiqish
-          </Button>
+          <div className="flex items-center gap-2">
+            <InstallPwaButton />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Chiqish
+            </Button>
+          </div>
         </header>
         <main className="p-4 sm:p-6 min-h-[calc(100vh-3.5rem)]">
           <Outlet />
@@ -93,8 +97,8 @@ export default function AppLayout() {
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
         </div>
-        <div className="p-3 border-t border-border">
-          <div className="flex items-center gap-3 px-3 py-2 mb-2">
+        <div className="p-3 border-t border-border space-y-2">
+          <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
               {user?.name?.[0] || 'A'}
             </div>
@@ -102,6 +106,9 @@ export default function AppLayout() {
               <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Admin'}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
+          </div>
+          <div className="px-1">
+            <InstallPwaButton />
           </div>
           <Button
             variant="ghost"
