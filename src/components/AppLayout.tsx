@@ -50,6 +50,10 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Web Serial (Arduino RFID) ulanishini global darajada hayotda saqlash —
+  // skaner gun rejimi yoqilgan bo'lsa ham, NfcScanner UI ko'rinmasa ham ulanish saqlanib turadi.
+  useEffect(() => { webSerialService.init(); }, []);
+
   const handleLogout = async () => {
     await logout();
     navigate('/login');
