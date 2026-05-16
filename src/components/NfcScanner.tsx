@@ -165,6 +165,43 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = false, titl
               <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" /> {serial.error}
             </p>
           )}
+
+          {/* Status + voqealar logi */}
+          <div className="rounded border border-border/50 bg-background/50 p-2 space-y-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-medium">Holat:</span>
+              <span className={`flex items-center gap-1 ${serial.connected ? 'text-primary' : 'text-muted-foreground'}`}>
+                <span className={`inline-block w-1.5 h-1.5 rounded-full ${serial.connected ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
+                {serial.status}
+              </span>
+            </div>
+            {serial.log.length > 0 && (
+              <>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+                  <span>Voqealar ({serial.log.length})</span>
+                  <button type="button" onClick={serial.clearLog} className="hover:text-foreground underline">tozalash</button>
+                </div>
+                <div className="max-h-32 overflow-y-auto space-y-0.5 font-mono text-[10px]">
+                  {[...serial.log].reverse().map((entry) => (
+                    <div key={entry.id} className="flex gap-1.5">
+                      <span className="text-muted-foreground shrink-0">
+                        {new Date(entry.at).toLocaleTimeString('uz-UZ', { hour12: false })}
+                      </span>
+                      <span className={
+                        entry.level === 'error' ? 'text-destructive' :
+                        entry.level === 'warn' ? 'text-orange-500' :
+                        entry.level === 'success' ? 'text-primary' :
+                        'text-foreground'
+                      }>
+                        {entry.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <p className="text-[11px] text-muted-foreground">
             Muhim: Arduino IDE'da Serial Monitor yopiq bo'lsin (port bir vaqtda faqat bittasi tomonidan ushlanadi).
           </p>
