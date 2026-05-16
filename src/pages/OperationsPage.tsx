@@ -86,8 +86,16 @@ export default function OperationsPage() {
       const uid = (e as CustomEvent<string>).detail;
       if (!uid) return;
       const s = stepRef.current;
-      if (s === 1) verifyWorkerRef.current(uid);
-      else if (s === 2) scanProductRef.current(uid);
+      if (s === 1) {
+        setWorkerBadge(uid);
+        verifyWorkerRef.current(uid);
+      } else if (s === 2) {
+        setProductCode(uid);
+        scanProductRef.current(uid);
+      } else {
+        // Bosqich 3 — keyingi mahsulotni skanerlash uchun 2-bosqichga qaytamiz va UID'ni yo'naltirib yuboramiz
+        toast.info(`UID qabul qilindi: ${uid} — avval amalni tasdiqlang`);
+      }
     };
     window.addEventListener('web-serial-uid', handler);
     return () => window.removeEventListener('web-serial-uid', handler);
