@@ -134,6 +134,44 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = false, titl
 
         <div className="border-t border-border/50" />
 
+        {/* Web Serial rejim: Arduino + RC522 (USB) */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5 text-xs">
+            <Usb className="w-3.5 h-3.5" /> Arduino RFID (USB — Chrome/Edge)
+          </Label>
+          {serial.support === 'unsupported' ? (
+            <div className="flex items-start gap-2 text-xs text-muted-foreground p-2 rounded bg-muted/50">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>Brauzer Web Serial'ni qo'llab-quvvatlamaydi. Chrome yoki Edge desktop kerak.</span>
+            </div>
+          ) : serial.connected ? (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={serial.disconnect}>
+              <CheckCircle className="w-4 h-4 text-primary" />
+              Arduino ulangan — uzish
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={serial.connect} disabled={serial.connecting}>
+              {serial.connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Usb className="w-4 h-4" />}
+              Arduino'ni ulash (COM port tanlang)
+            </Button>
+          )}
+          {serial.connected && (
+            <p className="text-[11px] text-primary flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Tegni RC522 o'quvchiga yaqinlashtiring
+            </p>
+          )}
+          {serial.error && (
+            <p className="text-[11px] text-destructive flex items-start gap-1">
+              <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" /> {serial.error}
+            </p>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            Muhim: Arduino IDE'da Serial Monitor yopiq bo'lsin (port bir vaqtda faqat bittasi tomonidan ushlanadi).
+          </p>
+        </div>
+
+        <div className="border-t border-border/50" />
+
         {/* Web NFC rejim: Android Chrome */}
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5 text-xs">
