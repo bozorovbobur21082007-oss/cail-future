@@ -75,6 +75,23 @@ export default function OperationsPage() {
 
   useEffect(() => { setScanError(null); }, [step]);
 
+  // Global Arduino RFID (Web Serial) UID — skaner gun rejimi yoqilgan bo'lsa,
+  // NfcScanner UI ochilmagan paytda ham UID kelsa hozirgi bosqichga yo'naltiramiz.
+  const stepRef = useRef(step);
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const uid = (e as CustomEvent<string>).detail;
+      if (!uid) return;
+      const s = stepRef.current;
+      if (s === 1) verifyWorker(uid);
+      else if (s === 2) scanProduct(uid);
+    };
+    window.addEventListener('web-serial-uid', handler);
+    return () => window.removeEventListener('web-serial-uid', handler);
+  }, []);
+
+
   const verifyWorker = useCallback(async (badgeValue?: string) => {
     const badge = (badgeValue || workerBadge).trim();
     if (!badge || loading) return;
