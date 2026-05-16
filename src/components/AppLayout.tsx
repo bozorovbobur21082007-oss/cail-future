@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -8,6 +8,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
+import { webSerialService } from '@/lib/webSerialService';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Bosh sahifa' },
