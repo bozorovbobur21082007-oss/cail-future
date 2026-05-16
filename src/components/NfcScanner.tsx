@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Radio, X, Loader2, Smartphone, Keyboard, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Radio, X, Loader2, Smartphone, Keyboard, AlertTriangle, CheckCircle2, Usb, CheckCircle } from 'lucide-react';
 import { useNfcReader } from '@/hooks/useNfc';
+import { useWebSerial } from '@/hooks/useWebSerial';
 import { toast } from 'sonner';
 
 interface Props {
@@ -36,6 +37,10 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = false, titl
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { start, stop, scanning, support, error } = useNfcReader((uid) => {
+    onScan(uid);
+  });
+
+  const serial = useWebSerial((uid) => {
     onScan(uid);
   });
 
@@ -124,6 +129,44 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = false, titl
           )}
           <p className="text-[11px] text-muted-foreground">
             O'quvchi avtomatik tarzda NFC ID ni yozadi va Enter bosadi (kamida {MIN_NFC_LEN} ta belgi).
+          </p>
+        </div>
+
+        <div className="border-t border-border/50" />
+
+        {/* Web Serial rejim: Arduino + RC522 (USB) */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5 text-xs">
+            <Usb className="w-3.5 h-3.5" /> Arduino RFID (USB — Chrome/Edge)
+          </Label>
+          {serial.support === 'unsupported' ? (
+            <div className="flex items-start gap-2 text-xs text-muted-foreground p-2 rounded bg-muted/50">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>Brauzer Web Serial'ni qo'llab-quvvatlamaydi. Chrome yoki Edge desktop kerak.</span>
+            </div>
+          ) : serial.connected ? (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={serial.disconnect}>
+              <CheckCircle className="w-4 h-4 text-primary" />
+              Arduino ulangan — uzish
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={serial.connect} disabled={serial.connecting}>
+              {serial.connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Usb className="w-4 h-4" />}
+              Arduino'ni ulash (COM port tanlang)
+            </Button>
+          )}
+          {serial.connected && (
+            <p className="text-[11px] text-primary flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Tegni RC522 o'quvchiga yaqinlashtiring
+            </p>
+          )}
+          {serial.error && (
+            <p className="text-[11px] text-destructive flex items-start gap-1">
+              <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" /> {serial.error}
+            </p>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            Muhim: Arduino IDE'da Serial Monitor yopiq bo'lsin (port bir vaqtda faqat bittasi tomonidan ushlanadi).
           </p>
         </div>
 
