@@ -40,6 +40,10 @@ export default function NfcScanner({ onScan, onClose, autoFocusHid = false, titl
     onScan(uid);
   });
 
+  const serial = useWebSerial((uid) => {
+    onScan(uid);
+  });
+
   useEffect(() => {
     if (autoFocusHid && hidActive) {
       const t = setTimeout(() => inputRef.current?.focus(), 150);
