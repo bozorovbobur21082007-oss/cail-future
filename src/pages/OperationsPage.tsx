@@ -167,6 +167,10 @@ export default function OperationsPage() {
     }
   }, [productCode, loading]);
 
+  // refs'ni so'nggi callback'lar bilan sinxron ushlab turamiz (Web Serial listener uchun)
+  useEffect(() => { verifyWorkerRef.current = (v: string) => verifyWorker(v); }, [verifyWorker]);
+  useEffect(() => { scanProductRef.current = (v: string) => scanProduct(v); }, [scanProduct]);
+
   const scanByNfc = useCallback(async (nfcId: string) => {
     const id = nfcId.trim().toUpperCase();
     if (!id || loading) return;
