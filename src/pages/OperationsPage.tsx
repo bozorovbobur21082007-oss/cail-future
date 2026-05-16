@@ -75,6 +75,25 @@ export default function OperationsPage() {
 
   useEffect(() => { setScanError(null); }, [step]);
 
+  // Global Arduino RFID (Web Serial) UID — skaner gun rejimi yoqilgan bo'lsa,
+  // NfcScanner UI ochilmagan paytda ham UID kelsa hozirgi bosqichga yo'naltiramiz.
+  const stepRef = useRef(step);
+  const verifyWorkerRef = useRef<(v: string) => void>(() => {});
+  const scanProductRef = useRef<(v: string) => void>(() => {});
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const uid = (e as CustomEvent<string>).detail;
+      if (!uid) return;
+      const s = stepRef.current;
+      if (s === 1) verifyWorkerRef.current(uid);
+      else if (s === 2) scanProductRef.current(uid);
+    };
+    window.addEventListener('web-serial-uid', handler);
+    return () => window.removeEventListener('web-serial-uid', handler);
+  }, []);
+
+
   const verifyWorker = useCallback(async (badgeValue?: string) => {
     const badge = (badgeValue || workerBadge).trim();
     if (!badge || loading) return;
@@ -147,6 +166,10 @@ export default function OperationsPage() {
       setLoading(false);
     }
   }, [productCode, loading]);
+
+  // refs'ni so'nggi callback'lar bilan sinxron ushlab turamiz (Web Serial listener uchun)
+  useEffect(() => { verifyWorkerRef.current = (v: string) => verifyWorker(v); }, [verifyWorker]);
+  useEffect(() => { scanProductRef.current = (v: string) => scanProduct(v); }, [scanProduct]);
 
   const scanByNfc = useCallback(async (nfcId: string) => {
     const id = nfcId.trim().toUpperCase();
