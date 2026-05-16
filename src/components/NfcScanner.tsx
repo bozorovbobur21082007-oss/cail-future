@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Radio, X, Loader2, Smartphone, Keyboard, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Radio, X, Loader2, Smartphone, Keyboard, AlertTriangle, CheckCircle2, Usb, CheckCircle } from 'lucide-react';
 import { useNfcReader } from '@/hooks/useNfc';
+import { useWebSerial } from '@/hooks/useWebSerial';
 import { toast } from 'sonner';
 
 interface Props {
