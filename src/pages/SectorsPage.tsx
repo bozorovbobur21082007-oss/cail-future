@@ -148,10 +148,16 @@ export default function SectorsPage() {
           </Card>
         ) : (
           filtered.map((s) => {
-            const usagePercent = s.capacity > 0 ? Math.round(((s.product_count || 0) / s.capacity) * 100) : 0;
+            const occupied = Math.min(s.product_count || 0, s.capacity);
+            const empty = Math.max(s.capacity - occupied, 0);
+            const usagePercent = s.capacity > 0 ? Math.round((occupied / s.capacity) * 100) : 0;
             const isFull = usagePercent >= 90;
+
+            // Compute grid columns: aim for near-square layout
+            const cols = Math.min(Math.max(Math.ceil(Math.sqrt(s.capacity)), 4), 12);
+
             return (
-              <Card key={s.id} className={`shadow-sm hover:shadow-md transition-shadow ${isFull ? 'border-warning/40' : ''}`}>
+              <Card key={s.id} className={`shadow-sm hover:shadow-md transition-shadow ${isFull ? 'border-destructive/40' : ''}`}>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -184,12 +190,44 @@ export default function SectorsPage() {
                     <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{s.description}</p>
                   )}
 
+                  {/* 2D shelf grid */}
+                  <div className="mb-3 rounded-md border border-border/60 bg-muted/30 p-2">
+                    <div
+                      className="grid gap-1"
+                      style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+                      aria-label={`${s.name} polka xaritasi`}
+                    >
+                      {Array.from({ length: s.capacity }).map((_, i) => {
+                        const isOccupied = i < occupied;
+                        return (
+                          <div
+                            key={i}
+                            title={isOccupied ? `Katak ${i + 1}: band` : `Katak ${i + 1}: bo'sh`}
+                            className={`aspect-square rounded-sm border ${
+                              isOccupied
+                                ? 'bg-destructive/80 border-destructive'
+                                : 'bg-success/70 border-success'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 rounded-sm bg-destructive/80" /> Band: {occupied}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 rounded-sm bg-success/70" /> Bo'sh: {empty}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Band: {s.product_count || 0} / {s.capacity}</span>
+                      <span className="text-muted-foreground">Band: {occupied} / {s.capacity}</span>
                       <Badge className={
                         isFull
-                          ? 'bg-warning/10 text-warning border-warning/20 text-[10px]'
+                          ? 'bg-destructive/10 text-destructive border-destructive/20 text-[10px]'
                           : 'bg-success/10 text-success border-success/20 text-[10px]'
                       }>
                         {usagePercent}%
