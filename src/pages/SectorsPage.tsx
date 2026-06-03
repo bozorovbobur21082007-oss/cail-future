@@ -479,9 +479,41 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
-                <div className="pl-6">
-                  <ShelfRack sector={detailSector} large />
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant={detailView === '3d' ? 'default' : 'outline'}
+                    onClick={() => setDetailView('3d')}
+                    className="h-8"
+                  >
+                    <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={detailView === '2d' ? 'default' : 'outline'}
+                    onClick={() => setDetailView('2d')}
+                    className="h-8"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
+                  </Button>
                 </div>
+
+                {detailView === '3d' ? (
+                  <SectorRack3D
+                    rows={detailSector.rows}
+                    columns={detailSector.columns}
+                    levels={detailSector.levels}
+                    width_cm={detailSector.width_cm}
+                    depth_cm={detailSector.depth_cm}
+                    height_cm={detailSector.height_cm}
+                    products={detailSector.products}
+                    height={460}
+                  />
+                ) : (
+                  <div className="pl-6">
+                    <ShelfRack sector={detailSector} large />
+                  </div>
+                )}
 
                 {detailSector.products.length > 0 && (
                   <div className="border-t pt-3">
