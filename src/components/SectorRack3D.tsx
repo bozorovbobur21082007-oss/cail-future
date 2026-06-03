@@ -9,6 +9,12 @@ interface Product {
   quantity: number;
 }
 
+export interface HighlightSlot {
+  level: number;   // 1-indexed
+  column: number;  // 1-indexed
+  row: number;     // 1-indexed (depth)
+}
+
 interface Sector3DProps {
   rows: number;       // depth slots
   columns: number;    // width
@@ -17,6 +23,7 @@ interface Sector3DProps {
   depth_cm: number;
   height_cm: number;
   products: Product[];
+  highlight?: HighlightSlot | null;
   className?: string;
   height?: number;
 }
