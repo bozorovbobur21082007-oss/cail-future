@@ -200,6 +200,8 @@ export default function SectorsPage() {
   const [deleting, setDeleting] = useState<Sector | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [detailView, setDetailView] = useState<'3d' | '2d'>('3d');
+  const [highlight, setHighlight] = useState<{ level: number; column: number; row: number } | null>(null);
+  const [hiInput, setHiInput] = useState({ level: 1, column: 1, row: 1 });
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
