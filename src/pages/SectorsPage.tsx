@@ -20,6 +20,15 @@ interface Sector {
   code: string;
   description: string;
   capacity: number;
+  rows: number;
+  columns: number;
+  levels: number;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number;
+  position_x: number;
+  position_y: number;
+  orientation: number;
   created_at: string;
 }
 
@@ -33,16 +42,6 @@ interface Product {
 interface SectorWithProducts extends Sector {
   products: Product[];
   occupied: number;
-}
-
-// Compute shelf layout: rows (levels) × cols, near-square but capping rows at 5
-function computeLayout(capacity: number) {
-  const cap = Math.max(1, capacity);
-  let rows = Math.min(5, Math.max(2, Math.round(Math.sqrt(cap / 2))));
-  let cols = Math.ceil(cap / rows);
-  if (cols < 3) { cols = 3; rows = Math.ceil(cap / cols); }
-  if (cols > 14) { cols = 14; rows = Math.ceil(cap / cols); }
-  return { rows, cols };
 }
 
 // Color hash for product chips to differentiate visually
@@ -59,19 +58,24 @@ interface ShelfRackProps {
 }
 
 function ShelfRack({ sector, large = false }: ShelfRackProps) {
-  const { rows, cols } = computeLayout(sector.capacity);
+  const rows = Math.max(1, sector.levels || 1);
+  const cols = Math.max(1, sector.columns || 1);
+  const depthRows = Math.max(1, sector.rows || 1);
   const totalCells = rows * cols;
+  const capacity = rows * cols * depthRows;
 
   // Build occupancy map: distribute each product across N consecutive slots = its quantity (capped)
   const cells = useMemo(() => {
     const arr: Array<Product | null> = Array(totalCells).fill(null);
     let i = 0;
     for (const p of sector.products) {
-      const slots = Math.max(1, Math.min(p.quantity || 1, sector.capacity));
-      for (let k = 0; k < slots && i < sector.capacity; k++, i++) arr[i] = p;
+      const slots = Math.max(1, Math.min(p.quantity || 1, capacity));
+      // Each visible cell represents depthRows physical slots
+      const visibleSlots = Math.max(1, Math.ceil(slots / depthRows));
+      for (let k = 0; k < visibleSlots && i < totalCells; k++, i++) arr[i] = p;
     }
     return arr;
-  }, [sector.products, sector.capacity, totalCells]);
+  }, [sector.products, capacity, totalCells, depthRows]);
 
   const cellSize = large ? 'min-h-[44px]' : 'min-h-[26px]';
   const fontSize = large ? 'text-[10px]' : 'text-[8px]';
@@ -84,7 +88,7 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
           {sector.code}
         </div>
         <span className="text-[10px] text-muted-foreground font-mono">
-          {rows} × {cols}
+          {rows}L × {cols}C × {depthRows}R
         </span>
       </div>
 
@@ -110,7 +114,7 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
                   >
                     {Array.from({ length: cols }).map((_, c) => {
                       const idx = rowIndex * cols + c;
-                      if (idx >= sector.capacity) {
+                      if (idx >= totalCells) {
                         return <div key={c} className={`${cellSize} bg-transparent`} />;
                       }
                       const p = cells[idx];
@@ -180,7 +184,12 @@ export default function SectorsPage() {
   const [editing, setEditing] = useState<Sector | null>(null);
   const [deleting, setDeleting] = useState<Sector | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', capacity: 100 });
+  const [form, setForm] = useState({
+    name: '', description: '',
+    rows: 3, columns: 5, levels: 2,
+    width_cm: 200, depth_cm: 60, height_cm: 180,
+    position_x: 0, position_y: 0, orientation: 0,
+  });
 
   const fetchSectors = useCallback(async () => {
     const [sectorsRes, productsRes] = await Promise.all([
@@ -215,13 +224,30 @@ export default function SectorsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', description: '', capacity: 100 });
+    setForm({
+      name: '', description: '',
+      rows: 3, columns: 5, levels: 2,
+      width_cm: 200, depth_cm: 60, height_cm: 180,
+      position_x: 0, position_y: 0, orientation: 0,
+    });
     setDialogOpen(true);
   };
 
   const openEdit = (s: Sector) => {
     setEditing(s);
-    setForm({ name: s.name, description: s.description || '', capacity: s.capacity });
+    setForm({
+      name: s.name,
+      description: s.description || '',
+      rows: s.rows ?? 3,
+      columns: s.columns ?? 5,
+      levels: s.levels ?? 2,
+      width_cm: s.width_cm ?? 200,
+      depth_cm: s.depth_cm ?? 60,
+      height_cm: s.height_cm ?? 180,
+      position_x: s.position_x ?? 0,
+      position_y: s.position_y ?? 0,
+      orientation: s.orientation ?? 0,
+    });
     setDialogOpen(true);
   };
 
@@ -229,12 +255,14 @@ export default function SectorsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const capacity = Math.max(1, form.rows * form.columns * form.levels);
+      const payload = { ...form, capacity };
       if (editing) {
-        const { error } = await supabase.from('sectors').update(form).eq('id', editing.id);
+        const { error } = await supabase.from('sectors').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Sektor yangilandi");
       } else {
-        const { error } = await supabase.from('sectors').insert(form);
+        const { error } = await supabase.from('sectors').insert(payload);
         if (error) throw error;
         toast.success("Sektor qo'shildi");
       }
@@ -419,6 +447,25 @@ export default function SectorsPage() {
                   </DialogDescription>
                 </DialogHeader>
 
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">Tuzilishi</p>
+                    <p className="font-mono font-semibold">{detailSector.rows}×{detailSector.columns}×{detailSector.levels}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">O'lcham (sm)</p>
+                    <p className="font-mono font-semibold">{detailSector.width_cm}×{detailSector.depth_cm}×{detailSector.height_cm}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">Pozitsiya</p>
+                    <p className="font-mono font-semibold">X:{detailSector.position_x} Y:{detailSector.position_y}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">Burchak</p>
+                    <p className="font-mono font-semibold">{detailSector.orientation}°</p>
+                  </div>
+                </div>
+
                 <div className="pl-6">
                   <ShelfRack sector={detailSector} large />
                 </div>
@@ -451,7 +498,7 @@ export default function SectorsPage() {
               <DialogTitle>{editing ? "Sektorni tahrirlash" : "Yangi sektor qo'shish"}</DialogTitle>
               <DialogDescription>Sektor ma'lumotlarini kiriting</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
               <div className="space-y-2">
                 <Label>Nomi</Label>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder="masalan: A-1 zona" />
@@ -460,11 +507,64 @@ export default function SectorsPage() {
                 <Label>Tavsif</Label>
                 <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Sektor haqida qisqacha..." rows={2} />
               </div>
-              <div className="space-y-2">
-                <Label>Sig'imi (jami katak soni)</Label>
-                <Input type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: parseInt(e.target.value) || 100 })} min={1} />
+
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-semibold">Javon tuzilishi (robot uchun)</p>
+                <p className="text-xs text-muted-foreground">Sig'im avtomatik: <strong>{form.rows * form.columns * form.levels}</strong> katak (Qator × Ustun × Qavat)</p>
               </div>
-              <DialogFooter>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Qatorlar (chuqurlik)</Label>
+                  <Input type="number" min={1} value={form.rows} onChange={(e) => setForm({ ...form, rows: Math.max(1, parseInt(e.target.value) || 1) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Ustunlar (eni)</Label>
+                  <Input type="number" min={1} value={form.columns} onChange={(e) => setForm({ ...form, columns: Math.max(1, parseInt(e.target.value) || 1) })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Qavatlar</Label>
+                  <Input type="number" min={1} value={form.levels} onChange={(e) => setForm({ ...form, levels: Math.max(1, parseInt(e.target.value) || 1) })} />
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-semibold">Fizik o'lchamlar (sm)</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Kenglik (W)</Label>
+                  <Input type="number" min={1} value={form.width_cm} onChange={(e) => setForm({ ...form, width_cm: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Chuqurlik (D)</Label>
+                  <Input type="number" min={1} value={form.depth_cm} onChange={(e) => setForm({ ...form, depth_cm: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Balandlik (H)</Label>
+                  <Input type="number" min={1} value={form.height_cm} onChange={(e) => setForm({ ...form, height_cm: parseInt(e.target.value) || 0 })} />
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-semibold">Omborxonadagi pozitsiya</p>
+                <p className="text-xs text-muted-foreground">Robotning navigatsiyasi uchun koordinatalar (sm)</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">X (sm)</Label>
+                  <Input type="number" value={form.position_x} onChange={(e) => setForm({ ...form, position_x: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Y (sm)</Label>
+                  <Input type="number" value={form.position_y} onChange={(e) => setForm({ ...form, position_y: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Burchak (°)</Label>
+                  <Input type="number" min={0} max={359} value={form.orientation} onChange={(e) => setForm({ ...form, orientation: parseInt(e.target.value) || 0 })} />
+                </div>
+              </div>
+
+              <DialogFooter className="pt-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
                 <Button type="submit" disabled={submitting}>
                   {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}

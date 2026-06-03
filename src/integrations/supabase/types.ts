@@ -164,29 +164,56 @@ export type Database = {
         Row: {
           capacity: number
           code: string
+          columns: number
           created_at: string
+          depth_cm: number
           description: string | null
+          height_cm: number
           id: string
+          levels: number
           name: string
+          orientation: number
+          position_x: number
+          position_y: number
+          rows: number
           updated_at: string
+          width_cm: number
         }
         Insert: {
           capacity?: number
           code?: string
+          columns?: number
           created_at?: string
+          depth_cm?: number
           description?: string | null
+          height_cm?: number
           id?: string
+          levels?: number
           name: string
+          orientation?: number
+          position_x?: number
+          position_y?: number
+          rows?: number
           updated_at?: string
+          width_cm?: number
         }
         Update: {
           capacity?: number
           code?: string
+          columns?: number
           created_at?: string
+          depth_cm?: number
           description?: string | null
+          height_cm?: number
           id?: string
+          levels?: number
           name?: string
+          orientation?: number
+          position_x?: number
+          position_y?: number
+          rows?: number
           updated_at?: string
+          width_cm?: number
         }
         Relationships: []
       }
