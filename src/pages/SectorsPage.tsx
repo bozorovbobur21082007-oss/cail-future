@@ -58,19 +58,24 @@ interface ShelfRackProps {
 }
 
 function ShelfRack({ sector, large = false }: ShelfRackProps) {
-  const { rows, cols } = computeLayout(sector.capacity);
+  const rows = Math.max(1, sector.levels || 1);
+  const cols = Math.max(1, sector.columns || 1);
+  const depthRows = Math.max(1, sector.rows || 1);
   const totalCells = rows * cols;
+  const capacity = rows * cols * depthRows;
 
   // Build occupancy map: distribute each product across N consecutive slots = its quantity (capped)
   const cells = useMemo(() => {
     const arr: Array<Product | null> = Array(totalCells).fill(null);
     let i = 0;
     for (const p of sector.products) {
-      const slots = Math.max(1, Math.min(p.quantity || 1, sector.capacity));
-      for (let k = 0; k < slots && i < sector.capacity; k++, i++) arr[i] = p;
+      const slots = Math.max(1, Math.min(p.quantity || 1, capacity));
+      // Each visible cell represents depthRows physical slots
+      const visibleSlots = Math.max(1, Math.ceil(slots / depthRows));
+      for (let k = 0; k < visibleSlots && i < totalCells; k++, i++) arr[i] = p;
     }
     return arr;
-  }, [sector.products, sector.capacity, totalCells]);
+  }, [sector.products, capacity, totalCells, depthRows]);
 
   const cellSize = large ? 'min-h-[44px]' : 'min-h-[26px]';
   const fontSize = large ? 'text-[10px]' : 'text-[8px]';
