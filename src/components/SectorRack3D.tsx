@@ -24,6 +24,8 @@ interface Sector3DProps {
   height_cm: number;
   products: Product[];
   highlight?: HighlightSlot | null;
+  highlightColor?: string;
+  pulseSpeed?: number; // Hz (pulses per second)
   className?: string;
   height?: number;
 }
@@ -52,7 +54,17 @@ interface BoxProps {
   highlighted?: boolean;
 }
 
-function PalletBox({ position, size, product, slotLabel, highlighted = false }: BoxProps) {
+interface BoxProps {
+  position: [number, number, number];
+  size: [number, number, number];
+  product: Product | null;
+  slotLabel: string;
+  highlighted?: boolean;
+  highlightColor?: string;
+  pulseSpeed?: number;
+}
+
+function PalletBox({ position, size, product, slotLabel, highlighted = false, highlightColor = '#ef4444', pulseSpeed = 4 }: BoxProps) {
   const [hovered, setHovered] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
@@ -60,12 +72,12 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
   useFrame(({ clock }) => {
     if (highlighted && beaconRef.current) {
       const t = clock.getElapsedTime();
-      const s = 1 + Math.sin(t * 4) * 0.15;
+      const s = 1 + Math.sin(t * Math.max(0.1, pulseSpeed) * 2 * Math.PI) * 0.15;
       beaconRef.current.scale.set(s, 1, s);
     }
   });
 
-  const ringColor = '#ef4444';
+  const ringColor = highlightColor;
 
   if (!product) {
     return (
@@ -91,7 +103,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
               <meshBasicMaterial color={ringColor} transparent opacity={0.5} />
             </mesh>
             <Html position={[0, size[1] * 1.6, 0]} center transform style={{ pointerEvents: 'none' }}>
-              <div className="px-1.5 py-0.5 rounded bg-red-500 text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px' }}>
+              <div className="px-1.5 py-0.5 rounded text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px', backgroundColor: ringColor }}>
                 ★ {slotLabel}
               </div>
             </Html>
@@ -140,7 +152,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
             <meshBasicMaterial color={ringColor} transparent opacity={0.55} />
           </mesh>
           <Html position={[0, size[1] / 2 + 0.35, 0]} center transform style={{ pointerEvents: 'none' }}>
-            <div className="px-1.5 py-0.5 rounded bg-red-500 text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px' }}>
+            <div className="px-1.5 py-0.5 rounded text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px', backgroundColor: ringColor }}>
               ★ {slotLabel}
             </div>
           </Html>
@@ -158,7 +170,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
   );
 }
 
-function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, highlight }: Omit<Sector3DProps, 'className' | 'height'>) {
+function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, highlight, highlightColor, pulseSpeed }: Omit<Sector3DProps, 'className' | 'height'>) {
   // Convert cm -> meters
   const W = Math.max(0.5, width_cm / 100);
   const D = Math.max(0.3, depth_cm / 100);
@@ -253,6 +265,8 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
                 product={product}
                 slotLabel={`L${l + 1}·R${r + 1}·C${c + 1}`}
                 highlighted={isHi}
+                highlightColor={highlightColor}
+                pulseSpeed={pulseSpeed}
               />
             );
           })
@@ -286,6 +300,8 @@ function AutoRotate({ enabled }: { enabled: boolean }) {
 export default function SectorRack3D({
   rows, columns, levels, width_cm, depth_cm, height_cm, products,
   highlight = null,
+  highlightColor = '#ef4444',
+  pulseSpeed = 4,
   className = '', height = 420,
 }: Sector3DProps) {
   // Camera target based on rack size
@@ -319,6 +335,8 @@ export default function SectorRack3D({
             height_cm={height_cm}
             products={products}
             highlight={highlight}
+            highlightColor={highlightColor}
+            pulseSpeed={pulseSpeed}
           />
           <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
           <Environment preset="city" />
