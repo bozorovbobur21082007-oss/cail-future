@@ -628,11 +628,13 @@ export default function SectorsPage() {
                     height_cm={detailSector.height_cm}
                     products={detailSector.products}
                     highlight={highlight}
+                    highlightColor={highlightColor}
+                    pulseSpeed={pulseSpeed}
                     height={460}
                   />
                 ) : (
                   <div className="pl-6">
-                    <ShelfRack sector={detailSector} large highlight={highlight} />
+                    <ShelfRack sector={detailSector} large highlight={highlight} highlightColor={highlightColor} pulseSpeed={pulseSpeed} />
                   </div>
                 )}
 
