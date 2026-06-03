@@ -77,97 +77,108 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
     return arr;
   }, [sector.products, capacity, totalCells, depthRows]);
 
-  const cellSize = large ? 'min-h-[44px]' : 'min-h-[26px]';
+  const boxH = large ? 'h-14' : 'h-10';
+  const boxShortH = large ? 'h-12' : 'h-8';
   const fontSize = large ? 'text-[10px]' : 'text-[8px]';
+  const rowGap = large ? 'gap-7' : 'gap-5';
 
   return (
     <div className="relative">
-      {/* Rack header label (like physical shelf label) */}
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-foreground text-background text-[10px] font-mono font-bold rounded-sm tracking-wider">
+      {/* Header: code tag + dimensions */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="px-2 py-0.5 bg-muted text-[10px] font-bold text-muted-foreground rounded uppercase tracking-wider font-mono">
           {sector.code}
-        </div>
-        <span className="text-[10px] text-muted-foreground font-mono">
+        </span>
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest font-mono">
           {rows}L × {cols}C × {depthRows}R
         </span>
       </div>
 
-      {/* Metal rack frame */}
-      <div className="relative rounded-md bg-gradient-to-b from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 p-[6px] shadow-inner border border-slate-400/40">
-        {/* Side posts */}
-        <div className="absolute inset-y-1 left-0 w-[3px] bg-gradient-to-b from-slate-400 to-slate-500 rounded-l-md" />
-        <div className="absolute inset-y-1 right-0 w-[3px] bg-gradient-to-b from-slate-400 to-slate-500 rounded-r-md" />
-
-        <div className="space-y-[3px]">
+      {/* Rack stage */}
+      <div className="relative bg-slate-50 dark:bg-slate-900/40 rounded-lg p-5 border border-slate-100 dark:border-slate-800">
+        <div className={`relative flex flex-col ${rowGap}`}>
           {Array.from({ length: rows }).map((_, r) => {
-            const rowIndex = rows - 1 - r; // top shelf = highest level
+            const rowIndex = rows - 1 - r; // top = highest level
+            const isBottom = r === rows - 1;
             return (
               <div key={r} className="relative">
-                {/* Shelf plank (top edge) */}
-                <div className="h-[2px] bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500 rounded-sm mb-[2px]" />
+                {/* Level label */}
+                <span className="absolute -left-5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground font-mono">
+                  L{rowIndex + 1}
+                </span>
 
-                {/* Shelf interior - back wall */}
-                <div className="bg-amber-50/60 dark:bg-amber-950/30 px-1 py-1 border-x border-slate-400/30">
-                  <div
-                    className="grid gap-[2px]"
-                    style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-                  >
-                    {Array.from({ length: cols }).map((_, c) => {
-                      const idx = rowIndex * cols + c;
-                      if (idx >= totalCells) {
-                        return <div key={c} className={`${cellSize} bg-transparent`} />;
-                      }
-                      const p = cells[idx];
-                      if (!p) {
-                        return (
-                          <Tooltip key={c}>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={`${cellSize} rounded-sm bg-success/20 border border-success/40 hover:bg-success/30 transition-colors cursor-help`}
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
-                              Bo'sh joy · Q{rowIndex + 1}-{c + 1}
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      }
+                {/* Horizontal steel beam */}
+                <div className="h-2 w-full bg-slate-400 dark:bg-slate-500 rounded-sm shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] mb-1" />
+
+                {/* Pallet slots */}
+                <div
+                  className={`grid gap-1 ${boxH} relative px-1`}
+                  style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+                >
+                  {Array.from({ length: cols }).map((_, c) => {
+                    const idx = rowIndex * cols + c;
+                    if (idx >= totalCells) return <div key={c} />;
+                    const p = cells[idx];
+                    if (!p) {
                       return (
                         <Tooltip key={c}>
                           <TooltipTrigger asChild>
-                            <div
-                              className={`${cellSize} rounded-sm border flex items-center justify-center cursor-help shadow-sm hover:scale-105 transition-transform overflow-hidden`}
-                              style={{
-                                background: `linear-gradient(135deg, ${productColor(p.id)}, ${productColor(p.id)}dd)`,
-                                borderColor: productColor(p.id),
-                              }}
-                            >
-                              <span className={`${fontSize} font-semibold text-white truncate px-0.5 leading-none`}>
-                                {large ? p.name.slice(0, 10) : p.name.slice(0, 3).toUpperCase()}
-                              </span>
+                            <div className="relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors">
+                              <div className="w-full h-1 bg-success/30 rounded-full" />
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
-                            <div className="font-semibold">{p.name}</div>
-                            <div className="text-muted-foreground">Q{rowIndex + 1}-{c + 1} · {p.quantity} dona</div>
+                            Bo'sh joy · Q{rowIndex + 1}-{c + 1}
                           </TooltipContent>
                         </Tooltip>
                       );
-                    })}
-                  </div>
+                    }
+                    // Stagger heights slightly for realism
+                    const useShort = (c + rowIndex) % 3 === 1;
+                    const color = productColor(p.id);
+                    return (
+                      <Tooltip key={c}>
+                        <TooltipTrigger asChild>
+                          <div className="relative flex items-end cursor-help">
+                            <div
+                              className={`w-full ${useShort ? boxShortH : boxH} rounded-sm border shadow-sm flex flex-col items-center overflow-hidden hover:-translate-y-0.5 transition-transform`}
+                              style={{
+                                background: `linear-gradient(180deg, ${color}33, ${color}55)`,
+                                borderColor: `${color}99`,
+                              }}
+                            >
+                              {/* Tape strip */}
+                              <div className="w-full h-[2px] mt-1 opacity-50" style={{ background: color }} />
+                              <div className="flex-1" />
+                              <span
+                                className={`${fontSize} font-bold uppercase tracking-tighter truncate px-0.5 leading-none pb-1`}
+                                style={{ color: color }}
+                              >
+                                {large ? p.name.slice(0, 10) : p.name.slice(0, 4).toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          <div className="font-semibold">{p.name}</div>
+                          <div className="text-muted-foreground">Q{rowIndex + 1}-{c + 1} · {p.quantity} dona</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
 
-                {/* Shelf level label on left */}
-                <div className="absolute -left-1 top-1/2 -translate-y-1/2 -translate-x-full pr-1 text-[8px] font-mono text-muted-foreground font-bold">
-                  L{rowIndex + 1}
-                </div>
+                {/* Ground rail on bottom level */}
+                {isBottom && (
+                  <div className="h-1.5 w-[calc(100%+8px)] -ml-1 bg-slate-500 dark:bg-slate-600 rounded-full mt-1" />
+                )}
               </div>
             );
           })}
-          {/* Bottom shelf plank */}
-          <div className="h-[2px] bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500 rounded-sm" />
-          {/* Base/floor */}
-          <div className="h-[4px] bg-gradient-to-b from-slate-500 to-slate-600 rounded-b-sm" />
+
+          {/* Vertical steel uprights (primary blue) */}
+          <div className="absolute inset-y-0 left-0 w-1.5 bg-primary/80 rounded-full shadow-[2px_0_4px_rgba(0,0,0,0.15)]" />
+          <div className="absolute inset-y-0 right-0 w-1.5 bg-primary/80 rounded-full shadow-[-2px_0_4px_rgba(0,0,0,0.15)]" />
         </div>
       </div>
     </div>
