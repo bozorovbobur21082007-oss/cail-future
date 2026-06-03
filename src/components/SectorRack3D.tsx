@@ -244,6 +244,7 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
             const x = -W / 2 + slotW / 2 + c * slotW;
             const y = l * slotH + boxSize[1] / 2 + 0.02;
             const z = -D / 2 + slotD / 2 + r * slotD;
+            const isHi = !!highlight && highlight.level === l + 1 && highlight.row === r + 1 && highlight.column === c + 1;
             return (
               <PalletBox
                 key={`${l}-${r}-${c}`}
@@ -251,6 +252,7 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
                 size={boxSize}
                 product={product}
                 slotLabel={`L${l + 1}·R${r + 1}·C${c + 1}`}
+                highlighted={isHi}
               />
             );
           })
