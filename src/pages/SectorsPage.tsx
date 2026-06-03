@@ -184,7 +184,12 @@ export default function SectorsPage() {
   const [editing, setEditing] = useState<Sector | null>(null);
   const [deleting, setDeleting] = useState<Sector | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', capacity: 100 });
+  const [form, setForm] = useState({
+    name: '', description: '',
+    rows: 3, columns: 5, levels: 2,
+    width_cm: 200, depth_cm: 60, height_cm: 180,
+    position_x: 0, position_y: 0, orientation: 0,
+  });
 
   const fetchSectors = useCallback(async () => {
     const [sectorsRes, productsRes] = await Promise.all([
