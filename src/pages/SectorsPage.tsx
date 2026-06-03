@@ -450,7 +450,7 @@ export default function SectorsPage() {
         </div>
 
         {/* Detail dialog with large rack */}
-        <Dialog open={!!detailSector} onOpenChange={(o) => !o && setDetailSector(null)}>
+        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); } }}>
           <DialogContent className="max-w-3xl">
             {detailSector && (
               <>
