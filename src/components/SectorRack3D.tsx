@@ -24,6 +24,8 @@ interface Sector3DProps {
   height_cm: number;
   products: Product[];
   highlight?: HighlightSlot | null;
+  highlightColor?: string;
+  pulseSpeed?: number; // Hz (pulses per second)
   className?: string;
   height?: number;
 }
