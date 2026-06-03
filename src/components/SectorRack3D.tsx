@@ -300,6 +300,8 @@ function AutoRotate({ enabled }: { enabled: boolean }) {
 export default function SectorRack3D({
   rows, columns, levels, width_cm, depth_cm, height_cm, products,
   highlight = null,
+  highlightColor = '#ef4444',
+  pulseSpeed = 4,
   className = '', height = 420,
 }: Sector3DProps) {
   // Camera target based on rack size
@@ -333,6 +335,8 @@ export default function SectorRack3D({
             height_cm={height_cm}
             products={products}
             highlight={highlight}
+            highlightColor={highlightColor}
+            pulseSpeed={pulseSpeed}
           />
           <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
           <Environment preset="city" />
