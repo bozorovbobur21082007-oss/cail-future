@@ -265,6 +265,8 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
                 product={product}
                 slotLabel={`L${l + 1}·R${r + 1}·C${c + 1}`}
                 highlighted={isHi}
+                highlightColor={highlightColor}
+                pulseSpeed={pulseSpeed}
               />
             );
           })
