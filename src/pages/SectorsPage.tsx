@@ -114,7 +114,7 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
                   >
                     {Array.from({ length: cols }).map((_, c) => {
                       const idx = rowIndex * cols + c;
-                      if (idx >= sector.capacity) {
+                      if (idx >= totalCells) {
                         return <div key={c} className={`${cellSize} bg-transparent`} />;
                       }
                       const p = cells[idx];
