@@ -44,12 +44,30 @@ interface BoxProps {
   slotLabel: string;
 }
 
-function PalletBox({ position, size, product, slotLabel }: BoxProps) {
+interface BoxProps {
+  position: [number, number, number];
+  size: [number, number, number];
+  product: Product | null;
+  slotLabel: string;
+  highlighted?: boolean;
+}
+
+function PalletBox({ position, size, product, slotLabel, highlighted = false }: BoxProps) {
   const [hovered, setHovered] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
+  const beaconRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (highlighted && beaconRef.current) {
+      const t = clock.getElapsedTime();
+      const s = 1 + Math.sin(t * 4) * 0.15;
+      beaconRef.current.scale.set(s, 1, s);
+    }
+  });
+
+  const ringColor = '#ef4444';
 
   if (!product) {
-    // Empty slot — flat green pad
     return (
       <group position={position}>
         <mesh
@@ -58,9 +76,28 @@ function PalletBox({ position, size, product, slotLabel }: BoxProps) {
           onPointerOut={() => setHovered(false)}
         >
           <boxGeometry args={[size[0] * 0.92, 0.04, size[2] * 0.92]} />
-          <meshStandardMaterial color={hovered ? '#22c55e' : '#86efac'} transparent opacity={0.55} />
+          <meshStandardMaterial
+            color={highlighted ? ringColor : hovered ? '#22c55e' : '#86efac'}
+            emissive={highlighted ? ringColor : '#000000'}
+            emissiveIntensity={highlighted ? 0.6 : 0}
+            transparent
+            opacity={highlighted ? 0.85 : 0.55}
+          />
         </mesh>
-        {hovered && (
+        {highlighted && (
+          <>
+            <mesh ref={beaconRef} position={[0, size[1] * 1.2, 0]}>
+              <cylinderGeometry args={[size[0] * 0.15, size[0] * 0.4, 0.02, 24]} />
+              <meshBasicMaterial color={ringColor} transparent opacity={0.5} />
+            </mesh>
+            <Html position={[0, size[1] * 1.6, 0]} center transform style={{ pointerEvents: 'none' }}>
+              <div className="px-1.5 py-0.5 rounded bg-red-500 text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px' }}>
+                ★ {slotLabel}
+              </div>
+            </Html>
+          </>
+        )}
+        {hovered && !highlighted && (
           <Html position={[0, size[1] / 2, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
             <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
               Bo'sh · {slotLabel}
@@ -71,7 +108,7 @@ function PalletBox({ position, size, product, slotLabel }: BoxProps) {
     );
   }
 
-  const color = productColor(product.id);
+  const color = highlighted ? ringColor : productColor(product.id);
 
   return (
     <group position={position}>
@@ -83,14 +120,33 @@ function PalletBox({ position, size, product, slotLabel }: BoxProps) {
         receiveShadow
       >
         <boxGeometry args={size} />
-        <meshStandardMaterial color={color} roughness={0.75} metalness={0.05} />
+        <meshStandardMaterial
+          color={color}
+          roughness={0.75}
+          metalness={0.05}
+          emissive={highlighted ? ringColor : '#000000'}
+          emissiveIntensity={highlighted ? 0.5 : 0}
+        />
       </mesh>
       {/* Tape strip */}
       <mesh position={[0, size[1] / 2 + 0.001, 0]}>
         <boxGeometry args={[size[0] * 0.95, 0.005, size[2] * 0.2]} />
-        <meshStandardMaterial color="#fde68a" />
+        <meshStandardMaterial color={highlighted ? '#fff' : '#fde68a'} />
       </mesh>
-      {hovered && (
+      {highlighted && (
+        <>
+          <mesh ref={beaconRef} position={[0, size[1] / 2 + 0.15, 0]}>
+            <cylinderGeometry args={[size[0] * 0.15, size[0] * 0.45, 0.02, 24]} />
+            <meshBasicMaterial color={ringColor} transparent opacity={0.55} />
+          </mesh>
+          <Html position={[0, size[1] / 2 + 0.35, 0]} center transform style={{ pointerEvents: 'none' }}>
+            <div className="px-1.5 py-0.5 rounded bg-red-500 text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px' }}>
+              ★ {slotLabel}
+            </div>
+          </Html>
+        </>
+      )}
+      {hovered && !highlighted && (
         <Html position={[0, size[1] / 2 + 0.15, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
           <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
             <div className="font-semibold">{product.name}</div>
