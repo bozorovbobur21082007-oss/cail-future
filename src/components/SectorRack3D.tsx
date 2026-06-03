@@ -170,7 +170,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false, hi
   );
 }
 
-function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, highlight }: Omit<Sector3DProps, 'className' | 'height'>) {
+function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, highlight, highlightColor, pulseSpeed }: Omit<Sector3DProps, 'className' | 'height'>) {
   // Convert cm -> meters
   const W = Math.max(0.5, width_cm / 100);
   const D = Math.max(0.3, depth_cm / 100);
