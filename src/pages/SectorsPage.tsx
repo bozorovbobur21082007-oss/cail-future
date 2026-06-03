@@ -224,13 +224,30 @@ export default function SectorsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', description: '', capacity: 100 });
+    setForm({
+      name: '', description: '',
+      rows: 3, columns: 5, levels: 2,
+      width_cm: 200, depth_cm: 60, height_cm: 180,
+      position_x: 0, position_y: 0, orientation: 0,
+    });
     setDialogOpen(true);
   };
 
   const openEdit = (s: Sector) => {
     setEditing(s);
-    setForm({ name: s.name, description: s.description || '', capacity: s.capacity });
+    setForm({
+      name: s.name,
+      description: s.description || '',
+      rows: s.rows ?? 3,
+      columns: s.columns ?? 5,
+      levels: s.levels ?? 2,
+      width_cm: s.width_cm ?? 200,
+      depth_cm: s.depth_cm ?? 60,
+      height_cm: s.height_cm ?? 180,
+      position_x: s.position_x ?? 0,
+      position_y: s.position_y ?? 0,
+      orientation: s.orientation ?? 0,
+    });
     setDialogOpen(true);
   };
 
@@ -238,12 +255,14 @@ export default function SectorsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const capacity = Math.max(1, form.rows * form.columns * form.levels);
+      const payload = { ...form, capacity };
       if (editing) {
-        const { error } = await supabase.from('sectors').update(form).eq('id', editing.id);
+        const { error } = await supabase.from('sectors').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Sektor yangilandi");
       } else {
-        const { error } = await supabase.from('sectors').insert(form);
+        const { error } = await supabase.from('sectors').insert(payload);
         if (error) throw error;
         toast.success("Sektor qo'shildi");
       }
