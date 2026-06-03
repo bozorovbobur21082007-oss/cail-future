@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import SectorRack3D from '@/components/SectorRack3D';
@@ -56,9 +56,10 @@ function productColor(id: string) {
 interface ShelfRackProps {
   sector: SectorWithProducts;
   large?: boolean;
+  highlight?: { level: number; column: number; row: number } | null;
 }
 
-function ShelfRack({ sector, large = false }: ShelfRackProps) {
+function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) {
   const rows = Math.max(1, sector.levels || 1);
   const cols = Math.max(1, sector.columns || 1);
   const depthRows = Math.max(1, sector.rows || 1);
@@ -118,29 +119,31 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
                 >
                   {Array.from({ length: cols }).map((_, c) => {
                     const idx = rowIndex * cols + c;
+                    const isHi = !!highlight && highlight.level === rowIndex + 1 && highlight.column === c + 1;
+                    const hiRing = isHi ? 'ring-2 ring-red-500 ring-offset-1 shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse rounded-sm' : '';
                     if (idx >= totalCells) return <div key={c} />;
                     const p = cells[idx];
                     if (!p) {
                       return (
                         <Tooltip key={c}>
                           <TooltipTrigger asChild>
-                            <div className="relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors">
-                              <div className="w-full h-1 bg-success/30 rounded-full" />
+                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors ${hiRing}`}>
+                              <div className={`w-full h-1 rounded-full ${isHi ? 'bg-red-500' : 'bg-success/30'}`} />
+                              {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-red-500">★</span>}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
-                            Bo'sh joy · Q{rowIndex + 1}-{c + 1}
+                            {isHi ? `★ Belgilangan · L${rowIndex + 1}·C${c + 1}` : `Bo'sh joy · Q${rowIndex + 1}-${c + 1}`}
                           </TooltipContent>
                         </Tooltip>
                       );
                     }
-                    // Stagger heights slightly for realism
                     const useShort = (c + rowIndex) % 3 === 1;
-                    const color = productColor(p.id);
+                    const color = isHi ? '#ef4444' : productColor(p.id);
                     return (
                       <Tooltip key={c}>
                         <TooltipTrigger asChild>
-                          <div className="relative flex items-end cursor-help">
+                          <div className={`relative flex items-end cursor-help ${hiRing}`}>
                             <div
                               className={`w-full ${useShort ? boxShortH : boxH} rounded-sm border shadow-sm flex flex-col items-center overflow-hidden hover:-translate-y-0.5 transition-transform`}
                               style={{
@@ -148,7 +151,6 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
                                 borderColor: `${color}99`,
                               }}
                             >
-                              {/* Tape strip */}
                               <div className="w-full h-[2px] mt-1 opacity-50" style={{ background: color }} />
                               <div className="flex-1" />
                               <span
@@ -158,11 +160,12 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
                                 {large ? p.name.slice(0, 10) : p.name.slice(0, 4).toUpperCase()}
                               </span>
                             </div>
+                            {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-500">★</span>}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          <div className="font-semibold">{p.name}</div>
-                          <div className="text-muted-foreground">Q{rowIndex + 1}-{c + 1} · {p.quantity} dona</div>
+                          <div className="font-semibold">{isHi && '★ '}{p.name}</div>
+                          <div className="text-muted-foreground">L{rowIndex + 1}·C{c + 1} · {p.quantity} dona</div>
                         </TooltipContent>
                       </Tooltip>
                     );
@@ -197,6 +200,8 @@ export default function SectorsPage() {
   const [deleting, setDeleting] = useState<Sector | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [detailView, setDetailView] = useState<'3d' | '2d'>('3d');
+  const [highlight, setHighlight] = useState<{ level: number; column: number; row: number } | null>(null);
+  const [hiInput, setHiInput] = useState({ level: 1, column: 1, row: 1 });
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -445,7 +450,7 @@ export default function SectorsPage() {
         </div>
 
         {/* Detail dialog with large rack */}
-        <Dialog open={!!detailSector} onOpenChange={(o) => !o && setDetailSector(null)}>
+        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); } }}>
           <DialogContent className="max-w-3xl">
             {detailSector && (
               <>
@@ -479,6 +484,59 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
+                {/* Slot belgilash (robot uchun) */}
+                <div className="rounded-md border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-red-500" />
+                    <p className="text-xs font-semibold">Joyni belgilash — robotga ko'rsatish</p>
+                  </div>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Qavat (L) 1–{detailSector.levels}</Label>
+                      <Input
+                        type="number" min={1} max={detailSector.levels}
+                        value={hiInput.level}
+                        onChange={(e) => setHiInput({ ...hiInput, level: Math.max(1, Math.min(detailSector.levels, parseInt(e.target.value) || 1)) })}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Ustun (C) 1–{detailSector.columns}</Label>
+                      <Input
+                        type="number" min={1} max={detailSector.columns}
+                        value={hiInput.column}
+                        onChange={(e) => setHiInput({ ...hiInput, column: Math.max(1, Math.min(detailSector.columns, parseInt(e.target.value) || 1)) })}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Qator (R) 1–{detailSector.rows}</Label>
+                      <Input
+                        type="number" min={1} max={detailSector.rows}
+                        value={hiInput.row}
+                        onChange={(e) => setHiInput({ ...hiInput, row: Math.max(1, Math.min(detailSector.rows, parseInt(e.target.value) || 1)) })}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <Button
+                      size="sm" className="h-8 bg-red-500 hover:bg-red-600 text-white"
+                      onClick={() => setHighlight({ ...hiInput })}
+                    >
+                      <Target className="w-3.5 h-3.5 mr-1.5" /> Belgilash
+                    </Button>
+                    {highlight && (
+                      <Button size="sm" variant="outline" className="h-8" onClick={() => setHighlight(null)}>
+                        <X className="w-3.5 h-3.5 mr-1.5" /> Tozalash
+                      </Button>
+                    )}
+                    {highlight && (
+                      <Badge className="bg-red-500 text-white ml-auto font-mono">
+                        ★ {detailSector.code} · L{highlight.level} · C{highlight.column} · R{highlight.row}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     size="sm"
@@ -507,11 +565,12 @@ export default function SectorsPage() {
                     depth_cm={detailSector.depth_cm}
                     height_cm={detailSector.height_cm}
                     products={detailSector.products}
+                    highlight={highlight}
                     height={460}
                   />
                 ) : (
                   <div className="pl-6">
-                    <ShelfRack sector={detailSector} large />
+                    <ShelfRack sector={detailSector} large highlight={highlight} />
                   </div>
                 )}
 
