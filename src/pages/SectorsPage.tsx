@@ -122,16 +122,24 @@ function ShelfRack({ sector, large = false, highlight = null, highlightColor = '
                   {Array.from({ length: cols }).map((_, c) => {
                     const idx = rowIndex * cols + c;
                     const isHi = !!highlight && highlight.level === rowIndex + 1 && highlight.column === c + 1;
-                    const hiRing = isHi ? 'ring-2 ring-red-500 ring-offset-1 shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse rounded-sm' : '';
+                    const pulseDurationMs = Math.max(100, Math.round(1000 / Math.max(0.1, pulseSpeed)));
+                    const hiStyle: React.CSSProperties = isHi
+                      ? {
+                          boxShadow: `0 0 0 2px ${highlightColor}, 0 0 12px ${highlightColor}b3`,
+                          borderRadius: 2,
+                          animation: `pulse ${pulseDurationMs}ms cubic-bezier(0.4,0,0.6,1) infinite`,
+                        }
+                      : {};
                     if (idx >= totalCells) return <div key={c} />;
                     const p = cells[idx];
                     if (!p) {
                       return (
                         <Tooltip key={c}>
                           <TooltipTrigger asChild>
-                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors ${hiRing}`}>
-                              <div className={`w-full h-1 rounded-full ${isHi ? 'bg-red-500' : 'bg-success/30'}`} />
-                              {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-red-500">★</span>}
+                            <div className="relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors" style={hiStyle}>
+                              <div className="w-full h-1 rounded-full" style={{ background: isHi ? highlightColor : undefined }} />
+                              {!isHi && <div className="w-full h-1 rounded-full bg-success/30 absolute bottom-1 left-0" />}
+                              {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold" style={{ color: highlightColor }}>★</span>}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
@@ -141,11 +149,11 @@ function ShelfRack({ sector, large = false, highlight = null, highlightColor = '
                       );
                     }
                     const useShort = (c + rowIndex) % 3 === 1;
-                    const color = isHi ? '#ef4444' : productColor(p.id);
+                    const color = isHi ? highlightColor : productColor(p.id);
                     return (
                       <Tooltip key={c}>
                         <TooltipTrigger asChild>
-                          <div className={`relative flex items-end cursor-help ${hiRing}`}>
+                          <div className="relative flex items-end cursor-help" style={hiStyle}>
                             <div
                               className={`w-full ${useShort ? boxShortH : boxH} rounded-sm border shadow-sm flex flex-col items-center overflow-hidden hover:-translate-y-0.5 transition-transform`}
                               style={{
@@ -162,7 +170,7 @@ function ShelfRack({ sector, large = false, highlight = null, highlightColor = '
                                 {large ? p.name.slice(0, 10) : p.name.slice(0, 4).toUpperCase()}
                               </span>
                             </div>
-                            {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-500">★</span>}
+                            {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold" style={{ color: highlightColor }}>★</span>}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
