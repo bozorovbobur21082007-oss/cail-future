@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
+import SectorRack3D from '@/components/SectorRack3D';
 
 interface Sector {
   id: string;
@@ -195,6 +196,7 @@ export default function SectorsPage() {
   const [editing, setEditing] = useState<Sector | null>(null);
   const [deleting, setDeleting] = useState<Sector | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [detailView, setDetailView] = useState<'3d' | '2d'>('3d');
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -477,9 +479,41 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
-                <div className="pl-6">
-                  <ShelfRack sector={detailSector} large />
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant={detailView === '3d' ? 'default' : 'outline'}
+                    onClick={() => setDetailView('3d')}
+                    className="h-8"
+                  >
+                    <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={detailView === '2d' ? 'default' : 'outline'}
+                    onClick={() => setDetailView('2d')}
+                    className="h-8"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
+                  </Button>
                 </div>
+
+                {detailView === '3d' ? (
+                  <SectorRack3D
+                    rows={detailSector.rows}
+                    columns={detailSector.columns}
+                    levels={detailSector.levels}
+                    width_cm={detailSector.width_cm}
+                    depth_cm={detailSector.depth_cm}
+                    height_cm={detailSector.height_cm}
+                    products={detailSector.products}
+                    height={460}
+                  />
+                ) : (
+                  <div className="pl-6">
+                    <ShelfRack sector={detailSector} large />
+                  </div>
+                )}
 
                 {detailSector.products.length > 0 && (
                   <div className="border-t pt-3">
