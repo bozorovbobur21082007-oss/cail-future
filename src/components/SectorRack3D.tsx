@@ -54,8 +54,8 @@ function PalletBox({ position, size, product, slotLabel }: BoxProps) {
           <meshStandardMaterial color={hovered ? '#22c55e' : '#86efac'} transparent opacity={0.55} />
         </mesh>
         {hovered && (
-          <Html position={[0, size[1] / 2, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-            <div className="px-2 py-1 rounded bg-background border text-[10px] whitespace-nowrap shadow">
+          <Html position={[0, size[1] / 2, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
+            <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
               Bo'sh · {slotLabel}
             </div>
           </Html>
@@ -84,8 +84,8 @@ function PalletBox({ position, size, product, slotLabel }: BoxProps) {
         <meshStandardMaterial color="#fde68a" />
       </mesh>
       {hovered && (
-        <Html position={[0, size[1] / 2 + 0.15, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-          <div className="px-2 py-1 rounded bg-background border text-[10px] whitespace-nowrap shadow">
+        <Html position={[0, size[1] / 2 + 0.15, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
+          <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
             <div className="font-semibold">{product.name}</div>
             <div className="text-muted-foreground">{slotLabel} · {product.quantity} dona</div>
           </div>
@@ -200,10 +200,10 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products }
           key={`lbl-${l}`}
           position={[-W / 2 - 0.15, l * slotH + slotH / 2, 0]}
           center
-          distanceFactor={10}
+          transform
           style={{ pointerEvents: 'none' }}
         >
-          <span className="text-[10px] font-bold text-primary font-mono bg-background/80 px-1 rounded">L{l + 1}</span>
+          <span className="font-bold text-primary font-mono bg-background/80 px-1 rounded" style={{ fontSize: '8px' }}>L{l + 1}</span>
         </Html>
       ))}
     </group>
