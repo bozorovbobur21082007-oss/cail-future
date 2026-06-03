@@ -57,9 +57,11 @@ interface ShelfRackProps {
   sector: SectorWithProducts;
   large?: boolean;
   highlight?: { level: number; column: number; row: number } | null;
+  highlightColor?: string;
+  pulseSpeed?: number;
 }
 
-function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) {
+function ShelfRack({ sector, large = false, highlight = null, highlightColor = '#ef4444', pulseSpeed = 4 }: ShelfRackProps) {
   const rows = Math.max(1, sector.levels || 1);
   const cols = Math.max(1, sector.columns || 1);
   const depthRows = Math.max(1, sector.rows || 1);
