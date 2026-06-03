@@ -54,7 +54,17 @@ interface BoxProps {
   highlighted?: boolean;
 }
 
-function PalletBox({ position, size, product, slotLabel, highlighted = false }: BoxProps) {
+interface BoxProps {
+  position: [number, number, number];
+  size: [number, number, number];
+  product: Product | null;
+  slotLabel: string;
+  highlighted?: boolean;
+  highlightColor?: string;
+  pulseSpeed?: number;
+}
+
+function PalletBox({ position, size, product, slotLabel, highlighted = false, highlightColor = '#ef4444', pulseSpeed = 4 }: BoxProps) {
   const [hovered, setHovered] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
@@ -62,12 +72,12 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
   useFrame(({ clock }) => {
     if (highlighted && beaconRef.current) {
       const t = clock.getElapsedTime();
-      const s = 1 + Math.sin(t * 4) * 0.15;
+      const s = 1 + Math.sin(t * Math.max(0.1, pulseSpeed) * 2 * Math.PI) * 0.15;
       beaconRef.current.scale.set(s, 1, s);
     }
   });
 
-  const ringColor = '#ef4444';
+  const ringColor = highlightColor;
 
   if (!product) {
     return (
