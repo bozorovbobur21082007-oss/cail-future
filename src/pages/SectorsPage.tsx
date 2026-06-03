@@ -484,6 +484,59 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
+                {/* Slot belgilash (robot uchun) */}
+                <div className="rounded-md border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-red-500" />
+                    <p className="text-xs font-semibold">Joyni belgilash — robotga ko'rsatish</p>
+                  </div>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Qavat (L) 1–{detailSector.levels}</Label>
+                      <Input
+                        type="number" min={1} max={detailSector.levels}
+                        value={hiInput.level}
+                        onChange={(e) => setHiInput({ ...hiInput, level: Math.max(1, Math.min(detailSector.levels, parseInt(e.target.value) || 1)) })}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Ustun (C) 1–{detailSector.columns}</Label>
+                      <Input
+                        type="number" min={1} max={detailSector.columns}
+                        value={hiInput.column}
+                        onChange={(e) => setHiInput({ ...hiInput, column: Math.max(1, Math.min(detailSector.columns, parseInt(e.target.value) || 1)) })}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Qator (R) 1–{detailSector.rows}</Label>
+                      <Input
+                        type="number" min={1} max={detailSector.rows}
+                        value={hiInput.row}
+                        onChange={(e) => setHiInput({ ...hiInput, row: Math.max(1, Math.min(detailSector.rows, parseInt(e.target.value) || 1)) })}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <Button
+                      size="sm" className="h-8 bg-red-500 hover:bg-red-600 text-white"
+                      onClick={() => setHighlight({ ...hiInput })}
+                    >
+                      <Target className="w-3.5 h-3.5 mr-1.5" /> Belgilash
+                    </Button>
+                    {highlight && (
+                      <Button size="sm" variant="outline" className="h-8" onClick={() => setHighlight(null)}>
+                        <X className="w-3.5 h-3.5 mr-1.5" /> Tozalash
+                      </Button>
+                    )}
+                    {highlight && (
+                      <Badge className="bg-red-500 text-white ml-auto font-mono">
+                        ★ {detailSector.code} · L{highlight.level} · C{highlight.column} · R{highlight.row}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     size="sm"
@@ -512,11 +565,12 @@ export default function SectorsPage() {
                     depth_cm={detailSector.depth_cm}
                     height_cm={detailSector.height_cm}
                     products={detailSector.products}
+                    highlight={highlight}
                     height={460}
                   />
                 ) : (
                   <div className="pl-6">
-                    <ShelfRack sector={detailSector} large />
+                    <ShelfRack sector={detailSector} large highlight={highlight} />
                   </div>
                 )}
 
