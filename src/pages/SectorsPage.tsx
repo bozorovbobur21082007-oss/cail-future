@@ -57,11 +57,9 @@ interface ShelfRackProps {
   sector: SectorWithProducts;
   large?: boolean;
   highlight?: { level: number; column: number; row: number } | null;
-  highlightColor?: string;
-  pulseSpeed?: number;
 }
 
-function ShelfRack({ sector, large = false, highlight = null, highlightColor = '#ef4444', pulseSpeed = 4 }: ShelfRackProps) {
+function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) {
   const rows = Math.max(1, sector.levels || 1);
   const cols = Math.max(1, sector.columns || 1);
   const depthRows = Math.max(1, sector.rows || 1);
@@ -122,24 +120,16 @@ function ShelfRack({ sector, large = false, highlight = null, highlightColor = '
                   {Array.from({ length: cols }).map((_, c) => {
                     const idx = rowIndex * cols + c;
                     const isHi = !!highlight && highlight.level === rowIndex + 1 && highlight.column === c + 1;
-                    const pulseDurationMs = Math.max(100, Math.round(1000 / Math.max(0.1, pulseSpeed)));
-                    const hiStyle: React.CSSProperties = isHi
-                      ? {
-                          boxShadow: `0 0 0 2px ${highlightColor}, 0 0 12px ${highlightColor}b3`,
-                          borderRadius: 2,
-                          animation: `pulse ${pulseDurationMs}ms cubic-bezier(0.4,0,0.6,1) infinite`,
-                        }
-                      : {};
+                    const hiRing = isHi ? 'ring-2 ring-red-500 ring-offset-1 shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse rounded-sm' : '';
                     if (idx >= totalCells) return <div key={c} />;
                     const p = cells[idx];
                     if (!p) {
                       return (
                         <Tooltip key={c}>
                           <TooltipTrigger asChild>
-                            <div className="relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors" style={hiStyle}>
-                              <div className="w-full h-1 rounded-full" style={{ background: isHi ? highlightColor : undefined }} />
-                              {!isHi && <div className="w-full h-1 rounded-full bg-success/30 absolute bottom-1 left-0" />}
-                              {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold" style={{ color: highlightColor }}>★</span>}
+                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors ${hiRing}`}>
+                              <div className={`w-full h-1 rounded-full ${isHi ? 'bg-red-500' : 'bg-success/30'}`} />
+                              {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-red-500">★</span>}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
@@ -149,11 +139,11 @@ function ShelfRack({ sector, large = false, highlight = null, highlightColor = '
                       );
                     }
                     const useShort = (c + rowIndex) % 3 === 1;
-                    const color = isHi ? highlightColor : productColor(p.id);
+                    const color = isHi ? '#ef4444' : productColor(p.id);
                     return (
                       <Tooltip key={c}>
                         <TooltipTrigger asChild>
-                          <div className="relative flex items-end cursor-help" style={hiStyle}>
+                          <div className={`relative flex items-end cursor-help ${hiRing}`}>
                             <div
                               className={`w-full ${useShort ? boxShortH : boxH} rounded-sm border shadow-sm flex flex-col items-center overflow-hidden hover:-translate-y-0.5 transition-transform`}
                               style={{
@@ -170,7 +160,7 @@ function ShelfRack({ sector, large = false, highlight = null, highlightColor = '
                                 {large ? p.name.slice(0, 10) : p.name.slice(0, 4).toUpperCase()}
                               </span>
                             </div>
-                            {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold" style={{ color: highlightColor }}>★</span>}
+                            {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-500">★</span>}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
@@ -212,8 +202,6 @@ export default function SectorsPage() {
   const [detailView, setDetailView] = useState<'3d' | '2d'>('3d');
   const [highlight, setHighlight] = useState<{ level: number; column: number; row: number } | null>(null);
   const [hiInput, setHiInput] = useState({ level: 1, column: 1, row: 1 });
-  const [highlightColor, setHighlightColor] = useState<string>('#ef4444');
-  const [pulseSpeed, setPulseSpeed] = useState<number>(4); // Hz
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -531,8 +519,7 @@ export default function SectorsPage() {
                       />
                     </div>
                     <Button
-                      size="sm" className="h-8 text-white"
-                      style={{ backgroundColor: highlightColor }}
+                      size="sm" className="h-8 bg-red-500 hover:bg-red-600 text-white"
                       onClick={() => setHighlight({ ...hiInput })}
                     >
                       <Target className="w-3.5 h-3.5 mr-1.5" /> Belgilash
@@ -543,59 +530,10 @@ export default function SectorsPage() {
                       </Button>
                     )}
                     {highlight && (
-                      <Badge className="text-white ml-auto font-mono" style={{ backgroundColor: highlightColor }}>
+                      <Badge className="bg-red-500 text-white ml-auto font-mono">
                         ★ {detailSector.code} · L{highlight.level} · C{highlight.column} · R{highlight.row}
                       </Badge>
                     )}
-                  </div>
-
-                  {/* Rang & miltillash tezligi */}
-                  <div className="mt-3 pt-3 border-t border-red-200/60 dark:border-red-900/30 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] text-muted-foreground">Rang</Label>
-                      <div className="flex items-center gap-2">
-                        {[
-                          { c: '#ef4444', name: 'Qizil' },
-                          { c: '#2563eb', name: "Ko'k" },
-                          { c: '#16a34a', name: 'Yashil' },
-                          { c: '#f59e0b', name: 'Sariq' },
-                          { c: '#a855f7', name: 'Binafsha' },
-                        ].map(({ c, name }) => (
-                          <button
-                            key={c}
-                            type="button"
-                            title={name}
-                            onClick={() => setHighlightColor(c)}
-                            className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${highlightColor === c ? 'ring-2 ring-offset-1 ring-foreground scale-110' : 'border-white shadow'}`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                        <Input
-                          type="color"
-                          value={highlightColor}
-                          onChange={(e) => setHighlightColor(e.target.value)}
-                          className="h-7 w-10 p-0.5 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] text-muted-foreground flex items-center justify-between">
-                        <span>Miltillash tezligi</span>
-                        <span className="font-mono text-foreground">{pulseSpeed.toFixed(1)} Hz</span>
-                      </Label>
-                      <input
-                        type="range"
-                        min={0.5}
-                        max={10}
-                        step={0.5}
-                        value={pulseSpeed}
-                        onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
-                        className="w-full accent-primary"
-                      />
-                      <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
-                        <span>Sekin</span><span>Tez</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -628,13 +566,11 @@ export default function SectorsPage() {
                     height_cm={detailSector.height_cm}
                     products={detailSector.products}
                     highlight={highlight}
-                    highlightColor={highlightColor}
-                    pulseSpeed={pulseSpeed}
                     height={460}
                   />
                 ) : (
                   <div className="pl-6">
-                    <ShelfRack sector={detailSector} large highlight={highlight} highlightColor={highlightColor} pulseSpeed={pulseSpeed} />
+                    <ShelfRack sector={detailSector} large highlight={highlight} />
                   </div>
                 )}
 
