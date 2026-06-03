@@ -20,6 +20,15 @@ interface Sector {
   code: string;
   description: string;
   capacity: number;
+  rows: number;
+  columns: number;
+  levels: number;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number;
+  position_x: number;
+  position_y: number;
+  orientation: number;
   created_at: string;
 }
 
@@ -33,16 +42,6 @@ interface Product {
 interface SectorWithProducts extends Sector {
   products: Product[];
   occupied: number;
-}
-
-// Compute shelf layout: rows (levels) × cols, near-square but capping rows at 5
-function computeLayout(capacity: number) {
-  const cap = Math.max(1, capacity);
-  let rows = Math.min(5, Math.max(2, Math.round(Math.sqrt(cap / 2))));
-  let cols = Math.ceil(cap / rows);
-  if (cols < 3) { cols = 3; rows = Math.ceil(cap / cols); }
-  if (cols > 14) { cols = 14; rows = Math.ceil(cap / cols); }
-  return { rows, cols };
 }
 
 // Color hash for product chips to differentiate visually
