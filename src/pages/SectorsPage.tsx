@@ -88,7 +88,7 @@ function ShelfRack({ sector, large = false }: ShelfRackProps) {
           {sector.code}
         </div>
         <span className="text-[10px] text-muted-foreground font-mono">
-          {rows} × {cols}
+          {rows}L × {cols}C × {depthRows}R
         </span>
       </div>
 
