@@ -531,7 +531,8 @@ export default function SectorsPage() {
                       />
                     </div>
                     <Button
-                      size="sm" className="h-8 bg-red-500 hover:bg-red-600 text-white"
+                      size="sm" className="h-8 text-white"
+                      style={{ backgroundColor: highlightColor }}
                       onClick={() => setHighlight({ ...hiInput })}
                     >
                       <Target className="w-3.5 h-3.5 mr-1.5" /> Belgilash
@@ -542,10 +543,59 @@ export default function SectorsPage() {
                       </Button>
                     )}
                     {highlight && (
-                      <Badge className="bg-red-500 text-white ml-auto font-mono">
+                      <Badge className="text-white ml-auto font-mono" style={{ backgroundColor: highlightColor }}>
                         ★ {detailSector.code} · L{highlight.level} · C{highlight.column} · R{highlight.row}
                       </Badge>
                     )}
+                  </div>
+
+                  {/* Rang & miltillash tezligi */}
+                  <div className="mt-3 pt-3 border-t border-red-200/60 dark:border-red-900/30 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] text-muted-foreground">Rang</Label>
+                      <div className="flex items-center gap-2">
+                        {[
+                          { c: '#ef4444', name: 'Qizil' },
+                          { c: '#2563eb', name: "Ko'k" },
+                          { c: '#16a34a', name: 'Yashil' },
+                          { c: '#f59e0b', name: 'Sariq' },
+                          { c: '#a855f7', name: 'Binafsha' },
+                        ].map(({ c, name }) => (
+                          <button
+                            key={c}
+                            type="button"
+                            title={name}
+                            onClick={() => setHighlightColor(c)}
+                            className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${highlightColor === c ? 'ring-2 ring-offset-1 ring-foreground scale-110' : 'border-white shadow'}`}
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                        <Input
+                          type="color"
+                          value={highlightColor}
+                          onChange={(e) => setHighlightColor(e.target.value)}
+                          className="h-7 w-10 p-0.5 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] text-muted-foreground flex items-center justify-between">
+                        <span>Miltillash tezligi</span>
+                        <span className="font-mono text-foreground">{pulseSpeed.toFixed(1)} Hz</span>
+                      </Label>
+                      <input
+                        type="range"
+                        min={0.5}
+                        max={10}
+                        step={0.5}
+                        value={pulseSpeed}
+                        onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
+                        className="w-full accent-primary"
+                      />
+                      <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                        <span>Sekin</span><span>Tez</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
