@@ -447,6 +447,25 @@ export default function SectorsPage() {
                   </DialogDescription>
                 </DialogHeader>
 
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">Tuzilishi</p>
+                    <p className="font-mono font-semibold">{detailSector.rows}×{detailSector.columns}×{detailSector.levels}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">O'lcham (sm)</p>
+                    <p className="font-mono font-semibold">{detailSector.width_cm}×{detailSector.depth_cm}×{detailSector.height_cm}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">Pozitsiya</p>
+                    <p className="font-mono font-semibold">X:{detailSector.position_x} Y:{detailSector.position_y}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-muted-foreground">Burchak</p>
+                    <p className="font-mono font-semibold">{detailSector.orientation}°</p>
+                  </div>
+                </div>
+
                 <div className="pl-6">
                   <ShelfRack sector={detailSector} large />
                 </div>
