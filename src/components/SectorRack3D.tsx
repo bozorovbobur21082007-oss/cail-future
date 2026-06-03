@@ -103,7 +103,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false, hi
               <meshBasicMaterial color={ringColor} transparent opacity={0.5} />
             </mesh>
             <Html position={[0, size[1] * 1.6, 0]} center transform style={{ pointerEvents: 'none' }}>
-              <div className="px-1.5 py-0.5 rounded bg-red-500 text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px' }}>
+              <div className="px-1.5 py-0.5 rounded text-white font-bold whitespace-nowrap shadow-lg" style={{ fontSize: '7px', backgroundColor: ringColor }}>
                 ★ {slotLabel}
               </div>
             </Html>
