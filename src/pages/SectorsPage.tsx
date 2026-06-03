@@ -56,9 +56,10 @@ function productColor(id: string) {
 interface ShelfRackProps {
   sector: SectorWithProducts;
   large?: boolean;
+  highlight?: { level: number; column: number; row: number } | null;
 }
 
-function ShelfRack({ sector, large = false }: ShelfRackProps) {
+function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) {
   const rows = Math.max(1, sector.levels || 1);
   const cols = Math.max(1, sector.columns || 1);
   const depthRows = Math.max(1, sector.rows || 1);
