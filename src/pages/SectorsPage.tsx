@@ -71,9 +71,21 @@ interface Product {
   nfc_id?: string | null;
 }
 
+interface Placement {
+  id: string;
+  sector_id: string;
+  product_id: string;
+  level: number;
+  column_idx: number;
+  row_idx: number;
+  quantity: number;
+}
+
 interface SectorWithProducts extends Sector {
   products: Product[];
   occupied: number;
+  placements: PlacementMap;
+  placementRows: Placement[];
 }
 
 // Color hash for product chips to differentiate visually
