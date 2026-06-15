@@ -348,6 +348,29 @@ export default function SectorsPage() {
   const totalOccupied = sectors.reduce((s, x) => s + x.occupied, 0);
   const totalEmpty = totalCapacity - totalOccupied;
 
+  // Find product in current detail sector by name/code/nfc and highlight it
+  const highlightByQuery = (q: string) => {
+    if (!detailSector) return;
+    const raw = q.trim();
+    if (!raw) {
+      toast.error('Mahsulot nomi yoki kodini kiriting');
+      return;
+    }
+    const needle = raw.toLowerCase();
+    const slot = findProductSlot(detailSector, (p) =>
+      p.name.toLowerCase().includes(needle) ||
+      (p.product_code || '').toLowerCase() === needle ||
+      (p.nfc_id || '').toLowerCase() === needle
+    );
+    if (!slot) {
+      toast.error(`"${raw}" bu sektorda topilmadi`);
+      return;
+    }
+    setHighlight(slot);
+    setHiInput(slot);
+    toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   }
