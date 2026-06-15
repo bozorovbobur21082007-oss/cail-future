@@ -539,6 +539,38 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
+                  {/* Mahsulot nomi yoki kod/QR/barkod orqali izlash */}
+                  <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b border-red-200/60 dark:border-red-900/30">
+                    <div className="space-y-1 flex-1 min-w-[180px]">
+                      <Label className="text-[10px] text-muted-foreground">Mahsulot nomi / kodi</Label>
+                      <Input
+                        list={`sector-products-${detailSector.id}`}
+                        placeholder="Masalan: Olma yoki AB12CD34"
+                        value={productQuery}
+                        onChange={(e) => setProductQuery(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); highlightByQuery(productQuery); } }}
+                        className="h-8"
+                      />
+                      <datalist id={`sector-products-${detailSector.id}`}>
+                        {detailSector.products.map((p) => (
+                          <option key={p.id} value={p.name}>{p.product_code || ''}</option>
+                        ))}
+                      </datalist>
+                    </div>
+                    <Button
+                      size="sm" className="h-8"
+                      onClick={() => highlightByQuery(productQuery)}
+                    >
+                      <Search className="w-3.5 h-3.5 mr-1.5" /> Topish
+                    </Button>
+                    <Button
+                      size="sm" variant="outline" className="h-8"
+                      onClick={() => setScannerOpen(true)}
+                    >
+                      <ScanLine className="w-3.5 h-3.5 mr-1.5" /> QR / Barkod
+                    </Button>
+                  </div>
+
                 {/* Slot belgilash (robot uchun) */}
                 <div className="rounded-md border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 p-3">
                   <div className="flex items-center gap-2 mb-2">
