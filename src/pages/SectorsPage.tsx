@@ -242,7 +242,7 @@ export default function SectorsPage() {
   const fetchSectors = useCallback(async () => {
     const [sectorsRes, productsRes] = await Promise.all([
       supabase.from('sectors').select('*').order('created_at', { ascending: false }),
-      supabase.from('products').select('id, name, sector_id, quantity'),
+      supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id'),
     ]);
 
     if (sectorsRes.error) {
