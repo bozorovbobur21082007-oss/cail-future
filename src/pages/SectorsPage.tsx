@@ -934,7 +934,21 @@ export default function SectorsPage() {
                   value={pickerQuantity}
                   onChange={(e) => setPickerQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                 />
+                {pickerProductId && (() => {
+                  const prod = allProducts.find(p => p.id === pickerProductId);
+                  if (!prod) return null;
+                  const placedElsewhere = sectors.reduce((sum, s) => sum + (s.placementRows || [])
+                    .filter(pl => pl.product_id === pickerProductId && !(s.id === detailSector?.id && pl.level === pickerSlot?.level && pl.column_idx === pickerSlot?.column && pl.row_idx === pickerSlot?.row))
+                    .reduce((a, b) => a + (b.quantity || 0), 0), 0);
+                  const remaining = (prod.quantity || 0) - placedElsewhere;
+                  return (
+                    <div className={`text-xs ${remaining < pickerQuantity ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      Jami: {prod.quantity} · Joylashtirilgan: {placedElsewhere} · Bo'sh: {Math.max(0, remaining)}
+                    </div>
+                  );
+                })()}
               </div>
+
             </div>
             <DialogFooter className="gap-2 sm:gap-2">
               {pickerExistingId && (
