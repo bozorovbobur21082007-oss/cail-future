@@ -874,6 +874,58 @@ export default function SectorsPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Slot info dialog */}
+        <Dialog open={!!slotInfo} onOpenChange={(o) => { if (!o) closeSlotInfo(); }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Info className="w-5 h-5 text-primary" />
+                Katak haqida
+              </DialogTitle>
+              <DialogDescription>
+                {slotInfo && detailSector && (
+                  <>
+                    {detailSector.code} · <span className="font-mono font-semibold">L{slotInfo.slot.level} · C{slotInfo.slot.column} · R{slotInfo.slot.row}</span>
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {slotInfo?.product ? (
+                <div className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: productColor(slotInfo.product.id) }} />
+                    <span className="font-semibold text-sm">{slotInfo.product.name}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                    <div>Miqdor: <span className="font-mono font-medium text-foreground">{slotInfo.product.quantity}</span></div>
+                    {slotInfo.product.product_code && <div>Kod: <span className="font-mono font-medium text-foreground">{slotInfo.product.product_code}</span></div>}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  <Package className="w-6 h-6 mx-auto mb-2 text-muted-foreground/60" />
+                  Bu katak bo'sh
+                </div>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={closeSlotInfo}>Yopish</Button>
+              <Button
+                onClick={() => {
+                  if (!slotInfo) return;
+                  const slot = slotInfo.slot;
+                  closeSlotInfo();
+                  openSlotPicker(slot);
+                }}
+              >
+                <ArrowRightLeft className="w-4 h-4 mr-1.5" />
+                Joyni o'zgartirish
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* QR / Barkod skaner */}
         <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
           <DialogContent className="max-w-md">
