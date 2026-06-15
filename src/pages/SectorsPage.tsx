@@ -634,7 +634,7 @@ export default function SectorsPage() {
         </div>
 
         {/* Detail dialog with large rack */}
-        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); } }}>
+        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); setDepthRow(1); closeSlotPicker(); } }}>
           <DialogContent className="max-w-3xl">
             {detailSector && (
               <>
