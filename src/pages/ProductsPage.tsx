@@ -16,6 +16,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -40,6 +41,7 @@ export default function ProductsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [bulkPrintOpen, setBulkPrintOpen] = useState(false);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [mergeTarget, setMergeTarget] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -390,11 +392,24 @@ export default function ProductsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Mahsulotlar</h1>
           <p className="text-sm text-muted-foreground mt-1">Barcha omborxona mahsulotlari</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="w-4 h-4 mr-2" />
-          Yangi mahsulot
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setBulkPrintOpen(true)} disabled={products.length === 0}>
+            <Printer className="w-4 h-4 mr-2" />
+            A4 ga chop etish
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus className="w-4 h-4 mr-2" />
+            Yangi mahsulot
+          </Button>
+        </div>
       </div>
+
+      <BulkPrintA4Dialog
+        open={bulkPrintOpen}
+        onOpenChange={setBulkPrintOpen}
+        products={products.map(p => ({ id: p.id, product_code: p.product_code, name: p.name }))}
+        initialSelectedIds={filtered.map(p => p.id)}
+      />
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative max-w-sm flex-1">
