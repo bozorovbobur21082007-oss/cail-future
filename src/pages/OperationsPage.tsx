@@ -58,6 +58,7 @@ export default function OperationsPage() {
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [quickLabelOpen, setQuickLabelOpen] = useState(false);
+  const [sectorsViewerOpen, setSectorsViewerOpen] = useState(false);
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
