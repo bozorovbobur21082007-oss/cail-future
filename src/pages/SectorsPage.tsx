@@ -539,10 +539,17 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
+                {/* Slot belgilash (robot uchun) */}
+                <div className="rounded-md border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-red-500" />
+                    <p className="text-xs font-semibold">Joyni belgilash — robotga ko'rsatish</p>
+                  </div>
+
                   {/* Mahsulot nomi yoki kod/QR/barkod orqali izlash */}
                   <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b border-red-200/60 dark:border-red-900/30">
                     <div className="space-y-1 flex-1 min-w-[180px]">
-                      <Label className="text-[10px] text-muted-foreground">Mahsulot nomi / kodi</Label>
+                      <Label className="text-[10px] text-muted-foreground">Mahsulot nomi / kodi (QR yoki barkod)</Label>
                       <Input
                         list={`sector-products-${detailSector.id}`}
                         placeholder="Masalan: Olma yoki AB12CD34"
@@ -571,13 +578,8 @@ export default function SectorsPage() {
                     </Button>
                   </div>
 
-                {/* Slot belgilash (robot uchun) */}
-                <div className="rounded-md border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-red-500" />
-                    <p className="text-xs font-semibold">Joyni belgilash — robotga ko'rsatish</p>
-                  </div>
                   <div className="flex flex-wrap items-end gap-2">
+
                     <div className="space-y-1">
                       <Label className="text-[10px] text-muted-foreground">Qavat (L) 1–{detailSector.levels}</Label>
                       <Input
