@@ -1,0 +1,364 @@
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { MapPin, Search, Loader2, Box, LayoutGrid, Target, X, ScanLine, Eye, Package } from 'lucide-react';
+import { toast } from 'sonner';
+import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
+import QrScanner from '@/components/QrScanner';
+
+interface Sector {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  capacity: number;
+  rows: number;
+  columns: number;
+  levels: number;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  sector_id: string | null;
+  quantity: number;
+  product_code?: string | null;
+  nfc_id?: string | null;
+}
+
+interface Placement {
+  id: string;
+  sector_id: string;
+  product_id: string;
+  level: number;
+  column_idx: number;
+  row_idx: number;
+  quantity: number;
+}
+
+interface SectorWithProducts extends Sector {
+  products: Product[];
+  occupied: number;
+  placements: PlacementMap;
+  placementRows: Placement[];
+}
+
+function productColor(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return `hsl(${h % 360} 70% 55%)`;
+}
+
+function findProductSlot(
+  sector: { rows: number; columns: number; levels: number; placements: PlacementMap },
+  predicate: (p: Product) => boolean,
+): HighlightSlot | null {
+  for (const [key, val] of sector.placements.entries()) {
+    if (predicate(val.product as Product)) {
+      const [l, c, r] = key.split('-').map(Number);
+      return { level: l, column: c, row: r };
+    }
+  }
+  return null;
+}
+
+interface Props {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}
+
+export default function SectorsViewer({ open, onOpenChange }: Props) {
+  const [sectors, setSectors] = useState<SectorWithProducts[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [detailSector, setDetailSector] = useState<SectorWithProducts | null>(null);
+  const [detailView, setDetailView] = useState<'3d' | '2d'>('3d');
+  const [highlight, setHighlight] = useState<HighlightSlot | null>(null);
+  const [productQuery, setProductQuery] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const fetchSectors = useCallback(async () => {
+    setLoading(true);
+    const [sectorsRes, productsRes, placementsRes] = await Promise.all([
+      supabase.from('sectors').select('*').order('created_at', { ascending: false }),
+      supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id'),
+      supabase.from('product_placements').select('*'),
+    ]);
+    if (sectorsRes.error) {
+      toast.error('Sektorlarni yuklashda xatolik');
+      setLoading(false);
+      return;
+    }
+    const products = (productsRes.data || []) as Product[];
+    const productById = new Map(products.map(p => [p.id, p]));
+    const bySector: Record<string, Product[]> = {};
+    products.forEach(p => { if (p.sector_id) (bySector[p.sector_id] ||= []).push(p); });
+    const placements = (placementsRes.data || []) as Placement[];
+    const placementsBySector: Record<string, Placement[]> = {};
+    placements.forEach(pl => { (placementsBySector[pl.sector_id] ||= []).push(pl); });
+
+    const enriched: SectorWithProducts[] = (sectorsRes.data || []).map(s => {
+      const list = bySector[s.id] || [];
+      const plList = placementsBySector[s.id] || [];
+      const map: PlacementMap = new Map();
+      plList.forEach(pl => {
+        const prod = productById.get(pl.product_id);
+        if (prod) map.set(placementKey(pl.level, pl.column_idx, pl.row_idx), { product: prod, quantity: pl.quantity });
+      });
+      const occupiedFromPlacements = plList.reduce((sum, pl) => sum + pl.quantity, 0);
+      const occupied = map.size > 0
+        ? Math.min(occupiedFromPlacements, s.capacity)
+        : Math.min(list.reduce((sum, p) => sum + (p.quantity || 0), 0), s.capacity);
+      return { ...s, products: list, occupied, placements: map, placementRows: plList };
+    });
+    setSectors(enriched);
+    setDetailSector(prev => prev ? (enriched.find(e => e.id === prev.id) ?? null) : null);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { if (open) fetchSectors(); }, [open, fetchSectors]);
+
+  const filtered = sectors.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.code.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Global product search across all sectors → opens detail and highlights
+  const globalFind = (q: string) => {
+    const raw = q.trim();
+    if (!raw) return;
+    const needle = raw.toLowerCase();
+    for (const s of sectors) {
+      const slot = findProductSlot(s, (p: Product) =>
+        p.name.toLowerCase().includes(needle) ||
+        (p.product_code || '').toLowerCase() === needle ||
+        (p.nfc_id || '').toLowerCase() === needle
+      );
+      if (slot) {
+        setDetailSector(s);
+        setHighlight(slot);
+        toast.success(`Topildi: ${s.name} · L${slot.level}·C${slot.column}·R${slot.row}`);
+        return;
+      }
+    }
+    toast.error(`"${raw}" topilmadi`);
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); } }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" /> Ombor xaritasi (faqat ko'rish)
+            </DialogTitle>
+            <DialogDescription>
+              Sektorlarni 3D ko'rinishda ko'ring. Mahsulotni qidirib, joyini aniqlang.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Global find */}
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1 flex-1 min-w-[180px]">
+                <Label className="text-[10px] text-muted-foreground">Mahsulot nomi yoki kodi</Label>
+                <Input
+                  placeholder="Masalan: Olma yoki AB12CD34"
+                  value={productQuery}
+                  onChange={(e) => setProductQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); globalFind(productQuery); } }}
+                  className="h-8"
+                />
+              </div>
+              <Button size="sm" className="h-8" onClick={() => globalFind(productQuery)}>
+                <Search className="w-3.5 h-3.5 mr-1.5" /> Topish
+              </Button>
+              <Button size="sm" variant="outline" className="h-8" onClick={() => setScannerOpen(true)}>
+                <ScanLine className="w-3.5 h-3.5 mr-1.5" /> QR / Barkod
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Sektor qidirish..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filtered.length === 0 ? (
+                <div className="col-span-full text-center text-muted-foreground py-8 text-sm">
+                  {search ? "Natija topilmadi" : "Sektor mavjud emas"}
+                </div>
+              ) : filtered.map(s => {
+                const pct = s.capacity > 0 ? Math.round((s.occupied / s.capacity) * 100) : 0;
+                return (
+                  <Card key={s.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setDetailSector(s); setHighlight(null); }}>
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <MapPin className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">{s.name}</p>
+                            <p className="text-[11px] text-muted-foreground font-mono truncate">{s.code} · {s.products.length} mahsulot</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">{pct}%</Badge>
+                      </div>
+                      <Progress value={pct} className="h-1.5" />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Sector detail (read-only) */}
+      <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {detailSector && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  {detailSector.name}
+                  <Badge variant="outline" className="font-mono">{detailSector.code}</Badge>
+                  <Badge variant="secondary" className="text-[10px]">Faqat ko'rish</Badge>
+                </DialogTitle>
+                <DialogDescription>
+                  {detailSector.description || "Sektor ko'rinishi"}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                {highlight && (
+                  <Badge className="bg-red-500 text-white font-mono">
+                    <Target className="w-3 h-3 mr-1" /> L{highlight.level} · C{highlight.column} · R{highlight.row}
+                  </Badge>
+                )}
+                <div className="flex items-center gap-1 ml-auto">
+                  {highlight && (
+                    <Button size="sm" variant="outline" className="h-8" onClick={() => setHighlight(null)}>
+                      <X className="w-3.5 h-3.5 mr-1.5" /> Tozalash
+                    </Button>
+                  )}
+                  <Button size="sm" variant={detailView === '3d' ? 'default' : 'outline'} onClick={() => setDetailView('3d')} className="h-8">
+                    <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
+                  </Button>
+                  <Button size="sm" variant={detailView === '2d' ? 'default' : 'outline'} onClick={() => setDetailView('2d')} className="h-8">
+                    <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
+                  </Button>
+                </div>
+              </div>
+
+              {detailView === '3d' ? (
+                <SectorRack3D
+                  rows={detailSector.rows}
+                  columns={detailSector.columns}
+                  levels={detailSector.levels}
+                  width_cm={detailSector.width_cm}
+                  depth_cm={detailSector.depth_cm}
+                  height_cm={detailSector.height_cm}
+                  products={detailSector.products}
+                  placements={detailSector.placements}
+                  highlight={highlight}
+                  height={460}
+                />
+              ) : (
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {detailSector.levels}L × {detailSector.columns}C × {detailSector.rows}R
+                  </p>
+                  <div className="space-y-3">
+                    {Array.from({ length: detailSector.levels }).map((_, lIdx) => {
+                      const L = detailSector.levels - lIdx;
+                      return (
+                        <div key={L}>
+                          <p className="text-[10px] font-mono text-muted-foreground mb-1">L{L}</p>
+                          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${detailSector.columns}, minmax(0, 1fr))` }}>
+                            {Array.from({ length: detailSector.columns }).map((_, cIdx) => {
+                              const C = cIdx + 1;
+                              const pl = detailSector.placements.get(placementKey(L, C, 1));
+                              const isHi = highlight && highlight.level === L && highlight.column === C;
+                              const color = pl ? productColor(pl.product.id) : null;
+                              return (
+                                <div
+                                  key={C}
+                                  className={`h-10 rounded border text-[9px] flex items-center justify-center font-semibold ${isHi ? 'ring-2 ring-red-500 animate-pulse' : ''}`}
+                                  style={pl ? { background: `${color}33`, borderColor: `${color}99`, color: color! } : undefined}
+                                  title={pl ? `${pl.product.name} ×${pl.quantity}` : `Bo'sh · L${L}·C${C}`}
+                                >
+                                  {pl ? pl.product.name.slice(0, 4).toUpperCase() : '—'}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {detailSector.products.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                    <Package className="w-3.5 h-3.5" /> Mahsulotlar ({detailSector.products.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                    {detailSector.products.map(p => (
+                      <div key={p.id} className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-xs">
+                        <span className="w-2.5 h-2.5 rounded-sm" style={{ background: productColor(p.id) }} />
+                        <span className="font-medium">{p.name}</span>
+                        <span className="text-muted-foreground">×{p.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* QR scanner */}
+      <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ScanLine className="w-5 h-5 text-primary" /> QR yoki barkodni skanerlash
+            </DialogTitle>
+            <DialogDescription>
+              Mahsulot kodini ko'rsating — joyi avtomatik topiladi
+            </DialogDescription>
+          </DialogHeader>
+          {scannerOpen && (
+            <QrScanner
+              onScan={(code) => {
+                setScannerOpen(false);
+                setProductQuery(code);
+                globalFind(code);
+              }}
+              onClose={() => setScannerOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

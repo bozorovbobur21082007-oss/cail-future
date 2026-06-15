@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio, Plus, Printer
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio, Plus, Printer, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
@@ -15,6 +15,7 @@ import QrScanner from '@/components/QrScanner';
 import NfcScanner from '@/components/NfcScanner';
 import QuickLabelDialog from '@/components/QuickLabelDialog';
 import PrintLabelDialog from '@/components/PrintLabelDialog';
+import SectorsViewer from '@/components/SectorsViewer';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,6 +58,7 @@ export default function OperationsPage() {
   const [showProductScanner, setShowProductScanner] = useState(false);
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [quickLabelOpen, setQuickLabelOpen] = useState(false);
+  const [sectorsViewerOpen, setSectorsViewerOpen] = useState(false);
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
@@ -292,16 +294,29 @@ export default function OperationsPage() {
             Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span>.
           </p>
         </div>
-        <Button
-          onClick={() => setQuickLabelOpen(true)}
-          variant="outline"
-          className="gap-2 shrink-0"
-        >
-          <Printer className="w-4 h-4" />
-          <span className="hidden sm:inline">Yangi mahsulot + yorliq</span>
-          <span className="sm:hidden">Yangi yorliq</span>
-        </Button>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            onClick={() => setSectorsViewerOpen(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <MapPin className="w-4 h-4" />
+            <span className="hidden sm:inline">Ombor xaritasi</span>
+            <span className="sm:hidden">Xarita</span>
+          </Button>
+          <Button
+            onClick={() => setQuickLabelOpen(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline">Yangi mahsulot + yorliq</span>
+            <span className="sm:hidden">Yangi yorliq</span>
+          </Button>
+        </div>
       </div>
+
+      <SectorsViewer open={sectorsViewerOpen} onOpenChange={setSectorsViewerOpen} />
 
       <QuickLabelDialog
         open={quickLabelOpen}
