@@ -848,7 +848,7 @@ export default function SectorsPage() {
                       large
                       highlight={highlight}
                       depthRow={depthRow}
-                      onSlotClick={openSlotPicker}
+                      onSlotClick={openSlotInfo}
                     />
                   </div>
                 )}
