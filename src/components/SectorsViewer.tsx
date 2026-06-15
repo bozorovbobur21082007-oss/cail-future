@@ -355,13 +355,6 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                   </div>
                 </div>
               )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {detailSector.products.length > 0 && (
                 <div className="border-t pt-3">
