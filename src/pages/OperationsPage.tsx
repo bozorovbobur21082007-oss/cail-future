@@ -294,16 +294,29 @@ export default function OperationsPage() {
             Yangi tovar omborga kelganda <span className="font-medium text-success">Kirim (IN)</span>, ombordan tovar olinganda <span className="font-medium text-warning">Chiqim (OUT)</span>.
           </p>
         </div>
-        <Button
-          onClick={() => setQuickLabelOpen(true)}
-          variant="outline"
-          className="gap-2 shrink-0"
-        >
-          <Printer className="w-4 h-4" />
-          <span className="hidden sm:inline">Yangi mahsulot + yorliq</span>
-          <span className="sm:hidden">Yangi yorliq</span>
-        </Button>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            onClick={() => setSectorsViewerOpen(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <MapPin className="w-4 h-4" />
+            <span className="hidden sm:inline">Ombor xaritasi</span>
+            <span className="sm:hidden">Xarita</span>
+          </Button>
+          <Button
+            onClick={() => setQuickLabelOpen(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="hidden sm:inline">Yangi mahsulot + yorliq</span>
+            <span className="sm:hidden">Yangi yorliq</span>
+          </Button>
+        </div>
       </div>
+
+      <SectorsViewer open={sectorsViewerOpen} onOpenChange={setSectorsViewerOpen} />
 
       <QuickLabelDialog
         open={quickLabelOpen}
