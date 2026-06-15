@@ -452,15 +452,33 @@ export default function SectorsPage() {
       toast.error('Mahsulot tanlang');
       return;
     }
+    const product = allProducts.find(p => p.id === pickerProductId);
+    if (!product) { toast.error('Mahsulot topilmadi'); return; }
+    const qty = Math.max(1, pickerQuantity);
     setPickerSaving(true);
     try {
+      // Sum existing placements for this product across all sectors (excluding this slot)
+      const { data: existing, error: exErr } = await supabase
+        .from('product_placements')
+        .select('id, quantity, sector_id, level, column_idx, row_idx')
+        .eq('product_id', pickerProductId);
+      if (exErr) throw exErr;
+      const alreadyPlaced = (existing || [])
+        .filter(p => !(p.sector_id === detailSector.id && p.level === pickerSlot.level && p.column_idx === pickerSlot.column && p.row_idx === pickerSlot.row))
+        .reduce((s, p) => s + (p.quantity || 0), 0);
+      const remaining = (product.quantity || 0) - alreadyPlaced;
+      if (qty > remaining) {
+        toast.error(`Yetarli emas! "${product.name}" jami ${product.quantity} dona, ${alreadyPlaced} dona joylashtirilgan, bo'sh: ${Math.max(0, remaining)} dona`);
+        setPickerSaving(false);
+        return;
+      }
       const payload = {
         sector_id: detailSector.id,
         product_id: pickerProductId,
         level: pickerSlot.level,
         column_idx: pickerSlot.column,
         row_idx: pickerSlot.row,
-        quantity: Math.max(1, pickerQuantity),
+        quantity: qty,
       };
       const { error } = await supabase
         .from('product_placements')
@@ -477,6 +495,7 @@ export default function SectorsPage() {
       setPickerSaving(false);
     }
   };
+
 
   const clearPlacement = async () => {
     if (!detailSector || !pickerSlot) return;
@@ -915,7 +934,21 @@ export default function SectorsPage() {
                   value={pickerQuantity}
                   onChange={(e) => setPickerQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                 />
+                {pickerProductId && (() => {
+                  const prod = allProducts.find(p => p.id === pickerProductId);
+                  if (!prod) return null;
+                  const placedElsewhere = sectors.reduce((sum, s) => sum + (s.placementRows || [])
+                    .filter(pl => pl.product_id === pickerProductId && !(s.id === detailSector?.id && pl.level === pickerSlot?.level && pl.column_idx === pickerSlot?.column && pl.row_idx === pickerSlot?.row))
+                    .reduce((a, b) => a + (b.quantity || 0), 0), 0);
+                  const remaining = (prod.quantity || 0) - placedElsewhere;
+                  return (
+                    <div className={`text-xs ${remaining < pickerQuantity ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      Jami: {prod.quantity} · Joylashtirilgan: {placedElsewhere} · Bo'sh: {Math.max(0, remaining)}
+                    </div>
+                  );
+                })()}
               </div>
+
             </div>
             <DialogFooter className="gap-2 sm:gap-2">
               {pickerExistingId && (
