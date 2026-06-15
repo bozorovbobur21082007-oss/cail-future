@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X, ScanLine } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X, ScanLine, MousePointer2, Layers, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
-import SectorRack3D from '@/components/SectorRack3D';
+import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
 import QrScanner from '@/components/QrScanner';
 
 // Compute slot coords (1-indexed) of a product inside a sector's slot layout.
@@ -70,9 +71,21 @@ interface Product {
   nfc_id?: string | null;
 }
 
+interface Placement {
+  id: string;
+  sector_id: string;
+  product_id: string;
+  level: number;
+  column_idx: number;
+  row_idx: number;
+  quantity: number;
+}
+
 interface SectorWithProducts extends Sector {
   products: Product[];
   occupied: number;
+  placements: PlacementMap;
+  placementRows: Placement[];
 }
 
 // Color hash for product chips to differentiate visually
@@ -87,83 +100,95 @@ interface ShelfRackProps {
   sector: SectorWithProducts;
   large?: boolean;
   highlight?: { level: number; column: number; row: number } | null;
+  depthRow?: number; // 1-indexed; which depth row to show in 2D
+  onSlotClick?: (slot: HighlightSlot) => void;
 }
 
-function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) {
+function ShelfRack({ sector, large = false, highlight = null, depthRow = 1, onSlotClick }: ShelfRackProps) {
   const rows = Math.max(1, sector.levels || 1);
   const cols = Math.max(1, sector.columns || 1);
   const depthRows = Math.max(1, sector.rows || 1);
   const totalCells = rows * cols;
   const capacity = rows * cols * depthRows;
 
-  // Build occupancy map: distribute each product across N consecutive slots = its quantity (capped)
+  // Build occupancy from placements if available, else legacy sequential fill (single front face)
+  const usePlacements = sector.placements && sector.placements.size > 0;
   const cells = useMemo(() => {
     const arr: Array<Product | null> = Array(totalCells).fill(null);
+    if (usePlacements) {
+      for (let l = 1; l <= rows; l++) {
+        for (let c = 1; c <= cols; c++) {
+          const pl = sector.placements.get(placementKey(l, c, depthRow));
+          if (pl) {
+            const idx = (l - 1) * cols + (c - 1);
+            arr[idx] = { ...pl.product, quantity: pl.quantity } as Product;
+          }
+        }
+      }
+      return arr;
+    }
     let i = 0;
     for (const p of sector.products) {
       const slots = Math.max(1, Math.min(p.quantity || 1, capacity));
-      // Each visible cell represents depthRows physical slots
       const visibleSlots = Math.max(1, Math.ceil(slots / depthRows));
       for (let k = 0; k < visibleSlots && i < totalCells; k++, i++) arr[i] = p;
     }
     return arr;
-  }, [sector.products, capacity, totalCells, depthRows]);
+  }, [sector.products, sector.placements, capacity, totalCells, depthRows, rows, cols, depthRow, usePlacements]);
 
   const boxH = large ? 'h-14' : 'h-10';
   const boxShortH = large ? 'h-12' : 'h-8';
   const fontSize = large ? 'text-[10px]' : 'text-[8px]';
   const rowGap = large ? 'gap-7' : 'gap-5';
+  const clickable = !!onSlotClick;
 
   return (
     <div className="relative">
-      {/* Header: code tag + dimensions */}
       <div className="flex items-center justify-between mb-3">
         <span className="px-2 py-0.5 bg-muted text-[10px] font-bold text-muted-foreground rounded uppercase tracking-wider font-mono">
           {sector.code}
         </span>
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest font-mono">
-          {rows}L × {cols}C × {depthRows}R
+          {rows}L × {cols}C × {depthRows}R{large && depthRows > 1 ? ` · R${depthRow}` : ''}
         </span>
       </div>
 
-      {/* Rack stage */}
       <div className="relative bg-slate-50 dark:bg-slate-900/40 rounded-lg p-5 border border-slate-100 dark:border-slate-800">
         <div className={`relative flex flex-col ${rowGap}`}>
           {Array.from({ length: rows }).map((_, r) => {
-            const rowIndex = rows - 1 - r; // top = highest level
+            const rowIndex = rows - 1 - r;
             const isBottom = r === rows - 1;
             return (
               <div key={r} className="relative">
-                {/* Level label */}
                 <span className="absolute -left-5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground font-mono">
                   L{rowIndex + 1}
                 </span>
-
-                {/* Horizontal steel beam */}
                 <div className="h-2 w-full bg-slate-400 dark:bg-slate-500 rounded-sm shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] mb-1" />
-
-                {/* Pallet slots */}
                 <div
                   className={`grid gap-1 ${boxH} relative px-1`}
                   style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
                 >
                   {Array.from({ length: cols }).map((_, c) => {
                     const idx = rowIndex * cols + c;
-                    const isHi = !!highlight && highlight.level === rowIndex + 1 && highlight.column === c + 1;
+                    const L = rowIndex + 1, C = c + 1, R = depthRow;
+                    const isHi = !!highlight && highlight.level === L && highlight.column === C && highlight.row === R;
                     const hiRing = isHi ? 'ring-2 ring-red-500 ring-offset-1 shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse rounded-sm' : '';
+                    const clickProps = clickable ? { onClick: () => onSlotClick!({ level: L, column: C, row: R }), role: 'button' as const } : {};
+                    const cursorCls = clickable ? 'cursor-pointer' : 'cursor-help';
                     if (idx >= totalCells) return <div key={c} />;
                     const p = cells[idx];
                     if (!p) {
                       return (
                         <Tooltip key={c}>
                           <TooltipTrigger asChild>
-                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors ${hiRing}`}>
+                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 ${cursorCls} hover:border-success/60 hover:bg-success/5 transition-colors ${hiRing}`} {...clickProps}>
                               <div className={`w-full h-1 rounded-full ${isHi ? 'bg-red-500' : 'bg-success/30'}`} />
                               {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-red-500">★</span>}
+                              {clickable && !isHi && <Plus className="absolute opacity-0 hover:opacity-50 w-3 h-3 text-success" />}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
-                            {isHi ? `★ Belgilangan · L${rowIndex + 1}·C${c + 1}` : `Bo'sh joy · Q${rowIndex + 1}-${c + 1}`}
+                            {isHi ? `★ Belgilangan · L${L}·C${C}·R${R}` : clickable ? `+ Joylash · L${L}·C${C}·R${R}` : `Bo'sh joy · L${L}·C${C}·R${R}`}
                           </TooltipContent>
                         </Tooltip>
                       );
@@ -173,7 +198,7 @@ function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) 
                     return (
                       <Tooltip key={c}>
                         <TooltipTrigger asChild>
-                          <div className={`relative flex items-end cursor-help ${hiRing}`}>
+                          <div className={`relative flex items-end ${cursorCls} ${hiRing}`} {...clickProps}>
                             <div
                               className={`w-full ${useShort ? boxShortH : boxH} rounded-sm border shadow-sm flex flex-col items-center overflow-hidden hover:-translate-y-0.5 transition-transform`}
                               style={{
@@ -195,14 +220,13 @@ function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) 
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
                           <div className="font-semibold">{isHi && '★ '}{p.name}</div>
-                          <div className="text-muted-foreground">L{rowIndex + 1}·C{c + 1} · {p.quantity} dona</div>
+                          <div className="text-muted-foreground">L{L}·C{C}·R{R} · {p.quantity} dona</div>
+                          {clickable && <div className="text-[10px] text-muted-foreground mt-1">Bosib o'zgartirish</div>}
                         </TooltipContent>
                       </Tooltip>
                     );
                   })}
                 </div>
-
-                {/* Ground rail on bottom level */}
                 {isBottom && (
                   <div className="h-1.5 w-[calc(100%+8px)] -ml-1 bg-slate-500 dark:bg-slate-600 rounded-full mt-1" />
                 )}
@@ -210,7 +234,6 @@ function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) 
             );
           })}
 
-          {/* Vertical steel uprights (primary blue) */}
           <div className="absolute inset-y-0 left-0 w-1.5 bg-primary/80 rounded-full shadow-[2px_0_4px_rgba(0,0,0,0.15)]" />
           <div className="absolute inset-y-0 right-0 w-1.5 bg-primary/80 rounded-full shadow-[-2px_0_4px_rgba(0,0,0,0.15)]" />
         </div>
@@ -234,6 +257,13 @@ export default function SectorsPage() {
   const [hiInput, setHiInput] = useState({ level: 1, column: 1, row: 1 });
   const [productQuery, setProductQuery] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [depthRow, setDepthRow] = useState(1);
+  const [pickerSlot, setPickerSlot] = useState<HighlightSlot | null>(null);
+  const [pickerProductId, setPickerProductId] = useState<string>('');
+  const [pickerQuantity, setPickerQuantity] = useState(1);
+  const [pickerExistingId, setPickerExistingId] = useState<string | null>(null);
+  const [pickerSaving, setPickerSaving] = useState(false);
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -242,9 +272,10 @@ export default function SectorsPage() {
   });
 
   const fetchSectors = useCallback(async () => {
-    const [sectorsRes, productsRes] = await Promise.all([
+    const [sectorsRes, productsRes, placementsRes] = await Promise.all([
       supabase.from('sectors').select('*').order('created_at', { ascending: false }),
       supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id'),
+      supabase.from('product_placements').select('*'),
     ]);
 
     if (sectorsRes.error) {
@@ -254,19 +285,38 @@ export default function SectorsPage() {
     }
 
     const products = (productsRes.data || []) as Product[];
+    setAllProducts(products);
+    const productById = new Map(products.map(p => [p.id, p]));
     const bySector: Record<string, Product[]> = {};
     products.forEach(p => {
       if (!p.sector_id) return;
       (bySector[p.sector_id] ||= []).push(p);
     });
 
+    const placements = (placementsRes.data || []) as Placement[];
+    const placementsBySector: Record<string, Placement[]> = {};
+    placements.forEach(pl => {
+      (placementsBySector[pl.sector_id] ||= []).push(pl);
+    });
+
     const enriched: SectorWithProducts[] = (sectorsRes.data || []).map(s => {
       const list = bySector[s.id] || [];
-      const occupied = list.reduce((sum, p) => sum + (p.quantity || 0), 0);
-      return { ...s, products: list, occupied: Math.min(occupied, s.capacity) };
+      const plList = placementsBySector[s.id] || [];
+      const map: PlacementMap = new Map();
+      plList.forEach(pl => {
+        const prod = productById.get(pl.product_id);
+        if (prod) map.set(placementKey(pl.level, pl.column_idx, pl.row_idx), { product: prod, quantity: pl.quantity });
+      });
+      const occupiedFromPlacements = plList.reduce((sum, pl) => sum + pl.quantity, 0);
+      const occupied = map.size > 0
+        ? Math.min(occupiedFromPlacements, s.capacity)
+        : Math.min(list.reduce((sum, p) => sum + (p.quantity || 0), 0), s.capacity);
+      return { ...s, products: list, occupied, placements: map, placementRows: plList };
     });
 
     setSectors(enriched);
+    // Re-sync detailSector reference if open
+    setDetailSector(prev => prev ? (enriched.find(e => e.id === prev.id) ?? null) : null);
     setLoading(false);
   }, []);
 
@@ -369,6 +419,85 @@ export default function SectorsPage() {
     setHighlight(slot);
     setHiInput(slot);
     toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
+  };
+
+  // Open slot picker dialog (for assign / move / clear)
+  const openSlotPicker = (slot: HighlightSlot) => {
+    if (!detailSector) return;
+    const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
+    setPickerSlot(slot);
+    if (existing) {
+      const rowMatch = detailSector.placementRows.find(
+        pl => pl.level === slot.level && pl.column_idx === slot.column && pl.row_idx === slot.row
+      );
+      setPickerProductId(existing.product.id);
+      setPickerQuantity(existing.quantity);
+      setPickerExistingId(rowMatch?.id || null);
+    } else {
+      setPickerProductId('');
+      setPickerQuantity(1);
+      setPickerExistingId(null);
+    }
+  };
+
+  const closeSlotPicker = () => {
+    setPickerSlot(null);
+    setPickerProductId('');
+    setPickerQuantity(1);
+    setPickerExistingId(null);
+  };
+
+  const savePlacement = async () => {
+    if (!detailSector || !pickerSlot || !pickerProductId) {
+      toast.error('Mahsulot tanlang');
+      return;
+    }
+    setPickerSaving(true);
+    try {
+      const payload = {
+        sector_id: detailSector.id,
+        product_id: pickerProductId,
+        level: pickerSlot.level,
+        column_idx: pickerSlot.column,
+        row_idx: pickerSlot.row,
+        quantity: Math.max(1, pickerQuantity),
+      };
+      const { error } = await supabase
+        .from('product_placements')
+        .upsert(payload, { onConflict: 'sector_id,level,column_idx,row_idx' });
+      if (error) throw error;
+      // Ensure product belongs to this sector
+      await supabase.from('products').update({ sector_id: detailSector.id }).eq('id', pickerProductId);
+      toast.success(`Joylashtirildi: L${pickerSlot.level}·C${pickerSlot.column}·R${pickerSlot.row}`);
+      closeSlotPicker();
+      await fetchSectors();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setPickerSaving(false);
+    }
+  };
+
+  const clearPlacement = async () => {
+    if (!detailSector || !pickerSlot) return;
+    setPickerSaving(true);
+    try {
+      const { error } = await supabase
+        .from('product_placements')
+        .delete()
+        .eq('sector_id', detailSector.id)
+        .eq('level', pickerSlot.level)
+        .eq('column_idx', pickerSlot.column)
+        .eq('row_idx', pickerSlot.row);
+      if (error) throw error;
+      toast.success('Katak bo\'shatildi');
+      closeSlotPicker();
+      await fetchSectors();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setPickerSaving(false);
+    }
   };
 
   if (loading) {
@@ -505,7 +634,7 @@ export default function SectorsPage() {
         </div>
 
         {/* Detail dialog with large rack */}
-        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); } }}>
+        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); setDepthRow(1); closeSlotPicker(); } }}>
           <DialogContent className="max-w-3xl">
             {detailSector && (
               <>
@@ -626,23 +755,45 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    size="sm"
-                    variant={detailView === '3d' ? 'default' : 'outline'}
-                    onClick={() => setDetailView('3d')}
-                    className="h-8"
-                  >
-                    <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={detailView === '2d' ? 'default' : 'outline'}
-                    onClick={() => setDetailView('2d')}
-                    className="h-8"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
-                  </Button>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <MousePointer2 className="w-3.5 h-3.5" />
+                    Katakni bosib mahsulot joylashtiring yoki almashtiring
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {detailView === '2d' && detailSector.rows > 1 && (
+                      <div className="flex items-center gap-1 mr-2">
+                        <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                        {Array.from({ length: detailSector.rows }).map((_, i) => (
+                          <Button
+                            key={i}
+                            size="sm"
+                            variant={depthRow === i + 1 ? 'default' : 'outline'}
+                            onClick={() => setDepthRow(i + 1)}
+                            className="h-7 px-2 text-[10px] font-mono"
+                          >
+                            R{i + 1}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={detailView === '3d' ? 'default' : 'outline'}
+                      onClick={() => setDetailView('3d')}
+                      className="h-8"
+                    >
+                      <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={detailView === '2d' ? 'default' : 'outline'}
+                      onClick={() => setDetailView('2d')}
+                      className="h-8"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
+                    </Button>
+                  </div>
                 </div>
 
                 {detailView === '3d' ? (
@@ -654,12 +805,20 @@ export default function SectorsPage() {
                     depth_cm={detailSector.depth_cm}
                     height_cm={detailSector.height_cm}
                     products={detailSector.products}
+                    placements={detailSector.placements}
                     highlight={highlight}
+                    onSlotClick={openSlotPicker}
                     height={460}
                   />
                 ) : (
                   <div className="pl-6">
-                    <ShelfRack sector={detailSector} large highlight={highlight} />
+                    <ShelfRack
+                      sector={detailSector}
+                      large
+                      highlight={highlight}
+                      depthRow={depthRow}
+                      onSlotClick={openSlotPicker}
+                    />
                   </div>
                 )}
 
@@ -708,6 +867,70 @@ export default function SectorsPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Slot picker — assign / move / clear */}
+        <Dialog open={!!pickerSlot} onOpenChange={(o) => { if (!o) closeSlotPicker(); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MousePointer2 className="w-5 h-5 text-primary" />
+                Katakka mahsulot joylash
+              </DialogTitle>
+              <DialogDescription>
+                {pickerSlot && detailSector && (
+                  <>
+                    {detailSector.code} · <span className="font-mono font-semibold">L{pickerSlot.level} · C{pickerSlot.column} · R{pickerSlot.row}</span>
+                    {pickerExistingId && <span className="ml-2 text-warning">— hozir band</span>}
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Mahsulot</Label>
+                <Select value={pickerProductId} onValueChange={setPickerProductId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Mahsulotni tanlang..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allProducts.length === 0 ? (
+                      <div className="p-2 text-xs text-muted-foreground">Mahsulotlar yo'q</div>
+                    ) : (
+                      allProducts.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: productColor(p.id) }} />
+                            <span className="font-medium">{p.name}</span>
+                            {p.product_code && <span className="text-[10px] text-muted-foreground font-mono">{p.product_code}</span>}
+                          </span>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Miqdor (bu katakda)</Label>
+                <Input
+                  type="number" min={1}
+                  value={pickerQuantity}
+                  onChange={(e) => setPickerQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-2">
+              {pickerExistingId && (
+                <Button variant="destructive" onClick={clearPlacement} disabled={pickerSaving} className="mr-auto">
+                  <Trash className="w-4 h-4 mr-1.5" /> Bo'shatish
+                </Button>
+              )}
+              <Button variant="outline" onClick={closeSlotPicker} disabled={pickerSaving}>Bekor</Button>
+              <Button onClick={savePlacement} disabled={pickerSaving || !pickerProductId}>
+                {pickerSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {pickerExistingId ? 'Almashtirish' : 'Joylash'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
         {/* Create/Edit Dialog */}
