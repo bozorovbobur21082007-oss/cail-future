@@ -85,6 +85,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
   const [highlight, setHighlight] = useState<HighlightSlot | null>(null);
   const [productQuery, setProductQuery] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [depthRow, setDepthRow] = useState(1);
 
   const fetchSectors = useCallback(async () => {
     setLoading(true);
@@ -251,7 +252,23 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                     <Target className="w-3 h-3 mr-1" /> L{highlight.level} · C{highlight.column} · R{highlight.row}
                   </Badge>
                 )}
-                <div className="flex items-center gap-1 ml-auto">
+                <div className="flex items-center gap-1 ml-auto flex-wrap">
+                  {detailView === '2d' && detailSector.rows > 1 && (
+                    <div className="flex items-center gap-1 mr-2">
+                      <span className="text-[10px] text-muted-foreground font-mono">Chuqurlik:</span>
+                      {Array.from({ length: detailSector.rows }).map((_, i) => (
+                        <Button
+                          key={i}
+                          size="sm"
+                          variant={depthRow === i + 1 ? 'default' : 'outline'}
+                          onClick={() => setDepthRow(i + 1)}
+                          className="h-7 px-2 text-[10px] font-mono"
+                        >
+                          R{i + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                   {highlight && (
                     <Button size="sm" variant="outline" className="h-8" onClick={() => setHighlight(null)}>
                       <X className="w-3.5 h-3.5 mr-1.5" /> Tozalash
@@ -260,7 +277,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                   <Button size="sm" variant={detailView === '3d' ? 'default' : 'outline'} onClick={() => setDetailView('3d')} className="h-8">
                     <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
                   </Button>
-                  <Button size="sm" variant={detailView === '2d' ? 'default' : 'outline'} onClick={() => setDetailView('2d')} className="h-8">
+                  <Button size="sm" variant={detailView === '2d' ? 'default' : 'outline'} onClick={() => { setDetailView('2d'); setDepthRow(1); }} className="h-8">
                     <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
                   </Button>
                 </div>
@@ -280,34 +297,58 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                   height={460}
                 />
               ) : (
-                <div className="rounded-lg border p-4 bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    {detailSector.levels}L × {detailSector.columns}C × {detailSector.rows}R
-                  </p>
-                  <div className="space-y-3">
+                <div className="rounded-lg border p-4 bg-slate-50 dark:bg-slate-900/40">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="px-2 py-0.5 bg-muted text-[10px] font-bold text-muted-foreground rounded uppercase tracking-wider font-mono">
+                      {detailSector.code}
+                    </span>
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest font-mono">
+                      {detailSector.levels}L × {detailSector.columns}C × {detailSector.rows}R{detailSector.rows > 1 ? ` · R${depthRow}` : ''}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-7">
                     {Array.from({ length: detailSector.levels }).map((_, lIdx) => {
                       const L = detailSector.levels - lIdx;
+                      const isBottom = lIdx === detailSector.levels - 1;
                       return (
-                        <div key={L}>
-                          <p className="text-[10px] font-mono text-muted-foreground mb-1">L{L}</p>
-                          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${detailSector.columns}, minmax(0, 1fr))` }}>
+                        <div key={L} className="relative">
+                          <span className="absolute -left-5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground font-mono">L{L}</span>
+                          <div className="h-2 w-full bg-slate-400 dark:bg-slate-500 rounded-sm shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] mb-1" />
+                          <div className="grid gap-1 h-14 px-1" style={{ gridTemplateColumns: `repeat(${detailSector.columns}, minmax(0, 1fr))` }}>
                             {Array.from({ length: detailSector.columns }).map((_, cIdx) => {
                               const C = cIdx + 1;
-                              const pl = detailSector.placements.get(placementKey(L, C, 1));
-                              const isHi = highlight && highlight.level === L && highlight.column === C;
+                              const R = depthRow;
+                              const pl = detailSector.placements.get(placementKey(L, C, R));
+                              const isHi = !!highlight && highlight.level === L && highlight.column === C && highlight.row === R;
                               const color = pl ? productColor(pl.product.id) : null;
+                              const hiRing = isHi ? 'ring-2 ring-red-500 ring-offset-1 shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse' : '';
+                              if (!pl) {
+                                return (
+                                  <div
+                                    key={C}
+                                    className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 rounded-sm ${hiRing}`}
+                                    title={`Bo'sh · L${L}·C${C}·R${R}`}
+                                  >
+                                    <div className={`w-full h-1 rounded-full ${isHi ? 'bg-red-500' : 'bg-success/30'}`} />
+                                  </div>
+                                );
+                              }
                               return (
                                 <div
                                   key={C}
-                                  className={`h-10 rounded border text-[9px] flex items-center justify-center font-semibold ${isHi ? 'ring-2 ring-red-500 animate-pulse' : ''}`}
-                                  style={pl ? { background: `${color}33`, borderColor: `${color}99`, color: color! } : undefined}
-                                  title={pl ? `${pl.product.name} ×${pl.quantity}` : `Bo'sh · L${L}·C${C}`}
+                                  className={`relative h-14 rounded-sm border shadow-sm flex flex-col items-center justify-end overflow-hidden ${hiRing}`}
+                                  style={{ background: `linear-gradient(180deg, ${color}33, ${color}55)`, borderColor: `${color}99` }}
+                                  title={`${pl.product.name} ×${pl.quantity} · L${L}·C${C}·R${R}`}
                                 >
-                                  {pl ? pl.product.name.slice(0, 4).toUpperCase() : '—'}
+                                  <span className="text-[10px] font-bold uppercase tracking-tighter truncate px-0.5 leading-none pb-1" style={{ color: color! }}>
+                                    {pl.product.name.slice(0, 10)}
+                                  </span>
+                                  {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-500">★</span>}
                                 </div>
                               );
                             })}
                           </div>
+                          {isBottom && <div className="h-1.5 w-[calc(100%+8px)] -ml-1 bg-slate-500 dark:bg-slate-600 rounded-full mt-1" />}
                         </div>
                       );
                     })}
