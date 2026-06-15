@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X, ScanLine, MousePointer2, Layers, Trash } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X, ScanLine, MousePointer2, Layers, Trash, Info, ArrowRightLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
@@ -264,6 +264,7 @@ export default function SectorsPage() {
   const [pickerQuantity, setPickerQuantity] = useState(1);
   const [pickerExistingId, setPickerExistingId] = useState<string | null>(null);
   const [pickerSaving, setPickerSaving] = useState(false);
+  const [slotInfo, setSlotInfo] = useState<{ slot: HighlightSlot; product: Product | null } | null>(null);
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -421,7 +422,18 @@ export default function SectorsPage() {
     toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
   };
 
-  // Open slot picker dialog (for assign / move / clear)
+  // Open slot info dialog (first click shows info, edit button then opens picker)
+  const openSlotInfo = (slot: HighlightSlot) => {
+    if (!detailSector) return;
+    const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
+    setSlotInfo({ slot, product: existing ? { ...existing.product, sector_id: detailSector.id, quantity: existing.quantity } : null });
+  };
+
+  const closeSlotInfo = () => {
+    setSlotInfo(null);
+  };
+
+  // Open slot picker dialog (for assign / move / clear) — called from info dialog
   const openSlotPicker = (slot: HighlightSlot) => {
     if (!detailSector) return;
     const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
@@ -653,7 +665,7 @@ export default function SectorsPage() {
         </div>
 
         {/* Detail dialog with large rack */}
-        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); setDepthRow(1); closeSlotPicker(); } }}>
+        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); setDepthRow(1); closeSlotPicker(); closeSlotInfo(); } }}>
           <DialogContent className="max-w-3xl">
             {detailSector && (
               <>
@@ -826,7 +838,7 @@ export default function SectorsPage() {
                     products={detailSector.products}
                     placements={detailSector.placements}
                     highlight={highlight}
-                    onSlotClick={openSlotPicker}
+                    onSlotClick={openSlotInfo}
                     height={460}
                   />
                 ) : (
@@ -836,7 +848,7 @@ export default function SectorsPage() {
                       large
                       highlight={highlight}
                       depthRow={depthRow}
-                      onSlotClick={openSlotPicker}
+                      onSlotClick={openSlotInfo}
                     />
                   </div>
                 )}
@@ -859,6 +871,58 @@ export default function SectorsPage() {
                 )}
               </>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Slot info dialog */}
+        <Dialog open={!!slotInfo} onOpenChange={(o) => { if (!o) closeSlotInfo(); }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Info className="w-5 h-5 text-primary" />
+                Katak haqida
+              </DialogTitle>
+              <DialogDescription>
+                {slotInfo && detailSector && (
+                  <>
+                    {detailSector.code} · <span className="font-mono font-semibold">L{slotInfo.slot.level} · C{slotInfo.slot.column} · R{slotInfo.slot.row}</span>
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {slotInfo?.product ? (
+                <div className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: productColor(slotInfo.product.id) }} />
+                    <span className="font-semibold text-sm">{slotInfo.product.name}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                    <div>Miqdor: <span className="font-mono font-medium text-foreground">{slotInfo.product.quantity}</span></div>
+                    {slotInfo.product.product_code && <div>Kod: <span className="font-mono font-medium text-foreground">{slotInfo.product.product_code}</span></div>}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  <Package className="w-6 h-6 mx-auto mb-2 text-muted-foreground/60" />
+                  Bu katak bo'sh
+                </div>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={closeSlotInfo}>Yopish</Button>
+              <Button
+                onClick={() => {
+                  if (!slotInfo) return;
+                  const slot = slotInfo.slot;
+                  closeSlotInfo();
+                  openSlotPicker(slot);
+                }}
+              >
+                <ArrowRightLeft className="w-4 h-4 mr-1.5" />
+                Joyni o'zgartirish
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
