@@ -10,10 +10,38 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import SectorRack3D from '@/components/SectorRack3D';
+import QrScanner from '@/components/QrScanner';
+
+// Compute slot coords (1-indexed) of a product inside a sector's slot layout.
+// Layout order matches SectorRack3D: idx = l*(cols*rows) + r*cols + c
+function findProductSlot(
+  sector: { rows: number; columns: number; levels: number; products: Product[] },
+  predicate: (p: Product) => boolean,
+): { level: number; column: number; row: number } | null {
+  const cols = Math.max(1, sector.columns);
+  const rows = Math.max(1, sector.rows);
+  const lvls = Math.max(1, sector.levels);
+  const total = cols * rows * lvls;
+  let i = 0;
+  for (const p of sector.products) {
+    const q = Math.max(1, Math.min(p.quantity || 1, total - i));
+    if (predicate(p)) {
+      const idx = i;
+      const l = Math.floor(idx / (cols * rows));
+      const rem = idx % (cols * rows);
+      const r = Math.floor(rem / cols);
+      const c = rem % cols;
+      return { level: l + 1, column: c + 1, row: r + 1 };
+    }
+    i += q;
+    if (i >= total) break;
+  }
+  return null;
+}
 
 interface Sector {
   id: string;
