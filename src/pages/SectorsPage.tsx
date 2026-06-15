@@ -838,7 +838,7 @@ export default function SectorsPage() {
                     products={detailSector.products}
                     placements={detailSector.placements}
                     highlight={highlight}
-                    onSlotClick={openSlotPicker}
+                    onSlotClick={openSlotInfo}
                     height={460}
                   />
                 ) : (
