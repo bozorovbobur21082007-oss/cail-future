@@ -867,6 +867,70 @@ export default function SectorsPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Slot picker — assign / move / clear */}
+        <Dialog open={!!pickerSlot} onOpenChange={(o) => { if (!o) closeSlotPicker(); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MousePointer2 className="w-5 h-5 text-primary" />
+                Katakka mahsulot joylash
+              </DialogTitle>
+              <DialogDescription>
+                {pickerSlot && detailSector && (
+                  <>
+                    {detailSector.code} · <span className="font-mono font-semibold">L{pickerSlot.level} · C{pickerSlot.column} · R{pickerSlot.row}</span>
+                    {pickerExistingId && <span className="ml-2 text-warning">— hozir band</span>}
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Mahsulot</Label>
+                <Select value={pickerProductId} onValueChange={setPickerProductId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Mahsulotni tanlang..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allProducts.length === 0 ? (
+                      <div className="p-2 text-xs text-muted-foreground">Mahsulotlar yo'q</div>
+                    ) : (
+                      allProducts.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: productColor(p.id) }} />
+                            <span className="font-medium">{p.name}</span>
+                            {p.product_code && <span className="text-[10px] text-muted-foreground font-mono">{p.product_code}</span>}
+                          </span>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Miqdor (bu katakda)</Label>
+                <Input
+                  type="number" min={1}
+                  value={pickerQuantity}
+                  onChange={(e) => setPickerQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-2">
+              {pickerExistingId && (
+                <Button variant="destructive" onClick={clearPlacement} disabled={pickerSaving} className="mr-auto">
+                  <Trash className="w-4 h-4 mr-1.5" /> Bo'shatish
+                </Button>
+              )}
+              <Button variant="outline" onClick={closeSlotPicker} disabled={pickerSaving}>Bekor</Button>
+              <Button onClick={savePlacement} disabled={pickerSaving || !pickerProductId}>
+                {pickerSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {pickerExistingId ? 'Almashtirish' : 'Joylash'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
 
         {/* Create/Edit Dialog */}
