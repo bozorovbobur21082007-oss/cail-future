@@ -264,6 +264,7 @@ export default function SectorsPage() {
   const [pickerQuantity, setPickerQuantity] = useState(1);
   const [pickerExistingId, setPickerExistingId] = useState<string | null>(null);
   const [pickerSaving, setPickerSaving] = useState(false);
+  const [slotInfo, setSlotInfo] = useState<{ slot: HighlightSlot; product: Product | null } | null>(null);
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
