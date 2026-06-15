@@ -684,6 +684,32 @@ export default function SectorsPage() {
           </DialogContent>
         </Dialog>
 
+        {/* QR / Barkod skaner */}
+        <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ScanLine className="w-5 h-5 text-primary" /> QR yoki barkodni skanerlash
+              </DialogTitle>
+              <DialogDescription>
+                Mahsulot kodi, QR yoki barkodini kameraga ko'rsating — joyi avtomatik belgilanadi
+              </DialogDescription>
+            </DialogHeader>
+            {scannerOpen && (
+              <QrScanner
+                onScan={(code) => {
+                  setScannerOpen(false);
+                  setProductQuery(code);
+                  highlightByQuery(code);
+                }}
+                onClose={() => setScannerOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+
+
         {/* Create/Edit Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
