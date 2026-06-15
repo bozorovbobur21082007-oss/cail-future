@@ -426,7 +426,7 @@ export default function SectorsPage() {
   const openSlotInfo = (slot: HighlightSlot) => {
     if (!detailSector) return;
     const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
-    setSlotInfo({ slot, product: existing ? { ...existing.product, quantity: existing.quantity } : null });
+    setSlotInfo({ slot, product: existing ? { ...existing.product, sector_id: detailSector.id, quantity: existing.quantity } : null });
   };
 
   const closeSlotInfo = () => {
