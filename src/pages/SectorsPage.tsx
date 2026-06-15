@@ -421,6 +421,85 @@ export default function SectorsPage() {
     toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
   };
 
+  // Open slot picker dialog (for assign / move / clear)
+  const openSlotPicker = (slot: HighlightSlot) => {
+    if (!detailSector) return;
+    const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
+    setPickerSlot(slot);
+    if (existing) {
+      const rowMatch = detailSector.placementRows.find(
+        pl => pl.level === slot.level && pl.column_idx === slot.column && pl.row_idx === slot.row
+      );
+      setPickerProductId(existing.product.id);
+      setPickerQuantity(existing.quantity);
+      setPickerExistingId(rowMatch?.id || null);
+    } else {
+      setPickerProductId('');
+      setPickerQuantity(1);
+      setPickerExistingId(null);
+    }
+  };
+
+  const closeSlotPicker = () => {
+    setPickerSlot(null);
+    setPickerProductId('');
+    setPickerQuantity(1);
+    setPickerExistingId(null);
+  };
+
+  const savePlacement = async () => {
+    if (!detailSector || !pickerSlot || !pickerProductId) {
+      toast.error('Mahsulot tanlang');
+      return;
+    }
+    setPickerSaving(true);
+    try {
+      const payload = {
+        sector_id: detailSector.id,
+        product_id: pickerProductId,
+        level: pickerSlot.level,
+        column_idx: pickerSlot.column,
+        row_idx: pickerSlot.row,
+        quantity: Math.max(1, pickerQuantity),
+      };
+      const { error } = await supabase
+        .from('product_placements')
+        .upsert(payload, { onConflict: 'sector_id,level,column_idx,row_idx' });
+      if (error) throw error;
+      // Ensure product belongs to this sector
+      await supabase.from('products').update({ sector_id: detailSector.id }).eq('id', pickerProductId);
+      toast.success(`Joylashtirildi: L${pickerSlot.level}·C${pickerSlot.column}·R${pickerSlot.row}`);
+      closeSlotPicker();
+      await fetchSectors();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setPickerSaving(false);
+    }
+  };
+
+  const clearPlacement = async () => {
+    if (!detailSector || !pickerSlot) return;
+    setPickerSaving(true);
+    try {
+      const { error } = await supabase
+        .from('product_placements')
+        .delete()
+        .eq('sector_id', detailSector.id)
+        .eq('level', pickerSlot.level)
+        .eq('column_idx', pickerSlot.column)
+        .eq('row_idx', pickerSlot.row);
+      if (error) throw error;
+      toast.success('Katak bo\'shatildi');
+      closeSlotPicker();
+      await fetchSectors();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setPickerSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   }
