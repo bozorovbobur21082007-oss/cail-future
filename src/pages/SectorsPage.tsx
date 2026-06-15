@@ -100,83 +100,95 @@ interface ShelfRackProps {
   sector: SectorWithProducts;
   large?: boolean;
   highlight?: { level: number; column: number; row: number } | null;
+  depthRow?: number; // 1-indexed; which depth row to show in 2D
+  onSlotClick?: (slot: HighlightSlot) => void;
 }
 
-function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) {
+function ShelfRack({ sector, large = false, highlight = null, depthRow = 1, onSlotClick }: ShelfRackProps) {
   const rows = Math.max(1, sector.levels || 1);
   const cols = Math.max(1, sector.columns || 1);
   const depthRows = Math.max(1, sector.rows || 1);
   const totalCells = rows * cols;
   const capacity = rows * cols * depthRows;
 
-  // Build occupancy map: distribute each product across N consecutive slots = its quantity (capped)
+  // Build occupancy from placements if available, else legacy sequential fill (single front face)
+  const usePlacements = sector.placements && sector.placements.size > 0;
   const cells = useMemo(() => {
     const arr: Array<Product | null> = Array(totalCells).fill(null);
+    if (usePlacements) {
+      for (let l = 1; l <= rows; l++) {
+        for (let c = 1; c <= cols; c++) {
+          const pl = sector.placements.get(placementKey(l, c, depthRow));
+          if (pl) {
+            const idx = (l - 1) * cols + (c - 1);
+            arr[idx] = { ...pl.product, quantity: pl.quantity } as Product;
+          }
+        }
+      }
+      return arr;
+    }
     let i = 0;
     for (const p of sector.products) {
       const slots = Math.max(1, Math.min(p.quantity || 1, capacity));
-      // Each visible cell represents depthRows physical slots
       const visibleSlots = Math.max(1, Math.ceil(slots / depthRows));
       for (let k = 0; k < visibleSlots && i < totalCells; k++, i++) arr[i] = p;
     }
     return arr;
-  }, [sector.products, capacity, totalCells, depthRows]);
+  }, [sector.products, sector.placements, capacity, totalCells, depthRows, rows, cols, depthRow, usePlacements]);
 
   const boxH = large ? 'h-14' : 'h-10';
   const boxShortH = large ? 'h-12' : 'h-8';
   const fontSize = large ? 'text-[10px]' : 'text-[8px]';
   const rowGap = large ? 'gap-7' : 'gap-5';
+  const clickable = !!onSlotClick;
 
   return (
     <div className="relative">
-      {/* Header: code tag + dimensions */}
       <div className="flex items-center justify-between mb-3">
         <span className="px-2 py-0.5 bg-muted text-[10px] font-bold text-muted-foreground rounded uppercase tracking-wider font-mono">
           {sector.code}
         </span>
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest font-mono">
-          {rows}L × {cols}C × {depthRows}R
+          {rows}L × {cols}C × {depthRows}R{large && depthRows > 1 ? ` · R${depthRow}` : ''}
         </span>
       </div>
 
-      {/* Rack stage */}
       <div className="relative bg-slate-50 dark:bg-slate-900/40 rounded-lg p-5 border border-slate-100 dark:border-slate-800">
         <div className={`relative flex flex-col ${rowGap}`}>
           {Array.from({ length: rows }).map((_, r) => {
-            const rowIndex = rows - 1 - r; // top = highest level
+            const rowIndex = rows - 1 - r;
             const isBottom = r === rows - 1;
             return (
               <div key={r} className="relative">
-                {/* Level label */}
                 <span className="absolute -left-5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground font-mono">
                   L{rowIndex + 1}
                 </span>
-
-                {/* Horizontal steel beam */}
                 <div className="h-2 w-full bg-slate-400 dark:bg-slate-500 rounded-sm shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] mb-1" />
-
-                {/* Pallet slots */}
                 <div
                   className={`grid gap-1 ${boxH} relative px-1`}
                   style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
                 >
                   {Array.from({ length: cols }).map((_, c) => {
                     const idx = rowIndex * cols + c;
-                    const isHi = !!highlight && highlight.level === rowIndex + 1 && highlight.column === c + 1;
+                    const L = rowIndex + 1, C = c + 1, R = depthRow;
+                    const isHi = !!highlight && highlight.level === L && highlight.column === C && highlight.row === R;
                     const hiRing = isHi ? 'ring-2 ring-red-500 ring-offset-1 shadow-[0_0_12px_rgba(239,68,68,0.7)] animate-pulse rounded-sm' : '';
+                    const clickProps = clickable ? { onClick: () => onSlotClick!({ level: L, column: C, row: R }), role: 'button' as const } : {};
+                    const cursorCls = clickable ? 'cursor-pointer' : 'cursor-help';
                     if (idx >= totalCells) return <div key={c} />;
                     const p = cells[idx];
                     if (!p) {
                       return (
                         <Tooltip key={c}>
                           <TooltipTrigger asChild>
-                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 cursor-help hover:border-success/60 transition-colors ${hiRing}`}>
+                            <div className={`relative border-b-2 border-slate-200 dark:border-slate-700 flex items-end justify-center pb-1 ${cursorCls} hover:border-success/60 hover:bg-success/5 transition-colors ${hiRing}`} {...clickProps}>
                               <div className={`w-full h-1 rounded-full ${isHi ? 'bg-red-500' : 'bg-success/30'}`} />
                               {isHi && <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-red-500">★</span>}
+                              {clickable && !isHi && <Plus className="absolute opacity-0 hover:opacity-50 w-3 h-3 text-success" />}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
-                            {isHi ? `★ Belgilangan · L${rowIndex + 1}·C${c + 1}` : `Bo'sh joy · Q${rowIndex + 1}-${c + 1}`}
+                            {isHi ? `★ Belgilangan · L${L}·C${C}·R${R}` : clickable ? `+ Joylash · L${L}·C${C}·R${R}` : `Bo'sh joy · L${L}·C${C}·R${R}`}
                           </TooltipContent>
                         </Tooltip>
                       );
@@ -186,7 +198,7 @@ function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) 
                     return (
                       <Tooltip key={c}>
                         <TooltipTrigger asChild>
-                          <div className={`relative flex items-end cursor-help ${hiRing}`}>
+                          <div className={`relative flex items-end ${cursorCls} ${hiRing}`} {...clickProps}>
                             <div
                               className={`w-full ${useShort ? boxShortH : boxH} rounded-sm border shadow-sm flex flex-col items-center overflow-hidden hover:-translate-y-0.5 transition-transform`}
                               style={{
@@ -208,14 +220,13 @@ function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) 
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
                           <div className="font-semibold">{isHi && '★ '}{p.name}</div>
-                          <div className="text-muted-foreground">L{rowIndex + 1}·C{c + 1} · {p.quantity} dona</div>
+                          <div className="text-muted-foreground">L{L}·C{C}·R{R} · {p.quantity} dona</div>
+                          {clickable && <div className="text-[10px] text-muted-foreground mt-1">Bosib o'zgartirish</div>}
                         </TooltipContent>
                       </Tooltip>
                     );
                   })}
                 </div>
-
-                {/* Ground rail on bottom level */}
                 {isBottom && (
                   <div className="h-1.5 w-[calc(100%+8px)] -ml-1 bg-slate-500 dark:bg-slate-600 rounded-full mt-1" />
                 )}
@@ -223,7 +234,6 @@ function ShelfRack({ sector, large = false, highlight = null }: ShelfRackProps) 
             );
           })}
 
-          {/* Vertical steel uprights (primary blue) */}
           <div className="absolute inset-y-0 left-0 w-1.5 bg-primary/80 rounded-full shadow-[2px_0_4px_rgba(0,0,0,0.15)]" />
           <div className="absolute inset-y-0 right-0 w-1.5 bg-primary/80 rounded-full shadow-[-2px_0_4px_rgba(0,0,0,0.15)]" />
         </div>
