@@ -85,6 +85,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
   const [highlight, setHighlight] = useState<HighlightSlot | null>(null);
   const [productQuery, setProductQuery] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [depthRow, setDepthRow] = useState(1);
 
   const fetchSectors = useCallback(async () => {
     setLoading(true);
