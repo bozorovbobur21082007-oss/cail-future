@@ -257,6 +257,13 @@ export default function SectorsPage() {
   const [hiInput, setHiInput] = useState({ level: 1, column: 1, row: 1 });
   const [productQuery, setProductQuery] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [depthRow, setDepthRow] = useState(1);
+  const [pickerSlot, setPickerSlot] = useState<HighlightSlot | null>(null);
+  const [pickerProductId, setPickerProductId] = useState<string>('');
+  const [pickerQuantity, setPickerQuantity] = useState(1);
+  const [pickerExistingId, setPickerExistingId] = useState<string | null>(null);
+  const [pickerSaving, setPickerSaving] = useState(false);
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -265,9 +272,10 @@ export default function SectorsPage() {
   });
 
   const fetchSectors = useCallback(async () => {
-    const [sectorsRes, productsRes] = await Promise.all([
+    const [sectorsRes, productsRes, placementsRes] = await Promise.all([
       supabase.from('sectors').select('*').order('created_at', { ascending: false }),
       supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id'),
+      supabase.from('product_placements').select('*'),
     ]);
 
     if (sectorsRes.error) {
@@ -277,19 +285,38 @@ export default function SectorsPage() {
     }
 
     const products = (productsRes.data || []) as Product[];
+    setAllProducts(products);
+    const productById = new Map(products.map(p => [p.id, p]));
     const bySector: Record<string, Product[]> = {};
     products.forEach(p => {
       if (!p.sector_id) return;
       (bySector[p.sector_id] ||= []).push(p);
     });
 
+    const placements = (placementsRes.data || []) as Placement[];
+    const placementsBySector: Record<string, Placement[]> = {};
+    placements.forEach(pl => {
+      (placementsBySector[pl.sector_id] ||= []).push(pl);
+    });
+
     const enriched: SectorWithProducts[] = (sectorsRes.data || []).map(s => {
       const list = bySector[s.id] || [];
-      const occupied = list.reduce((sum, p) => sum + (p.quantity || 0), 0);
-      return { ...s, products: list, occupied: Math.min(occupied, s.capacity) };
+      const plList = placementsBySector[s.id] || [];
+      const map: PlacementMap = new Map();
+      plList.forEach(pl => {
+        const prod = productById.get(pl.product_id);
+        if (prod) map.set(placementKey(pl.level, pl.column_idx, pl.row_idx), { product: prod, quantity: pl.quantity });
+      });
+      const occupiedFromPlacements = plList.reduce((sum, pl) => sum + pl.quantity, 0);
+      const occupied = map.size > 0
+        ? Math.min(occupiedFromPlacements, s.capacity)
+        : Math.min(list.reduce((sum, p) => sum + (p.quantity || 0), 0), s.capacity);
+      return { ...s, products: list, occupied, placements: map, placementRows: plList };
     });
 
     setSectors(enriched);
+    // Re-sync detailSector reference if open
+    setDetailSector(prev => prev ? (enriched.find(e => e.id === prev.id) ?? null) : null);
     setLoading(false);
   }, []);
 
