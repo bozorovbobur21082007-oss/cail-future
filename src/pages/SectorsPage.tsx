@@ -755,23 +755,45 @@ export default function SectorsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    size="sm"
-                    variant={detailView === '3d' ? 'default' : 'outline'}
-                    onClick={() => setDetailView('3d')}
-                    className="h-8"
-                  >
-                    <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={detailView === '2d' ? 'default' : 'outline'}
-                    onClick={() => setDetailView('2d')}
-                    className="h-8"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
-                  </Button>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <MousePointer2 className="w-3.5 h-3.5" />
+                    Katakni bosib mahsulot joylashtiring yoki almashtiring
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {detailView === '2d' && detailSector.rows > 1 && (
+                      <div className="flex items-center gap-1 mr-2">
+                        <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                        {Array.from({ length: detailSector.rows }).map((_, i) => (
+                          <Button
+                            key={i}
+                            size="sm"
+                            variant={depthRow === i + 1 ? 'default' : 'outline'}
+                            onClick={() => setDepthRow(i + 1)}
+                            className="h-7 px-2 text-[10px] font-mono"
+                          >
+                            R{i + 1}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={detailView === '3d' ? 'default' : 'outline'}
+                      onClick={() => setDetailView('3d')}
+                      className="h-8"
+                    >
+                      <Box className="w-3.5 h-3.5 mr-1.5" /> 3D
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={detailView === '2d' ? 'default' : 'outline'}
+                      onClick={() => setDetailView('2d')}
+                      className="h-8"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> 2D
+                    </Button>
+                  </div>
                 </div>
 
                 {detailView === '3d' ? (
@@ -783,12 +805,20 @@ export default function SectorsPage() {
                     depth_cm={detailSector.depth_cm}
                     height_cm={detailSector.height_cm}
                     products={detailSector.products}
+                    placements={detailSector.placements}
                     highlight={highlight}
+                    onSlotClick={openSlotPicker}
                     height={460}
                   />
                 ) : (
                   <div className="pl-6">
-                    <ShelfRack sector={detailSector} large highlight={highlight} />
+                    <ShelfRack
+                      sector={detailSector}
+                      large
+                      highlight={highlight}
+                      depthRow={depthRow}
+                      onSlotClick={openSlotPicker}
+                    />
                   </div>
                 )}
 
