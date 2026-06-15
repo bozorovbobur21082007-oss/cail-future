@@ -10,10 +10,38 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Loader2, MapPin, Package, Maximize2, Box, LayoutGrid, Target, X, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import SectorRack3D from '@/components/SectorRack3D';
+import QrScanner from '@/components/QrScanner';
+
+// Compute slot coords (1-indexed) of a product inside a sector's slot layout.
+// Layout order matches SectorRack3D: idx = l*(cols*rows) + r*cols + c
+function findProductSlot(
+  sector: { rows: number; columns: number; levels: number; products: Product[] },
+  predicate: (p: Product) => boolean,
+): { level: number; column: number; row: number } | null {
+  const cols = Math.max(1, sector.columns);
+  const rows = Math.max(1, sector.rows);
+  const lvls = Math.max(1, sector.levels);
+  const total = cols * rows * lvls;
+  let i = 0;
+  for (const p of sector.products) {
+    const q = Math.max(1, Math.min(p.quantity || 1, total - i));
+    if (predicate(p)) {
+      const idx = i;
+      const l = Math.floor(idx / (cols * rows));
+      const rem = idx % (cols * rows);
+      const r = Math.floor(rem / cols);
+      const c = rem % cols;
+      return { level: l + 1, column: c + 1, row: r + 1 };
+    }
+    i += q;
+    if (i >= total) break;
+  }
+  return null;
+}
 
 interface Sector {
   id: string;
@@ -38,6 +66,8 @@ interface Product {
   name: string;
   sector_id: string | null;
   quantity: number;
+  product_code?: string | null;
+  nfc_id?: string | null;
 }
 
 interface SectorWithProducts extends Sector {
@@ -202,6 +232,8 @@ export default function SectorsPage() {
   const [detailView, setDetailView] = useState<'3d' | '2d'>('3d');
   const [highlight, setHighlight] = useState<{ level: number; column: number; row: number } | null>(null);
   const [hiInput, setHiInput] = useState({ level: 1, column: 1, row: 1 });
+  const [productQuery, setProductQuery] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', description: '',
     rows: 3, columns: 5, levels: 2,
@@ -212,7 +244,7 @@ export default function SectorsPage() {
   const fetchSectors = useCallback(async () => {
     const [sectorsRes, productsRes] = await Promise.all([
       supabase.from('sectors').select('*').order('created_at', { ascending: false }),
-      supabase.from('products').select('id, name, sector_id, quantity'),
+      supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id'),
     ]);
 
     if (sectorsRes.error) {
@@ -315,6 +347,29 @@ export default function SectorsPage() {
   const totalCapacity = sectors.reduce((s, x) => s + x.capacity, 0);
   const totalOccupied = sectors.reduce((s, x) => s + x.occupied, 0);
   const totalEmpty = totalCapacity - totalOccupied;
+
+  // Find product in current detail sector by name/code/nfc and highlight it
+  const highlightByQuery = (q: string) => {
+    if (!detailSector) return;
+    const raw = q.trim();
+    if (!raw) {
+      toast.error('Mahsulot nomi yoki kodini kiriting');
+      return;
+    }
+    const needle = raw.toLowerCase();
+    const slot = findProductSlot(detailSector, (p) =>
+      p.name.toLowerCase().includes(needle) ||
+      (p.product_code || '').toLowerCase() === needle ||
+      (p.nfc_id || '').toLowerCase() === needle
+    );
+    if (!slot) {
+      toast.error(`"${raw}" bu sektorda topilmadi`);
+      return;
+    }
+    setHighlight(slot);
+    setHiInput(slot);
+    toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -450,7 +505,7 @@ export default function SectorsPage() {
         </div>
 
         {/* Detail dialog with large rack */}
-        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); } }}>
+        <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setProductQuery(''); setScannerOpen(false); } }}>
           <DialogContent className="max-w-3xl">
             {detailSector && (
               <>
@@ -490,7 +545,41 @@ export default function SectorsPage() {
                     <Target className="w-4 h-4 text-red-500" />
                     <p className="text-xs font-semibold">Joyni belgilash — robotga ko'rsatish</p>
                   </div>
+
+                  {/* Mahsulot nomi yoki kod/QR/barkod orqali izlash */}
+                  <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b border-red-200/60 dark:border-red-900/30">
+                    <div className="space-y-1 flex-1 min-w-[180px]">
+                      <Label className="text-[10px] text-muted-foreground">Mahsulot nomi / kodi (QR yoki barkod)</Label>
+                      <Input
+                        list={`sector-products-${detailSector.id}`}
+                        placeholder="Masalan: Olma yoki AB12CD34"
+                        value={productQuery}
+                        onChange={(e) => setProductQuery(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); highlightByQuery(productQuery); } }}
+                        className="h-8"
+                      />
+                      <datalist id={`sector-products-${detailSector.id}`}>
+                        {detailSector.products.map((p) => (
+                          <option key={p.id} value={p.name}>{p.product_code || ''}</option>
+                        ))}
+                      </datalist>
+                    </div>
+                    <Button
+                      size="sm" className="h-8"
+                      onClick={() => highlightByQuery(productQuery)}
+                    >
+                      <Search className="w-3.5 h-3.5 mr-1.5" /> Topish
+                    </Button>
+                    <Button
+                      size="sm" variant="outline" className="h-8"
+                      onClick={() => setScannerOpen(true)}
+                    >
+                      <ScanLine className="w-3.5 h-3.5 mr-1.5" /> QR / Barkod
+                    </Button>
+                  </div>
+
                   <div className="flex flex-wrap items-end gap-2">
+
                     <div className="space-y-1">
                       <Label className="text-[10px] text-muted-foreground">Qavat (L) 1–{detailSector.levels}</Label>
                       <Input
@@ -594,6 +683,32 @@ export default function SectorsPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* QR / Barkod skaner */}
+        <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ScanLine className="w-5 h-5 text-primary" /> QR yoki barkodni skanerlash
+              </DialogTitle>
+              <DialogDescription>
+                Mahsulot kodi, QR yoki barkodini kameraga ko'rsating — joyi avtomatik belgilanadi
+              </DialogDescription>
+            </DialogHeader>
+            {scannerOpen && (
+              <QrScanner
+                onScan={(code) => {
+                  setScannerOpen(false);
+                  setProductQuery(code);
+                  highlightByQuery(code);
+                }}
+                onClose={() => setScannerOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+
 
         {/* Create/Edit Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
