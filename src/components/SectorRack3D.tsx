@@ -15,6 +15,9 @@ export interface HighlightSlot {
   row: number;     // 1-indexed (depth)
 }
 
+export type PlacementMap = Map<string, { product: Product; quantity: number }>;
+export const placementKey = (l: number, c: number, r: number) => `${l}-${c}-${r}`;
+
 interface Sector3DProps {
   rows: number;       // depth slots
   columns: number;    // width
@@ -23,7 +26,9 @@ interface Sector3DProps {
   depth_cm: number;
   height_cm: number;
   products: Product[];
+  placements?: PlacementMap | null;
   highlight?: HighlightSlot | null;
+  onSlotClick?: (slot: HighlightSlot) => void;
   className?: string;
   height?: number;
 }
@@ -42,17 +47,12 @@ interface BoxProps {
   size: [number, number, number];
   product: Product | null;
   slotLabel: string;
-}
-
-interface BoxProps {
-  position: [number, number, number];
-  size: [number, number, number];
-  product: Product | null;
-  slotLabel: string;
   highlighted?: boolean;
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
-function PalletBox({ position, size, product, slotLabel, highlighted = false }: BoxProps) {
+function PalletBox({ position, size, product, slotLabel, highlighted = false, onClick, clickable = false }: BoxProps) {
   const [hovered, setHovered] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
@@ -67,13 +67,20 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
 
   const ringColor = '#ef4444';
 
+  const handleClick = (e: any) => {
+    if (!clickable || !onClick) return;
+    e.stopPropagation();
+    onClick();
+  };
+
   if (!product) {
     return (
       <group position={position}>
         <mesh
           position={[0, -size[1] / 2 + 0.02, 0]}
-          onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-          onPointerOut={() => setHovered(false)}
+          onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = clickable ? 'pointer' : 'default'; }}
+          onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
+          onClick={handleClick}
         >
           <boxGeometry args={[size[0] * 0.92, 0.04, size[2] * 0.92]} />
           <meshStandardMaterial
@@ -84,6 +91,19 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
             opacity={highlighted ? 0.85 : 0.55}
           />
         </mesh>
+        {/* Invisible larger click target for empty slots */}
+        {clickable && (
+          <mesh
+            position={[0, size[1] / 2, 0]}
+            onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
+            onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
+            onClick={handleClick}
+            visible={false}
+          >
+            <boxGeometry args={size} />
+            <meshBasicMaterial transparent opacity={0} />
+          </mesh>
+        )}
         {highlighted && (
           <>
             <mesh ref={beaconRef} position={[0, size[1] * 1.2, 0]}>
@@ -100,7 +120,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
         {hovered && !highlighted && (
           <Html position={[0, size[1] / 2, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
             <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
-              Bo'sh · {slotLabel}
+              {clickable ? '+ Joylash' : "Bo'sh"} · {slotLabel}
             </div>
           </Html>
         )}
@@ -114,8 +134,9 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
     <group position={position}>
       <mesh
         ref={meshRef}
-        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = clickable ? 'pointer' : 'default'; }}
+        onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default'; }}
+        onClick={handleClick}
         castShadow
         receiveShadow
       >
@@ -128,7 +149,6 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
           emissiveIntensity={highlighted ? 0.5 : 0}
         />
       </mesh>
-      {/* Tape strip */}
       <mesh position={[0, size[1] / 2 + 0.001, 0]}>
         <boxGeometry args={[size[0] * 0.95, 0.005, size[2] * 0.2]} />
         <meshStandardMaterial color={highlighted ? '#fff' : '#fde68a'} />
@@ -158,8 +178,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false }: 
   );
 }
 
-function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, highlight }: Omit<Sector3DProps, 'className' | 'height'>) {
-  // Convert cm -> meters
+function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, placements, highlight, onSlotClick }: Omit<Sector3DProps, 'className' | 'height'>) {
   const W = Math.max(0.5, width_cm / 100);
   const D = Math.max(0.3, depth_cm / 100);
   const H = Math.max(0.5, height_cm / 100);
@@ -168,37 +187,37 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
   const lvls = Math.max(1, levels);
   const depthRows = Math.max(1, rows);
 
-  // Each slot
   const slotW = W / cols;
   const slotD = D / depthRows;
   const slotH = H / lvls;
 
   const boxSize: [number, number, number] = [slotW * 0.82, slotH * 0.7, slotD * 0.82];
 
-  // Distribute products across slots (front-row first, level-by-level from bottom)
+  // If placements provided & non-empty, use them. Otherwise fall back to sequential fill.
+  const usePlacements = !!placements && placements.size > 0;
+
   const totalSlots = cols * lvls * depthRows;
   const slotMap = useMemo(() => {
     const arr: Array<Product | null> = Array(totalSlots).fill(null);
+    if (usePlacements) return arr;
     let i = 0;
     for (const p of products) {
       const q = Math.max(1, Math.min(p.quantity || 1, totalSlots - i));
       for (let k = 0; k < q && i < totalSlots; k++, i++) arr[i] = p;
     }
     return arr;
-  }, [products, totalSlots]);
+  }, [products, totalSlots, usePlacements]);
 
   const beamH = 0.04;
   const uprightW = 0.06;
 
   return (
     <group position={[0, 0, 0]}>
-      {/* Floor reference */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
         <planeGeometry args={[W * 2.5, D * 3.5]} />
         <meshStandardMaterial color="#e2e8f0" />
       </mesh>
 
-      {/* Uprights — 4 corners */}
       {[
         [-W / 2, 0, -D / 2],
         [W / 2, 0, -D / 2],
@@ -211,7 +230,6 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
         </mesh>
       ))}
 
-      {/* Horizontal beams at each level (front + back) */}
       {Array.from({ length: lvls + 1 }).map((_, l) => {
         const y = l * slotH;
         return (
@@ -224,7 +242,6 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
               <boxGeometry args={[W, beamH, uprightW]} />
               <meshStandardMaterial color="#64748b" metalness={0.4} roughness={0.4} />
             </mesh>
-            {/* Shelf deck (thin) — not for top */}
             {l < lvls && (
               <mesh position={[0, y + 0.01, 0]} receiveShadow>
                 <boxGeometry args={[W - uprightW, 0.015, D - uprightW]} />
@@ -235,31 +252,38 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
         );
       })}
 
-      {/* Pallet boxes */}
       {Array.from({ length: lvls }).map((_, l) =>
         Array.from({ length: depthRows }).map((_, r) =>
           Array.from({ length: cols }).map((_, c) => {
-            const idx = l * (cols * depthRows) + r * cols + c;
-            const product = slotMap[idx];
+            const L = l + 1, C = c + 1, R = r + 1;
+            let product: Product | null = null;
+            if (usePlacements) {
+              const pl = placements!.get(placementKey(L, C, R));
+              if (pl) product = { ...pl.product, quantity: pl.quantity };
+            } else {
+              const idx = l * (cols * depthRows) + r * cols + c;
+              product = slotMap[idx];
+            }
             const x = -W / 2 + slotW / 2 + c * slotW;
             const y = l * slotH + boxSize[1] / 2 + 0.02;
             const z = -D / 2 + slotD / 2 + r * slotD;
-            const isHi = !!highlight && highlight.level === l + 1 && highlight.row === r + 1 && highlight.column === c + 1;
+            const isHi = !!highlight && highlight.level === L && highlight.row === R && highlight.column === C;
             return (
               <PalletBox
                 key={`${l}-${r}-${c}`}
                 position={[x, y, z]}
                 size={boxSize}
                 product={product}
-                slotLabel={`L${l + 1}·R${r + 1}·C${c + 1}`}
+                slotLabel={`L${L}·R${R}·C${C}`}
                 highlighted={isHi}
+                clickable={!!onSlotClick}
+                onClick={() => onSlotClick?.({ level: L, column: C, row: R })}
               />
             );
           })
         )
       )}
 
-      {/* Level labels on left upright */}
       {Array.from({ length: lvls }).map((_, l) => (
         <Html
           key={`lbl-${l}`}
@@ -275,20 +299,13 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
   );
 }
 
-function AutoRotate({ enabled }: { enabled: boolean }) {
-  const ref = useRef<any>(null);
-  useFrame(() => {
-    if (enabled && ref.current) ref.current.update();
-  });
-  return null;
-}
-
 export default function SectorRack3D({
   rows, columns, levels, width_cm, depth_cm, height_cm, products,
+  placements = null,
   highlight = null,
+  onSlotClick,
   className = '', height = 420,
 }: Sector3DProps) {
-  // Camera target based on rack size
   const W = Math.max(0.5, width_cm / 100);
   const H = Math.max(0.5, height_cm / 100);
   const D = Math.max(0.3, depth_cm / 100);
@@ -318,7 +335,9 @@ export default function SectorRack3D({
             depth_cm={depth_cm}
             height_cm={height_cm}
             products={products}
+            placements={placements}
             highlight={highlight}
+            onSlotClick={onSlotClick}
           />
           <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
           <Environment preset="city" />
@@ -333,7 +352,7 @@ export default function SectorRack3D({
         />
       </Canvas>
       <div className="absolute top-2 left-2 px-2 py-1 rounded bg-background/80 backdrop-blur text-[10px] text-muted-foreground font-mono pointer-events-none">
-        Sichqoncha: aylantirish · g'ildirak: zoom · o'ng tugma: surish
+        {onSlotClick ? "Katakni bosing — mahsulot joylash/almashtirish" : "Sichqoncha: aylantirish · g'ildirak: zoom"}
       </div>
     </div>
   );
