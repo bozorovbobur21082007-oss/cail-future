@@ -422,7 +422,18 @@ export default function SectorsPage() {
     toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
   };
 
-  // Open slot picker dialog (for assign / move / clear)
+  // Open slot info dialog (first click shows info, edit button then opens picker)
+  const openSlotInfo = (slot: HighlightSlot) => {
+    if (!detailSector) return;
+    const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
+    setSlotInfo({ slot, product: existing ? { ...existing.product, quantity: existing.quantity } : null });
+  };
+
+  const closeSlotInfo = () => {
+    setSlotInfo(null);
+  };
+
+  // Open slot picker dialog (for assign / move / clear) — called from info dialog
   const openSlotPicker = (slot: HighlightSlot) => {
     if (!detailSector) return;
     const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
