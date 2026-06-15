@@ -86,6 +86,57 @@ export type Database = {
           },
         ]
       }
+      product_placements: {
+        Row: {
+          column_idx: number
+          created_at: string
+          id: string
+          level: number
+          product_id: string
+          quantity: number
+          row_idx: number
+          sector_id: string
+          updated_at: string
+        }
+        Insert: {
+          column_idx: number
+          created_at?: string
+          id?: string
+          level: number
+          product_id: string
+          quantity?: number
+          row_idx: number
+          sector_id: string
+          updated_at?: string
+        }
+        Update: {
+          column_idx?: number
+          created_at?: string
+          id?: string
+          level?: number
+          product_id?: string
+          quantity?: number
+          row_idx?: number
+          sector_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_placements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_placements_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           approved: boolean
