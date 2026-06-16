@@ -263,7 +263,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
       </Dialog>
 
       {/* Sector detail (read-only) */}
-      <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); } }}>
+      <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setSelectedSlot(null); } }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {detailSector && (
             <>
