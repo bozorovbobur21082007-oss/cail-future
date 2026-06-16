@@ -431,6 +431,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                 </div>
               );
             }
+            const prod = pl.product as Product;
             return (
               <div className="space-y-3 py-2">
                 <div className="flex items-center gap-2">
@@ -438,22 +439,22 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                 </div>
                 <div className="rounded-lg border p-3 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm" style={{ background: productColor(pl.product.id) }} />
-                    <span className="font-semibold text-sm">{pl.product.name}</span>
+                    <div className="w-3 h-3 rounded-sm" style={{ background: productColor(prod.id) }} />
+                    <span className="font-semibold text-sm">{prod.name}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="text-muted-foreground">Miqdor:</div>
                     <div className="font-medium text-right">{pl.quantity} dona</div>
-                    {pl.product.product_code && (
+                    {prod.product_code && (
                       <>
                         <div className="text-muted-foreground">Kod:</div>
-                        <div className="font-medium font-mono text-right">{pl.product.product_code}</div>
+                        <div className="font-medium font-mono text-right">{prod.product_code}</div>
                       </>
                     )}
-                    {pl.product.nfc_id && (
+                    {prod.nfc_id && (
                       <>
                         <div className="text-muted-foreground">NFC:</div>
-                        <div className="font-medium font-mono text-right">{pl.product.nfc_id}</div>
+                        <div className="font-medium font-mono text-right">{prod.nfc_id}</div>
                       </>
                     )}
                   </div>
