@@ -357,7 +357,7 @@ export default function SectorRack3D({
         />
       </Canvas>
       <div className="absolute top-2 left-2 px-2 py-1 rounded bg-background/80 backdrop-blur text-[10px] text-muted-foreground font-mono pointer-events-none">
-        {onSlotClick ? "Katakni bosing — mahsulot joylash/almashtirish" : "Sichqoncha: aylantirish · g'ildirak: zoom"}
+        {onSlotClick && !readOnly ? "Katakni bosing — mahsulot joylash/almashtirish" : "Sichqoncha: aylantirish · g'ildirak: zoom"}
       </div>
     </div>
   );
