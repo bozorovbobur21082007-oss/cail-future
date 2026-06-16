@@ -149,6 +149,20 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
 
   useEffect(() => { if (open) fetchSectors(); }, [open, fetchSectors]);
 
+  // RFID (Web Serial) UID — dialog ochiq bo'lsa, avtomatik global qidiruv
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: Event) => {
+      const uid = (e as CustomEvent<string>).detail;
+      if (!uid) return;
+      setProductQuery(uid);
+      globalFind(uid);
+    };
+    window.addEventListener('web-serial-uid', handler as EventListener);
+    return () => window.removeEventListener('web-serial-uid', handler as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, sectors]);
+
   const filtered = sectors.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.code.toLowerCase().includes(search.toLowerCase())

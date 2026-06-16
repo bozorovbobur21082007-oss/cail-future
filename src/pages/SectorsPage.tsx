@@ -433,6 +433,20 @@ export default function SectorsPage() {
     toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
   };
 
+  // RFID (Web Serial) UID — sektor batafsil ochiq bo'lsa, avtomatik qidirish
+  useEffect(() => {
+    if (!detailSector) return;
+    const handler = (e: Event) => {
+      const uid = (e as CustomEvent<string>).detail;
+      if (!uid) return;
+      setProductQuery(uid);
+      highlightByQuery(uid);
+    };
+    window.addEventListener('web-serial-uid', handler as EventListener);
+    return () => window.removeEventListener('web-serial-uid', handler as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailSector]);
+
   // Open slot info dialog (read-only — shows product info)
   const openSlotInfo = (slot: HighlightSlot) => {
     if (!detailSector) return;
