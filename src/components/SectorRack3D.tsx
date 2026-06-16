@@ -29,6 +29,7 @@ interface Sector3DProps {
   placements?: PlacementMap | null;
   highlight?: HighlightSlot | null;
   onSlotClick?: (slot: HighlightSlot) => void;
+  readOnly?: boolean;
   className?: string;
   height?: number;
 }
