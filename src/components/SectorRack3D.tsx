@@ -54,7 +54,7 @@ interface BoxProps {
   readOnly?: boolean;
 }
 
-function PalletBox({ position, size, product, slotLabel, highlighted = false, onClick, clickable = false }: BoxProps) {
+function PalletBox({ position, size, product, slotLabel, highlighted = false, onClick, clickable = false, readOnly = false }: BoxProps) {
   const [hovered, setHovered] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
