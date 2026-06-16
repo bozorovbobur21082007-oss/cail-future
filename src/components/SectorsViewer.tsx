@@ -328,6 +328,8 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                   placements={detailSector.placements}
                   highlight={highlight}
                   height={460}
+                  readOnly
+                  onSlotClick={(slot) => setSelectedSlot(slot)}
                 />
               ) : (
                 <div className="rounded-lg border p-4 bg-slate-50 dark:bg-slate-900/40">
