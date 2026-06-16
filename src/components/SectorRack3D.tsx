@@ -122,7 +122,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false, on
         {hovered && !highlighted && (
           <Html position={[0, size[1] / 2, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
             <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
-              {clickable ? '+ Joylash' : "Bo'sh"} · {slotLabel}
+              {clickable && !readOnly ? '+ Joylash' : "Bo'sh"} · {slotLabel}
             </div>
           </Html>
         )}
