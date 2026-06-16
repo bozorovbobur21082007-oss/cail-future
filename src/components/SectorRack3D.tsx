@@ -51,6 +51,7 @@ interface BoxProps {
   highlighted?: boolean;
   onClick?: () => void;
   clickable?: boolean;
+  readOnly?: boolean;
 }
 
 function PalletBox({ position, size, product, slotLabel, highlighted = false, onClick, clickable = false }: BoxProps) {
