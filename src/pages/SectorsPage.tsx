@@ -433,12 +433,35 @@ export default function SectorsPage() {
     toast.success(`Topildi: L${slot.level}·C${slot.column}·R${slot.row}`);
   };
 
-  // Open slot info dialog (first click shows info, edit button then opens picker)
+  // Open slot info dialog (read-only — shows product info)
   const openSlotInfo = (slot: HighlightSlot) => {
     if (!detailSector) return;
     const existing = detailSector.placements.get(placementKey(slot.level, slot.column, slot.row));
-    setSlotInfo({ slot, product: existing ? { ...existing.product, sector_id: detailSector.id, quantity: existing.quantity } : null });
+    if (existing) {
+      setSlotInfo({ slot, product: { ...existing.product, sector_id: detailSector.id, quantity: existing.quantity } });
+      return;
+    }
+    // Sequential fill fallback when no explicit placements exist
+    if (detailSector.placements.size === 0) {
+      const cols = Math.max(1, detailSector.columns);
+      const rows = Math.max(1, detailSector.rows);
+      const lvls = Math.max(1, detailSector.levels);
+      const total = cols * rows * lvls;
+      const idx = (slot.level - 1) * (cols * rows) + (slot.row - 1) * cols + (slot.column - 1);
+      let i = 0;
+      for (const p of detailSector.products) {
+        const q = Math.max(1, Math.min(p.quantity || 1, total - i));
+        if (idx >= i && idx < i + q) {
+          setSlotInfo({ slot, product: { ...p, sector_id: detailSector.id } });
+          return;
+        }
+        i += q;
+        if (i >= total) break;
+      }
+    }
+    setSlotInfo({ slot, product: null });
   };
+
 
   const closeSlotInfo = () => {
     setSlotInfo(null);
