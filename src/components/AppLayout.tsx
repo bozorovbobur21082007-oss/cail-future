@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Package, Users, ArrowLeftRight,
-  ClipboardList, LogOut, Menu, Warehouse, MapPin, Settings
+  ClipboardList, LogOut, Menu, Warehouse, MapPin, Settings, Move
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ const navItems = [
   { to: '/sektorlar', icon: MapPin, label: 'Sektorlar' },
   { to: '/ishchilar', icon: Users, label: 'Ishchilar' },
   { to: '/operatsiyalar', icon: ArrowLeftRight, label: 'Kirim/Chiqim' },
+  { to: '/kochirish', icon: Move, label: "Ko'chirish" },
   { to: '/loglar', icon: ClipboardList, label: 'Loglar' },
   { to: '/sozlamalar', icon: Settings, label: 'Sozlamalar' },
 ];

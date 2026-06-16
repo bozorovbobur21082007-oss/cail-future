@@ -11,6 +11,7 @@ import WorkersPage from "@/pages/WorkersPage";
 import OperationsPage from "@/pages/OperationsPage";
 import LogsPage from "@/pages/LogsPage";
 import SectorsPage from "@/pages/SectorsPage";
+import TransferPage from "@/pages/TransferPage";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="operatsiyalar" element={<ProtectedRoute allowWorker><OperationsPage /></ProtectedRoute>} />
               <Route path="loglar" element={<ProtectedRoute><LogsPage /></ProtectedRoute>} />
               <Route path="sektorlar" element={<ProtectedRoute><SectorsPage /></ProtectedRoute>} />
+              <Route path="kochirish" element={<ProtectedRoute><TransferPage /></ProtectedRoute>} />
               <Route path="sozlamalar" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
