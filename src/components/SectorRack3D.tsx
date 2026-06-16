@@ -180,7 +180,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false, on
   );
 }
 
-function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, placements, highlight, onSlotClick }: Omit<Sector3DProps, 'className' | 'height'>) {
+function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, placements, highlight, onSlotClick, readOnly }: Omit<Sector3DProps, 'className' | 'height'>) {
   const W = Math.max(0.5, width_cm / 100);
   const D = Math.max(0.3, depth_cm / 100);
   const H = Math.max(0.5, height_cm / 100);
