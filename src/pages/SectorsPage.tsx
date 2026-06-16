@@ -943,20 +943,10 @@ export default function SectorsPage() {
                 </div>
               )}
             </div>
-            <DialogFooter className="gap-2">
+            <DialogFooter>
               <Button variant="outline" onClick={closeSlotInfo}>Yopish</Button>
-              <Button
-                onClick={() => {
-                  if (!slotInfo) return;
-                  const slot = slotInfo.slot;
-                  closeSlotInfo();
-                  openSlotPicker(slot);
-                }}
-              >
-                <ArrowRightLeft className="w-4 h-4 mr-1.5" />
-                Joyni o'zgartirish
-              </Button>
             </DialogFooter>
+
           </DialogContent>
         </Dialog>
 
