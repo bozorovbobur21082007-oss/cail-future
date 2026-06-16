@@ -412,6 +412,58 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* Slot info dialog */}
+      <Dialog open={!!selectedSlot} onOpenChange={(o) => { if (!o) setSelectedSlot(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-primary" />
+              Katak ma'lumoti
+            </DialogTitle>
+          </DialogHeader>
+          {selectedSlot && detailSector && (() => {
+            const pl = detailSector.placements.get(placementKey(selectedSlot.level, selectedSlot.column, selectedSlot.row));
+            if (!pl) {
+              return (
+                <div className="space-y-3 py-2">
+                  <Badge variant="outline" className="font-mono">L{selectedSlot.level} · C{selectedSlot.column} · R{selectedSlot.row}</Badge>
+                  <p className="text-sm text-muted-foreground">Bu katak bo'sh.</p>
+                </div>
+              );
+            }
+            return (
+              <div className="space-y-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono">L{selectedSlot.level} · C{selectedSlot.column} · R{selectedSlot.row}</Badge>
+                </div>
+                <div className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ background: productColor(pl.product.id) }} />
+                    <span className="font-semibold text-sm">{pl.product.name}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-muted-foreground">Miqdor:</div>
+                    <div className="font-medium text-right">{pl.quantity} dona</div>
+                    {pl.product.product_code && (
+                      <>
+                        <div className="text-muted-foreground">Kod:</div>
+                        <div className="font-medium font-mono text-right">{pl.product.product_code}</div>
+                      </>
+                    )}
+                    {pl.product.nfc_id && (
+                      <>
+                        <div className="text-muted-foreground">NFC:</div>
+                        <div className="font-medium font-mono text-right">{pl.product.nfc_id}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {/* QR scanner */}
       <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
         <DialogContent className="max-w-md">
