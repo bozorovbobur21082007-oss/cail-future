@@ -17,6 +17,7 @@ import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
+import { checkSectorCapacity } from '@/utils/sectorCapacity';
 
 interface Sector { id: string; name: string; code: string; }
 
