@@ -138,16 +138,28 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
     const raw = q.trim();
     if (!raw) return;
     const needle = raw.toLowerCase();
+    const match = (p: Product) =>
+      p.name.toLowerCase().includes(needle) ||
+      (p.product_code || '').toLowerCase() === needle ||
+      (p.nfc_id || '').toLowerCase() === needle;
+
+    // 1) Try exact placement slot first
     for (const s of sectors) {
-      const slot = findProductSlot(s, (p: Product) =>
-        p.name.toLowerCase().includes(needle) ||
-        (p.product_code || '').toLowerCase() === needle ||
-        (p.nfc_id || '').toLowerCase() === needle
-      );
+      const slot = findProductSlot(s, match);
       if (slot) {
         setDetailSector(s);
         setHighlight(slot);
         toast.success(`Topildi: ${s.name} · L${slot.level}·C${slot.column}·R${slot.row}`);
+        return;
+      }
+    }
+    // 2) Fallback: product assigned to sector but not placed in a cell
+    for (const s of sectors) {
+      const prod = s.products.find(match);
+      if (prod) {
+        setDetailSector(s);
+        setHighlight(null);
+        toast.success(`Topildi: ${s.name} (aniq joy belgilanmagan)`);
         return;
       }
     }
