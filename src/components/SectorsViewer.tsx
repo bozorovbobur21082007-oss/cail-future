@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { MapPin, Search, Loader2, Box, LayoutGrid, Target, X, ScanLine, Eye, Package } from 'lucide-react';
+import { MapPin, Search, Loader2, Box, LayoutGrid, Target, X, ScanLine, Eye, Package, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
 import QrScanner from '@/components/QrScanner';
@@ -106,6 +106,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
   const [productQuery, setProductQuery] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [depthRow, setDepthRow] = useState(1);
+  const [selectedSlot, setSelectedSlot] = useState<HighlightSlot | null>(null);
 
   const fetchSectors = useCallback(async () => {
     setLoading(true);
@@ -262,7 +263,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
       </Dialog>
 
       {/* Sector detail (read-only) */}
-      <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); } }}>
+      <Dialog open={!!detailSector} onOpenChange={(o) => { if (!o) { setDetailSector(null); setHighlight(null); setSelectedSlot(null); } }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {detailSector && (
             <>
@@ -327,6 +328,8 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                   placements={detailSector.placements}
                   highlight={highlight}
                   height={460}
+                  readOnly
+                  onSlotClick={(slot) => setSelectedSlot(slot)}
                 />
               ) : (
                 <div className="rounded-lg border p-4 bg-slate-50 dark:bg-slate-900/40">
@@ -406,6 +409,59 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
               )}
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Slot info dialog */}
+      <Dialog open={!!selectedSlot} onOpenChange={(o) => { if (!o) setSelectedSlot(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-primary" />
+              Katak ma'lumoti
+            </DialogTitle>
+          </DialogHeader>
+          {selectedSlot && detailSector && (() => {
+            const pl = detailSector.placements.get(placementKey(selectedSlot.level, selectedSlot.column, selectedSlot.row));
+            if (!pl) {
+              return (
+                <div className="space-y-3 py-2">
+                  <Badge variant="outline" className="font-mono">L{selectedSlot.level} · C{selectedSlot.column} · R{selectedSlot.row}</Badge>
+                  <p className="text-sm text-muted-foreground">Bu katak bo'sh.</p>
+                </div>
+              );
+            }
+            const prod = pl.product as Product;
+            return (
+              <div className="space-y-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono">L{selectedSlot.level} · C{selectedSlot.column} · R{selectedSlot.row}</Badge>
+                </div>
+                <div className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm" style={{ background: productColor(prod.id) }} />
+                    <span className="font-semibold text-sm">{prod.name}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-muted-foreground">Miqdor:</div>
+                    <div className="font-medium text-right">{pl.quantity} dona</div>
+                    {prod.product_code && (
+                      <>
+                        <div className="text-muted-foreground">Kod:</div>
+                        <div className="font-medium font-mono text-right">{prod.product_code}</div>
+                      </>
+                    )}
+                    {prod.nfc_id && (
+                      <>
+                        <div className="text-muted-foreground">NFC:</div>
+                        <div className="font-medium font-mono text-right">{prod.nfc_id}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

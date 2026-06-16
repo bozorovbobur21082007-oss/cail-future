@@ -29,6 +29,7 @@ interface Sector3DProps {
   placements?: PlacementMap | null;
   highlight?: HighlightSlot | null;
   onSlotClick?: (slot: HighlightSlot) => void;
+  readOnly?: boolean;
   className?: string;
   height?: number;
 }
@@ -50,9 +51,10 @@ interface BoxProps {
   highlighted?: boolean;
   onClick?: () => void;
   clickable?: boolean;
+  readOnly?: boolean;
 }
 
-function PalletBox({ position, size, product, slotLabel, highlighted = false, onClick, clickable = false }: BoxProps) {
+function PalletBox({ position, size, product, slotLabel, highlighted = false, onClick, clickable = false, readOnly = false }: BoxProps) {
   const [hovered, setHovered] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
   const beaconRef = useRef<THREE.Mesh>(null);
@@ -120,7 +122,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false, on
         {hovered && !highlighted && (
           <Html position={[0, size[1] / 2, 0]} center transform occlude style={{ pointerEvents: 'none' }}>
             <div className="px-2 py-1 rounded bg-background border whitespace-nowrap shadow" style={{ fontSize: '6px' }}>
-              {clickable ? '+ Joylash' : "Bo'sh"} · {slotLabel}
+              {clickable && !readOnly ? '+ Joylash' : "Bo'sh"} · {slotLabel}
             </div>
           </Html>
         )}
@@ -178,7 +180,7 @@ function PalletBox({ position, size, product, slotLabel, highlighted = false, on
   );
 }
 
-function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, placements, highlight, onSlotClick }: Omit<Sector3DProps, 'className' | 'height'>) {
+function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, placements, highlight, onSlotClick, readOnly }: Omit<Sector3DProps, 'className' | 'height'>) {
   const W = Math.max(0.5, width_cm / 100);
   const D = Math.max(0.3, depth_cm / 100);
   const H = Math.max(0.5, height_cm / 100);
@@ -277,6 +279,7 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
                 slotLabel={`L${L}·R${R}·C${C}`}
                 highlighted={isHi}
                 clickable={!!onSlotClick}
+                readOnly={readOnly}
                 onClick={() => onSlotClick?.({ level: L, column: C, row: R })}
               />
             );
@@ -304,6 +307,7 @@ export default function SectorRack3D({
   placements = null,
   highlight = null,
   onSlotClick,
+  readOnly = false,
   className = '', height = 420,
 }: Sector3DProps) {
   const W = Math.max(0.5, width_cm / 100);
@@ -338,6 +342,7 @@ export default function SectorRack3D({
             placements={placements}
             highlight={highlight}
             onSlotClick={onSlotClick}
+            readOnly={readOnly}
           />
           <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
           <Environment preset="city" />
@@ -352,7 +357,7 @@ export default function SectorRack3D({
         />
       </Canvas>
       <div className="absolute top-2 left-2 px-2 py-1 rounded bg-background/80 backdrop-blur text-[10px] text-muted-foreground font-mono pointer-events-none">
-        {onSlotClick ? "Katakni bosing — mahsulot joylash/almashtirish" : "Sichqoncha: aylantirish · g'ildirak: zoom"}
+        {onSlotClick && !readOnly ? "Katakni bosing — mahsulot joylash/almashtirish" : "Sichqoncha: aylantirish · g'ildirak: zoom"}
       </div>
     </div>
   );
