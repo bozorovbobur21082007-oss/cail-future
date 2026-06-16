@@ -235,6 +235,21 @@ export default function OperationsPage() {
         return;
       }
 
+      if (actionType === 'IN') {
+        const cap = await checkSectorCapacity(verifiedProduct.sector_id, quantity, verifiedProduct.id);
+        if (!cap.ok) {
+          setScanError({
+            title: "Javonda joy qolmagan",
+            detail: cap.message || "Sektor sig'imi to'lgan.",
+            hint: "Yangi javon (sektor) yarating yoki mahsulotni bo'sh sektorga biriktiring.",
+          });
+          sound.error();
+          setLoading(false);
+          return;
+        }
+      }
+
+
       const { error: updateError } = await supabase.from('products').update({ quantity: newQty }).eq('id', verifiedProduct.id);
       if (updateError) throw updateError;
 
