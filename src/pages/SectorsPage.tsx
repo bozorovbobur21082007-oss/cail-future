@@ -873,7 +873,9 @@ export default function SectorsPage() {
                     placements={detailSector.placements}
                     highlight={highlight}
                     onSlotClick={openSlotInfo}
+                    readOnly
                     height={460}
+
                   />
                 ) : (
                   <div className="pl-6">
