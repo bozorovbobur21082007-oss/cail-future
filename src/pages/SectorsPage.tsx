@@ -359,6 +359,17 @@ export default function SectorsPage() {
       const capacity = Math.max(1, form.rows * form.columns * form.levels);
       const payload = { ...form, capacity };
       if (editing) {
+        // Tahrirlashda: yangi sig'im hozirgi band miqdordan kichik bo'lmasin
+        const current = sectors.find(s => s.id === editing.id);
+        const used = current?.products.reduce((sum, p) => sum + (p.quantity || 0), 0) ?? 0;
+        if (capacity < used) {
+          toast.error(
+            `Sig'imni ${capacity} ga kamaytirib bo'lmaydi: hozir bu sektorda ${used} dona mahsulot bor. ` +
+            `Avval mahsulotlarni boshqa sektorga ko'chiring yoki chiqarib oling (kamida ${used} bo'lishi kerak).`
+          );
+          setSubmitting(false);
+          return;
+        }
         const { error } = await supabase.from('sectors').update(payload).eq('id', editing.id);
         if (error) throw error;
         toast.success("Sektor yangilandi");
