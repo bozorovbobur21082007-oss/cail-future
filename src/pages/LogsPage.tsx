@@ -257,6 +257,7 @@ export default function LogsPage() {
                     <SelectItem value="all">Barchasi</SelectItem>
                     <SelectItem value="IN">Kirim</SelectItem>
                     <SelectItem value="OUT">Chiqim</SelectItem>
+                    <SelectItem value="MOVE">Ko'chirish</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -305,8 +306,12 @@ export default function LogsPage() {
                     operations.map(op => (
                       <TableRow key={op.id}>
                         <TableCell>
-                          <Badge className={op.action_type === 'IN' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}>
-                            {op.action_type === 'IN' ? 'Kirim' : 'Chiqim'}
+                          <Badge className={
+                            op.action_type === 'IN' ? 'bg-success/10 text-success border-success/20'
+                            : op.action_type === 'OUT' ? 'bg-warning/10 text-warning border-warning/20'
+                            : 'bg-primary/10 text-primary border-primary/20'
+                          }>
+                            {op.action_type === 'IN' ? 'Kirim' : op.action_type === 'OUT' ? 'Chiqim' : "Ko'chirish"}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{op.product_name}</TableCell>
