@@ -59,14 +59,34 @@ function productColor(id: string) {
 }
 
 function findProductSlot(
-  sector: { rows: number; columns: number; levels: number; placements: PlacementMap },
+  sector: { rows: number; columns: number; levels: number; products: Product[]; placements: PlacementMap },
   predicate: (p: Product) => boolean,
 ): HighlightSlot | null {
+  // 1) Prefer explicit placement if any
   for (const [key, val] of sector.placements.entries()) {
     if (predicate(val.product as Product)) {
       const [l, c, r] = key.split('-').map(Number);
       return { level: l, column: c, row: r };
     }
+  }
+  // 2) Fallback: sequential fill (same as admin)
+  const cols = Math.max(1, sector.columns);
+  const rows = Math.max(1, sector.rows);
+  const lvls = Math.max(1, sector.levels);
+  const total = cols * rows * lvls;
+  let i = 0;
+  for (const p of sector.products) {
+    const q = Math.max(1, Math.min(p.quantity || 1, total - i));
+    if (predicate(p)) {
+      const idx = i;
+      const l = Math.floor(idx / (cols * rows));
+      const rem = idx % (cols * rows);
+      const r = Math.floor(rem / cols);
+      const c = rem % cols;
+      return { level: l + 1, column: c + 1, row: r + 1 };
+    }
+    i += q;
+    if (i >= total) break;
   }
   return null;
 }
