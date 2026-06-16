@@ -423,7 +423,27 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
           </DialogHeader>
           {selectedSlot && detailSector && (() => {
             const pl = detailSector.placements.get(placementKey(selectedSlot.level, selectedSlot.column, selectedSlot.row));
-            if (!pl) {
+            let prod: Product | null = null;
+            let qty = 0;
+            if (pl) {
+              prod = pl.product as Product;
+              qty = pl.quantity;
+            } else if (detailSector.placements.size === 0) {
+              // Sequential fill fallback (matches 3D render order)
+              const cols = Math.max(1, detailSector.columns);
+              const rows = Math.max(1, detailSector.rows);
+              const lvls = Math.max(1, detailSector.levels);
+              const total = cols * rows * lvls;
+              const idx = (selectedSlot.level - 1) * (cols * rows) + (selectedSlot.row - 1) * cols + (selectedSlot.column - 1);
+              let i = 0;
+              for (const p of detailSector.products) {
+                const q = Math.max(1, Math.min(p.quantity || 1, total - i));
+                if (idx >= i && idx < i + q) { prod = p; qty = p.quantity; break; }
+                i += q;
+                if (i >= total) break;
+              }
+            }
+            if (!prod) {
               return (
                 <div className="space-y-3 py-2">
                   <Badge variant="outline" className="font-mono">L{selectedSlot.level} · C{selectedSlot.column} · R{selectedSlot.row}</Badge>
@@ -431,7 +451,6 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                 </div>
               );
             }
-            const prod = pl.product as Product;
             return (
               <div className="space-y-3 py-2">
                 <div className="flex items-center gap-2">
@@ -444,7 +463,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="text-muted-foreground">Miqdor:</div>
-                    <div className="font-medium text-right">{pl.quantity} dona</div>
+                    <div className="font-medium text-right">{qty} dona</div>
                     {prod.product_code && (
                       <>
                         <div className="text-muted-foreground">Kod:</div>
@@ -462,6 +481,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
               </div>
             );
           })()}
+
         </DialogContent>
       </Dialog>
 
