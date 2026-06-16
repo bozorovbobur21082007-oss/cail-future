@@ -342,6 +342,7 @@ export default function SectorRack3D({
             placements={placements}
             highlight={highlight}
             onSlotClick={onSlotClick}
+            readOnly={readOnly}
           />
           <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
           <Environment preset="city" />
