@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { MapPin, Search, Loader2, Box, LayoutGrid, Target, X, ScanLine, Eye, Package } from 'lucide-react';
+import { MapPin, Search, Loader2, Box, LayoutGrid, Target, X, ScanLine, Eye, Package, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
 import QrScanner from '@/components/QrScanner';
