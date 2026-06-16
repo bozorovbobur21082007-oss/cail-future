@@ -307,6 +307,7 @@ export default function SectorRack3D({
   placements = null,
   highlight = null,
   onSlotClick,
+  readOnly = false,
   className = '', height = 420,
 }: Sector3DProps) {
   const W = Math.max(0.5, width_cm / 100);
