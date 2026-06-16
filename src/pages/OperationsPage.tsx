@@ -34,6 +34,7 @@ interface Product {
   name: string;
   quantity: number;
   nfc_id: string | null;
+  sector_id: string | null;
 }
 
 interface BatchLog {
