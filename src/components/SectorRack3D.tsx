@@ -279,6 +279,7 @@ function Rack({ rows, columns, levels, width_cm, depth_cm, height_cm, products, 
                 slotLabel={`L${L}·R${R}·C${C}`}
                 highlighted={isHi}
                 clickable={!!onSlotClick}
+                readOnly={readOnly}
                 onClick={() => onSlotClick?.({ level: L, column: C, row: R })}
               />
             );
