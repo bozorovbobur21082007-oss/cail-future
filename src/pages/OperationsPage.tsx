@@ -16,6 +16,7 @@ import NfcScanner from '@/components/NfcScanner';
 import QuickLabelDialog from '@/components/QuickLabelDialog';
 import PrintLabelDialog from '@/components/PrintLabelDialog';
 import SectorsViewer from '@/components/SectorsViewer';
+import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +34,7 @@ interface Product {
   name: string;
   quantity: number;
   nfc_id: string | null;
+  sector_id: string | null;
 }
 
 interface BatchLog {
@@ -232,6 +234,21 @@ export default function OperationsPage() {
         setLoading(false);
         return;
       }
+
+      if (actionType === 'IN') {
+        const cap = await checkSectorCapacity(verifiedProduct.sector_id, quantity, verifiedProduct.id);
+        if (!cap.ok) {
+          setScanError({
+            title: "Javonda joy qolmagan",
+            detail: cap.message || "Sektor sig'imi to'lgan.",
+            hint: "Yangi javon (sektor) yarating yoki mahsulotni bo'sh sektorga biriktiring.",
+          });
+          sound.error();
+          setLoading(false);
+          return;
+        }
+      }
+
 
       const { error: updateError } = await supabase.from('products').update({ quantity: newQty }).eq('id', verifiedProduct.id);
       if (updateError) throw updateError;

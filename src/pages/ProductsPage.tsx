@@ -17,6 +17,7 @@ import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
+import { checkSectorCapacity } from '@/utils/sectorCapacity';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -208,6 +209,22 @@ export default function ProductsPage() {
       sector_id: form.sector_id || null,
       nfc_id: idMethod === 'nfc' ? nfc : null,
     };
+
+    // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
+    if (payload.sector_id) {
+      const delta = editing
+        ? Math.max(0, payload.quantity - editing.quantity)
+        : payload.quantity;
+      if (delta > 0) {
+        const cap = await checkSectorCapacity(payload.sector_id, delta, editing?.id);
+        if (!cap.ok) {
+          toast.error(cap.message || "Sektorda joy qolmagan");
+          setSubmitting(false);
+          return;
+        }
+      }
+    }
+
     try {
       if (editing) {
         const oldQty = editing.quantity;
