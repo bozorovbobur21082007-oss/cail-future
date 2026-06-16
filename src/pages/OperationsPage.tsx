@@ -16,6 +16,7 @@ import NfcScanner from '@/components/NfcScanner';
 import QuickLabelDialog from '@/components/QuickLabelDialog';
 import PrintLabelDialog from '@/components/PrintLabelDialog';
 import SectorsViewer from '@/components/SectorsViewer';
+import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { useAuth } from '@/contexts/AuthContext';
