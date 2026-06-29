@@ -189,6 +189,13 @@ export default function ProductsPage() {
       return;
     }
 
+    // Maxsus QR kod (mahsulot bilan kelgan) — tekshirish
+    const customCodeVal = customCode.trim().toUpperCase();
+    if (idMethod === 'code' && useCustomCode && !customCodeVal) {
+      toast.error("Mahsulot QR/Barkodini kiriting yoki skanerlang.");
+      return;
+    }
+
     setSubmitting(true);
 
     // NFC ID takrorlanmasligini oldindan tekshirish (do'stona xato xabari uchun)
@@ -212,13 +219,37 @@ export default function ProductsPage() {
       }
     }
 
-    const payload = {
+    // Maxsus mahsulot kodi takrorlanmasligini tekshirish
+    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+      const { data: existingCode, error: codeErr } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('product_code', customCodeVal)
+        .maybeSingle();
+      if (codeErr) {
+        toast.error("Kodni tekshirishda xatolik: " + codeErr.message);
+        setSubmitting(false);
+        return;
+      }
+      if (existingCode && existingCode.id !== editing?.id) {
+        toast.error(
+          `Bu kod allaqachon "${existingCode.name}" mahsulotiga biriktirilgan. Boshqa kod ishlatishingiz kerak.`
+        );
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    const payload: any = {
       name: trimmedName,
       quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
       nfc_id: idMethod === 'nfc' ? nfc : null,
     };
+    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+      payload.product_code = customCodeVal;
+    }
 
     // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
     if (payload.sector_id) {
