@@ -754,6 +754,70 @@ export default function ProductsPage() {
               </div>
             </div>
 
+            {idMethod === 'code' && (
+              <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useCustomCode}
+                    onChange={(e) => {
+                      setUseCustomCode(e.target.checked);
+                      if (!e.target.checked) { setCustomCode(''); setShowQrScanner(false); }
+                    }}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Mahsulot o'z QR/Barkodi bilan kelgan
+                    <span className="block text-[11px] text-muted-foreground leading-tight">
+                      Tayyor kodini ro'yxatdan o'tkazing — avtomatik kod o'rniga shu kod ishlatiladi.
+                    </span>
+                  </span>
+                </label>
+
+                {useCustomCode && (
+                  <>
+                    {showQrScanner ? (
+                      <QrScanner
+                        onScan={(code) => {
+                          setCustomCode(code.trim().toUpperCase());
+                          setShowQrScanner(false);
+                          toast.success(`Kod o'qildi: ${code}`);
+                        }}
+                        onClose={() => setShowQrScanner(false)}
+                      />
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          value={customCode}
+                          onChange={(e) => setCustomCode(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && customCode.trim()) {
+                              e.preventDefault();
+                              toast.success(`Kod qabul qilindi: ${customCode.trim().toUpperCase()}`);
+                            }
+                          }}
+                          placeholder="QR/Barkodni skanerlang yoki kiriting..."
+                          className="font-mono uppercase"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowQrScanner(true)}
+                          title="Kamera orqali skanerlash"
+                        >
+                          <QrCode className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      USB QR/Barkod o'quvchi avtomatik kiritadi. Kamera uchun yondagi tugmani bosing. Kod takrorlanmasligi tekshiriladi.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
             {idMethod === 'nfc' && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5">
