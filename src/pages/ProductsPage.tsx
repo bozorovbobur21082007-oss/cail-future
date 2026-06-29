@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
+import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
@@ -52,6 +53,9 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [idMethod, setIdMethod] = useState<'code' | 'nfc'>('code');
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [useCustomCode, setUseCustomCode] = useState(false);
+  const [customCode, setCustomCode] = useState('');
+  const [showQrScanner, setShowQrScanner] = useState(false);
   const [scannerMode] = useScannerMode();
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
@@ -115,6 +119,9 @@ export default function ProductsPage() {
     setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
     setIdMethod('code');
     setShowNfcScanner(false);
+    setUseCustomCode(false);
+    setCustomCode('');
+    setShowQrScanner(false);
     setDialogOpen(true);
   };
 
@@ -123,6 +130,9 @@ export default function ProductsPage() {
     setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
     setIdMethod(p.nfc_id ? 'nfc' : 'code');
     setShowNfcScanner(false);
+    setUseCustomCode(false);
+    setCustomCode('');
+    setShowQrScanner(false);
     setDialogOpen(true);
   };
 
@@ -179,6 +189,13 @@ export default function ProductsPage() {
       return;
     }
 
+    // Maxsus QR kod (mahsulot bilan kelgan) — tekshirish
+    const customCodeVal = customCode.trim().toUpperCase();
+    if (idMethod === 'code' && useCustomCode && !customCodeVal) {
+      toast.error("Mahsulot QR/Barkodini kiriting yoki skanerlang.");
+      return;
+    }
+
     setSubmitting(true);
 
     // NFC ID takrorlanmasligini oldindan tekshirish (do'stona xato xabari uchun)
@@ -202,13 +219,37 @@ export default function ProductsPage() {
       }
     }
 
-    const payload = {
+    // Maxsus mahsulot kodi takrorlanmasligini tekshirish
+    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+      const { data: existingCode, error: codeErr } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('product_code', customCodeVal)
+        .maybeSingle();
+      if (codeErr) {
+        toast.error("Kodni tekshirishda xatolik: " + codeErr.message);
+        setSubmitting(false);
+        return;
+      }
+      if (existingCode && existingCode.id !== editing?.id) {
+        toast.error(
+          `Bu kod allaqachon "${existingCode.name}" mahsulotiga biriktirilgan. Boshqa kod ishlatishingiz kerak.`
+        );
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    const payload: any = {
       name: trimmedName,
       quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
       nfc_id: idMethod === 'nfc' ? nfc : null,
     };
+    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+      payload.product_code = customCodeVal;
+    }
 
     // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
     if (payload.sector_id) {
@@ -712,6 +753,70 @@ export default function ProductsPage() {
                 </button>
               </div>
             </div>
+
+            {idMethod === 'code' && (
+              <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useCustomCode}
+                    onChange={(e) => {
+                      setUseCustomCode(e.target.checked);
+                      if (!e.target.checked) { setCustomCode(''); setShowQrScanner(false); }
+                    }}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Mahsulot o'z QR/Barkodi bilan kelgan
+                    <span className="block text-[11px] text-muted-foreground leading-tight">
+                      Tayyor kodini ro'yxatdan o'tkazing — avtomatik kod o'rniga shu kod ishlatiladi.
+                    </span>
+                  </span>
+                </label>
+
+                {useCustomCode && (
+                  <>
+                    {showQrScanner ? (
+                      <QrScanner
+                        onScan={(code) => {
+                          setCustomCode(code.trim().toUpperCase());
+                          setShowQrScanner(false);
+                          toast.success(`Kod o'qildi: ${code}`);
+                        }}
+                        onClose={() => setShowQrScanner(false)}
+                      />
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          value={customCode}
+                          onChange={(e) => setCustomCode(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && customCode.trim()) {
+                              e.preventDefault();
+                              toast.success(`Kod qabul qilindi: ${customCode.trim().toUpperCase()}`);
+                            }
+                          }}
+                          placeholder="QR/Barkodni skanerlang yoki kiriting..."
+                          className="font-mono uppercase"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowQrScanner(true)}
+                          title="Kamera orqali skanerlash"
+                        >
+                          <QrCode className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      USB QR/Barkod o'quvchi avtomatik kiritadi. Kamera uchun yondagi tugmani bosing. Kod takrorlanmasligi tekshiriladi.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
 
             {idMethod === 'nfc' && (
               <div className="space-y-2">
