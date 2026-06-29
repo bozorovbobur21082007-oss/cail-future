@@ -45,7 +45,7 @@ interface Shelf {
 interface Product {
   id: string;
   name: string;
-  sector_id: string | null;
+  sector_id?: string | null;
   quantity: number;
   product_code?: string | null;
   nfc_id?: string | null;
