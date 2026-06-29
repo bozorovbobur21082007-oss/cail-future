@@ -46,18 +46,27 @@ export default function TransferPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [pRes, sRes] = await Promise.all([
+    const [pRes, sRes, shRes] = await Promise.all([
       supabase.from('products')
         .select('id, product_code, name, quantity, sector_id, nfc_id')
         .order('name'),
       supabase.from('sectors')
-        .select('id, name, code, capacity')
+        .select('id, name, code')
         .order('code'),
+      supabase.from('shelves')
+        .select('id, sector_id, capacity'),
     ]);
     if (pRes.error) toast.error('Mahsulotlarni yuklashda xatolik');
     else setProducts(pRes.data || []);
-    if (sRes.error) toast.error('Sektorlarni yuklashda xatolik');
-    else setSectors(sRes.data || []);
+    if (sRes.error || shRes.error) toast.error('Xonalarni yuklashda xatolik');
+    else {
+      // Xona sig'imi = ichidagi barcha shkaflarning sig'imlari yig'indisi
+      const capByS = new Map<string, number>();
+      (shRes.data || []).forEach((sh: any) => {
+        capByS.set(sh.sector_id, (capByS.get(sh.sector_id) || 0) + (sh.capacity || 0));
+      });
+      setSectors((sRes.data || []).map((s: any) => ({ ...s, capacity: capByS.get(s.id) || 0 })));
+    }
     setLoading(false);
   }, []);
 

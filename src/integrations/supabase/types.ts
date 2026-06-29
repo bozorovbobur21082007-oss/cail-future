@@ -96,6 +96,7 @@ export type Database = {
           quantity: number
           row_idx: number
           sector_id: string
+          shelf_id: string
           updated_at: string
         }
         Insert: {
@@ -107,6 +108,7 @@ export type Database = {
           quantity?: number
           row_idx: number
           sector_id: string
+          shelf_id: string
           updated_at?: string
         }
         Update: {
@@ -118,6 +120,7 @@ export type Database = {
           quantity?: number
           row_idx?: number
           sector_id?: string
+          shelf_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -133,6 +136,13 @@ export type Database = {
             columns: ["sector_id"]
             isOneToOne: false
             referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_placements_shelf_id_fkey"
+            columns: ["shelf_id"]
+            isOneToOne: false
+            referencedRelation: "shelves"
             referencedColumns: ["id"]
           },
         ]
@@ -213,12 +223,47 @@ export type Database = {
       }
       sectors: {
         Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          orientation: number
+          position_x: number
+          position_y: number
+          updated_at: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          orientation?: number
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          orientation?: number
+          position_x?: number
+          position_y?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shelves: {
+        Row: {
           capacity: number
           code: string
           columns: number
           created_at: string
           depth_cm: number
-          description: string | null
           height_cm: number
           id: string
           levels: number
@@ -227,6 +272,7 @@ export type Database = {
           position_x: number
           position_y: number
           rows: number
+          sector_id: string
           updated_at: string
           width_cm: number
         }
@@ -236,7 +282,6 @@ export type Database = {
           columns?: number
           created_at?: string
           depth_cm?: number
-          description?: string | null
           height_cm?: number
           id?: string
           levels?: number
@@ -245,6 +290,7 @@ export type Database = {
           position_x?: number
           position_y?: number
           rows?: number
+          sector_id: string
           updated_at?: string
           width_cm?: number
         }
@@ -254,7 +300,6 @@ export type Database = {
           columns?: number
           created_at?: string
           depth_cm?: number
-          description?: string | null
           height_cm?: number
           id?: string
           levels?: number
@@ -263,10 +308,19 @@ export type Database = {
           position_x?: number
           position_y?: number
           rows?: number
+          sector_id?: string
           updated_at?: string
           width_cm?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shelves_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workers: {
         Row: {
