@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
+import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
@@ -52,6 +53,9 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
   const [idMethod, setIdMethod] = useState<'code' | 'nfc'>('code');
   const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [useCustomCode, setUseCustomCode] = useState(false);
+  const [customCode, setCustomCode] = useState('');
+  const [showQrScanner, setShowQrScanner] = useState(false);
   const [scannerMode] = useScannerMode();
   const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
   const [compactLabel, setCompactLabel] = useState(false);
@@ -115,6 +119,9 @@ export default function ProductsPage() {
     setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
     setIdMethod('code');
     setShowNfcScanner(false);
+    setUseCustomCode(false);
+    setCustomCode('');
+    setShowQrScanner(false);
     setDialogOpen(true);
   };
 
@@ -123,6 +130,9 @@ export default function ProductsPage() {
     setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
     setIdMethod(p.nfc_id ? 'nfc' : 'code');
     setShowNfcScanner(false);
+    setUseCustomCode(false);
+    setCustomCode('');
+    setShowQrScanner(false);
     setDialogOpen(true);
   };
 
