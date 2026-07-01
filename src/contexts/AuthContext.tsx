@@ -51,12 +51,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', session.user.id)
       .single();
 
+    // Server-side role check via user_roles table (RLS-protected)
+    const { data: isAdmin } = await supabase.rpc('has_role', {
+      _user_id: session.user.id,
+      _role: 'admin',
+    });
+
     setUser({
       id: session.user.id,
       email: data?.email || session.user.email || '',
       name: data?.name || '',
     });
-    setRole('admin');
+    setRole(isAdmin ? 'admin' : null);
     setLoading(false);
   };
 
