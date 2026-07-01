@@ -194,6 +194,34 @@ export default function SectorsPage() {
     return m;
   }, [placements, products]);
 
+  // Shkaflar bo'yicha bandlik: aniq joylashuv + qolgan mahsulotlarni ketma-ket taqsimlash
+  const shelfOccupancy = useMemo(() => {
+    const map = new Map<string, number>();
+    sectors.forEach(s => {
+      const shList = shelvesBySector.get(s.id) || [];
+      const sectorProds = productsBySector.get(s.id) || [];
+      const placedIds = new Set<string>();
+      const explicit = new Map<string, number>();
+      placements.forEach(pl => {
+        const sh = shList.find(x => x.id === pl.shelf_id);
+        if (!sh) return;
+        explicit.set(pl.shelf_id, (explicit.get(pl.shelf_id) || 0) + (pl.quantity || 1));
+        placedIds.add(pl.product_id);
+      });
+      let unplaced = sectorProds
+        .filter(p => !placedIds.has(p.id))
+        .reduce((sum, p) => sum + (p.quantity || 0), 0);
+      shList.forEach(sh => {
+        const ex = explicit.get(sh.id) || 0;
+        const free = Math.max(0, (sh.capacity || 0) - ex);
+        const take = Math.min(free, unplaced);
+        unplaced -= take;
+        map.set(sh.id, ex + take);
+      });
+    });
+    return map;
+  }, [sectors, shelvesBySector, productsBySector, placements]);
+
   const sectorStats = useMemo(() => {
     return sectors.map(s => {
       const shList = shelvesBySector.get(s.id) || [];
@@ -666,6 +694,7 @@ export default function SectorsPage() {
                   <RoomMap
                     shelves={shelfList}
                     placements={placements}
+                    occupancy={shelfOccupancy}
                     onClick={(sh) => openShelf(sh.id)}
                   />
                 </div>
@@ -680,7 +709,7 @@ export default function SectorsPage() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {shelfList.map(sh => {
-                        const occ = placements.filter(pl => pl.shelf_id === sh.id).reduce((s, pl) => s + (pl.quantity || 1), 0);
+                        const occ = shelfOccupancy.get(sh.id) ?? 0;
                         const pct = sh.capacity > 0 ? Math.round((occ / sh.capacity) * 100) : 0;
                         return (
                           <div key={sh.id} className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition group">
@@ -940,10 +969,12 @@ function StatCard({ label, value, icon, sub }: { label: string; value: number | 
 function RoomMap({
   shelves,
   placements,
+  occupancy,
   onClick,
 }: {
   shelves: Shelf[];
   placements: Placement[];
+  occupancy: Map<string, number>;
   onClick: (sh: Shelf) => void;
 }) {
   if (shelves.length === 0) {
@@ -980,7 +1011,7 @@ function RoomMap({
           fill="none" stroke="currentColor" strokeOpacity="0.2" strokeDasharray="4 4" rx="8" />
 
         {shelves.map((sh) => {
-          const occ = placements.filter(pl => pl.shelf_id === sh.id).reduce((s, pl) => s + (pl.quantity || 1), 0);
+          const occ = occupancy.get(sh.id) ?? placements.filter(pl => pl.shelf_id === sh.id).reduce((s, pl) => s + (pl.quantity || 1), 0);
           const pct = sh.capacity > 0 ? Math.round((occ / sh.capacity) * 100) : 0;
           const fillClass = pct >= 100 ? 'fill-red-500/70' : pct >= 70 ? 'fill-amber-500/70' : pct > 0 ? 'fill-blue-500/60' : 'fill-emerald-500/40';
           const x = sh.position_x - xMin + padding;
