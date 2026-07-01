@@ -709,7 +709,7 @@ export default function SectorsPage() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {shelfList.map(sh => {
-                        const occ = placements.filter(pl => pl.shelf_id === sh.id).reduce((s, pl) => s + (pl.quantity || 1), 0);
+                        const occ = shelfOccupancy.get(sh.id) ?? 0;
                         const pct = sh.capacity > 0 ? Math.round((occ / sh.capacity) * 100) : 0;
                         return (
                           <div key={sh.id} className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition group">
