@@ -162,7 +162,7 @@ export default function LoginPage() {
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {loading ? (isSignup ? "Yaratilmoqda..." : "Kirilmoqda...") : (isSignup ? "Ro'yxatdan o'tish" : "Kirish")}
               </Button>
-              <div className="flex items-center justify-between">
+              <div>
                 <button
                   type="button"
                   onClick={() => { setMode('choose'); setError(''); }}
@@ -170,14 +170,8 @@ export default function LoginPage() {
                 >
                   <ArrowLeft className="w-3 h-3" /> Orqaga
                 </button>
-                <button
-                  type="button"
-                  onClick={() => { setIsSignup(!isSignup); setError(''); }}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {isSignup ? "Kirish" : "Ro'yxatdan o'tish"}
-                </button>
               </div>
+
             </form>
           )}
         </CardContent>
