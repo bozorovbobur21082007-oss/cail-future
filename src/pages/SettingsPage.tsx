@@ -4,11 +4,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { exportBackup, readBackupZip, restoreBackup, downloadBlob, type RestoreProgress } from '@/utils/backup';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function SettingsPage() {
   const [scannerMode, setScannerMode] = useScannerMode();
@@ -20,15 +22,28 @@ export default function SettingsPage() {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinSaving, setPinSaving] = useState(false);
 
+  // Backup / restore state
+  const [backupEnabled, setBackupEnabled] = useState(false);
+  const [backupEmail, setBackupEmail] = useState('');
+  const [backupEmailInput, setBackupEmailInput] = useState('');
+  const [backupSaving, setBackupSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
       const { data } = await supabase
         .from('app_settings')
-        .select('value')
-        .eq('key', 'worker_pin')
-        .maybeSingle();
-      if (data?.value) setWorkerPin(data.value);
+        .select('key,value')
+        .in('key', ['worker_pin', 'backup_enabled', 'backup_email']);
+      const map = new Map((data || []).map((r: any) => [r.key, r.value]));
+      if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
+      setBackupEnabled(map.get('backup_enabled') === 'true');
+      setBackupEmail((map.get('backup_email') as string) || '');
+      setBackupEmailInput((map.get('backup_email') as string) || '');
       setPinLoading(false);
     })();
   }, []);
@@ -63,6 +78,59 @@ export default function SettingsPage() {
     setSoundEnabled(v);
     if (v) test();
     toast.success(v ? 'Tovush bilan tasdiqlash yoqildi' : 'Tovush o\'chirildi');
+  };
+
+  const saveBackupEnabled = async (v: boolean) => {
+    setBackupSaving(true);
+    const { error } = await supabase.from('app_settings').update({ value: v ? 'true' : 'false' }).eq('key', 'backup_enabled');
+    setBackupSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setBackupEnabled(v);
+    toast.success(v ? 'Avtomatik zaxira yoqildi' : "Avtomatik zaxira o'chirildi");
+  };
+
+  const saveBackupEmail = async () => {
+    const email = backupEmailInput.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Email noto'g'ri formatda");
+      return;
+    }
+    setBackupSaving(true);
+    const { error } = await supabase.from('app_settings').update({ value: email }).eq('key', 'backup_email');
+    setBackupSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setBackupEmail(email);
+    toast.success('Email saqlandi');
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportBackup();
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      downloadBlob(blob, `ombor-zaxira-${stamp}.zip`);
+      toast.success('Zaxira yuklab olindi');
+    } catch (e: any) {
+      toast.error('Zaxira yaratishda xatolik: ' + e.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!restoreFile) return;
+    setRestoring(true);
+    setRestoreLog([]);
+    try {
+      const data = await readBackupZip(restoreFile);
+      await restoreBackup(data, (p) => setRestoreLog((prev) => [...prev, p]));
+      toast.success('Baza muvaffaqiyatli qayta tiklandi');
+      setRestoreFile(null);
+    } catch (e: any) {
+      toast.error('Tiklashda xatolik: ' + e.message);
+    } finally {
+      setRestoring(false);
+    }
   };
 
   return (
@@ -234,6 +302,152 @@ export default function SettingsPage() {
             <Play className="w-4 h-4" />
             Ovozni sinab ko'rish
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Database className="w-4 h-4 text-primary" />
+            Ma'lumotlar zaxirasi (Backup)
+          </CardTitle>
+          <CardDescription>
+            Barcha mahsulot, sektor, shkaf, ishchi va operatsiya ma'lumotlarini ZIP fayl sifatida yuklab oling.
+            Avtomatik email yuborish uchun email domenini sozlash kerak.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="space-y-1 flex-1 min-w-0">
+              <Label htmlFor="backup-toggle" className="text-sm font-medium cursor-pointer">
+                Har kuni avtomatik email jo'natish
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Yoqilganda tizim har kuni bir marta zaxirani email manzilingizga jo'natadi.
+                O'chirilgan holatda hech qanday kredit ishlatilmaydi.
+              </p>
+            </div>
+            <Switch
+              id="backup-toggle"
+              checked={backupEnabled}
+              disabled={backupSaving}
+              onCheckedChange={saveBackupEnabled}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="backup-email" className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              Zaxira uchun email manzili
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="backup-email"
+                type="email"
+                placeholder="misol@gmail.com"
+                value={backupEmailInput}
+                onChange={(e) => setBackupEmailInput(e.target.value)}
+              />
+              <Button
+                onClick={saveBackupEmail}
+                disabled={backupSaving || backupEmailInput.trim() === backupEmail}
+              >
+                {backupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Saqlash'}
+              </Button>
+            </div>
+            {backupEmail && (
+              <p className="text-xs text-muted-foreground">Joriy: <span className="font-mono">{backupEmail}</span></p>
+            )}
+          </div>
+
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExport}
+              disabled={exporting}
+              className="gap-2"
+            >
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Zaxirani hozir yuklab olish (ZIP)
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-destructive/30">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Upload className="w-4 h-4 text-destructive" />
+            Bazani qayta tiklash (Restore)
+          </CardTitle>
+          <CardDescription>
+            Avval yuklab olingan ZIP fayl orqali bazani qayta tiklash. Diqqat: joriy ma'lumotlar o'chib, ZIPdagilar bilan almashtiriladi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+            <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-medium text-destructive mb-1">Ogohlantirish</p>
+              <p className="text-foreground/80">
+                Bu amal joriy mahsulotlar, sektorlar, shkaflar, ishchilar va operatsiyalarni butunlay o'chirib,
+                ZIP fayldagi ma'lumotlar bilan almashtiradi. Avval joriy holatni ham yuklab olib qo'ying.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="restore-file">ZIP fayl</Label>
+            <Input
+              id="restore-file"
+              type="file"
+              accept=".zip"
+              onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+              disabled={restoring}
+            />
+            {restoreFile && (
+              <p className="text-xs text-muted-foreground">Tanlangan: <span className="font-mono">{restoreFile.name}</span></p>
+            )}
+          </div>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                disabled={!restoreFile || restoring}
+                className="gap-2"
+              >
+                {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                Qayta tiklashni boshlash
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Bazani qayta tiklashni tasdiqlaysizmi?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Joriy barcha ma'lumotlar o'chiriladi va ZIP fayldagilar bilan almashtiriladi.
+                  Bu amalni bekor qilib bo'lmaydi.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRestore} className="bg-destructive hover:bg-destructive/90">
+                  Ha, tiklash
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {restoreLog.length > 0 && (
+            <div className="mt-3 p-3 rounded-lg border bg-muted/30 space-y-1 max-h-48 overflow-auto text-xs font-mono">
+              {restoreLog.map((p, i) => (
+                <div key={i} className={p.status === 'ok' ? 'text-success' : 'text-destructive'}>
+                  {p.status === 'ok' ? '✓' : '✗'} {p.table} — {p.count} qator {p.message ? `(${p.message})` : ''}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
