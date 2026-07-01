@@ -22,15 +22,28 @@ export default function SettingsPage() {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinSaving, setPinSaving] = useState(false);
 
+  // Backup / restore state
+  const [backupEnabled, setBackupEnabled] = useState(false);
+  const [backupEmail, setBackupEmail] = useState('');
+  const [backupEmailInput, setBackupEmailInput] = useState('');
+  const [backupSaving, setBackupSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
       const { data } = await supabase
         .from('app_settings')
-        .select('value')
-        .eq('key', 'worker_pin')
-        .maybeSingle();
-      if (data?.value) setWorkerPin(data.value);
+        .select('key,value')
+        .in('key', ['worker_pin', 'backup_enabled', 'backup_email']);
+      const map = new Map((data || []).map((r: any) => [r.key, r.value]));
+      if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
+      setBackupEnabled(map.get('backup_enabled') === 'true');
+      setBackupEmail((map.get('backup_email') as string) || '');
+      setBackupEmailInput((map.get('backup_email') as string) || '');
       setPinLoading(false);
     })();
   }, []);
