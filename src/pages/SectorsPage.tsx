@@ -1010,7 +1010,7 @@ function RoomMap({
         <rect x={padding / 2} y={padding / 2} width={w - padding} height={h - padding}
           fill="none" stroke="currentColor" strokeOpacity="0.2" strokeDasharray="4 4" rx="8" />
 
-        {shelves.map((sh) => {
+        {[...shelves].sort((a, b) => (b.width_cm * b.depth_cm) - (a.width_cm * a.depth_cm)).map((sh) => {
           const occ = occupancy.get(sh.id) ?? placements.filter(pl => pl.shelf_id === sh.id).reduce((s, pl) => s + (pl.quantity || 1), 0);
           const pct = sh.capacity > 0 ? Math.round((occ / sh.capacity) * 100) : 0;
           const fillClass = pct >= 100 ? 'fill-red-500/70' : pct >= 70 ? 'fill-amber-500/70' : pct > 0 ? 'fill-blue-500/60' : 'fill-emerald-500/40';
