@@ -694,6 +694,7 @@ export default function SectorsPage() {
                   <RoomMap
                     shelves={shelfList}
                     placements={placements}
+                    occupancy={shelfOccupancy}
                     onClick={(sh) => openShelf(sh.id)}
                   />
                 </div>
