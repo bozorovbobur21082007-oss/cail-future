@@ -80,6 +80,59 @@ export default function SettingsPage() {
     toast.success(v ? 'Tovush bilan tasdiqlash yoqildi' : 'Tovush o\'chirildi');
   };
 
+  const saveBackupEnabled = async (v: boolean) => {
+    setBackupSaving(true);
+    const { error } = await supabase.from('app_settings').update({ value: v ? 'true' : 'false' }).eq('key', 'backup_enabled');
+    setBackupSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setBackupEnabled(v);
+    toast.success(v ? 'Avtomatik zaxira yoqildi' : "Avtomatik zaxira o'chirildi");
+  };
+
+  const saveBackupEmail = async () => {
+    const email = backupEmailInput.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Email noto'g'ri formatda");
+      return;
+    }
+    setBackupSaving(true);
+    const { error } = await supabase.from('app_settings').update({ value: email }).eq('key', 'backup_email');
+    setBackupSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setBackupEmail(email);
+    toast.success('Email saqlandi');
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportBackup();
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      downloadBlob(blob, `ombor-zaxira-${stamp}.zip`);
+      toast.success('Zaxira yuklab olindi');
+    } catch (e: any) {
+      toast.error('Zaxira yaratishda xatolik: ' + e.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!restoreFile) return;
+    setRestoring(true);
+    setRestoreLog([]);
+    try {
+      const data = await readBackupZip(restoreFile);
+      await restoreBackup(data, (p) => setRestoreLog((prev) => [...prev, p]));
+      toast.success('Baza muvaffaqiyatli qayta tiklandi');
+      setRestoreFile(null);
+    } catch (e: any) {
+      toast.error('Tiklashda xatolik: ' + e.message);
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
