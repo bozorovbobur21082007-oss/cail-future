@@ -194,6 +194,34 @@ export default function SectorsPage() {
     return m;
   }, [placements, products]);
 
+  // Shkaflar bo'yicha bandlik: aniq joylashuv + qolgan mahsulotlarni ketma-ket taqsimlash
+  const shelfOccupancy = useMemo(() => {
+    const map = new Map<string, number>();
+    sectors.forEach(s => {
+      const shList = shelvesBySector.get(s.id) || [];
+      const sectorProds = productsBySector.get(s.id) || [];
+      const placedIds = new Set<string>();
+      const explicit = new Map<string, number>();
+      placements.forEach(pl => {
+        const sh = shList.find(x => x.id === pl.shelf_id);
+        if (!sh) return;
+        explicit.set(pl.shelf_id, (explicit.get(pl.shelf_id) || 0) + (pl.quantity || 1));
+        placedIds.add(pl.product_id);
+      });
+      let unplaced = sectorProds
+        .filter(p => !placedIds.has(p.id))
+        .reduce((sum, p) => sum + (p.quantity || 0), 0);
+      shList.forEach(sh => {
+        const ex = explicit.get(sh.id) || 0;
+        const free = Math.max(0, (sh.capacity || 0) - ex);
+        const take = Math.min(free, unplaced);
+        unplaced -= take;
+        map.set(sh.id, ex + take);
+      });
+    });
+    return map;
+  }, [sectors, shelvesBySector, productsBySector, placements]);
+
   const sectorStats = useMemo(() => {
     return sectors.map(s => {
       const shList = shelvesBySector.get(s.id) || [];
