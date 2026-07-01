@@ -328,7 +328,7 @@ export default function SectorsPage() {
       name: `Shkaf ${existing.length + 1}`, code: nextCode,
       rows: 3, columns: 5, levels: 2,
       width_cm: 200, depth_cm: 60, height_cm: 180,
-      position_x: existing.length * 250, position_y: 0, orientation: 0,
+      position_x: existing.reduce((mx, sh) => Math.max(mx, sh.position_x + sh.width_cm), 0) + 50, position_y: 0, orientation: 0,
     });
     setShelfDialogOpen(true);
   };
