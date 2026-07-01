@@ -969,10 +969,12 @@ function StatCard({ label, value, icon, sub }: { label: string; value: number | 
 function RoomMap({
   shelves,
   placements,
+  occupancy,
   onClick,
 }: {
   shelves: Shelf[];
   placements: Placement[];
+  occupancy: Map<string, number>;
   onClick: (sh: Shelf) => void;
 }) {
   if (shelves.length === 0) {
