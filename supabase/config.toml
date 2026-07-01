@@ -2,3 +2,7 @@ project_id = "pkrmowguxlphrfbvalzl"
 
 [functions.verify-worker-pin]
 verify_jwt = false
+
+[functions.daily-backup-email]
+verify_jwt = false
+
