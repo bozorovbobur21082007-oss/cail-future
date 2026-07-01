@@ -84,13 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
-  const signup = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name }, emailRedirectTo: window.location.origin },
-    });
-    if (error) throw error;
+  const signup = async (_email: string, _password: string, _name: string) => {
+    // Public self-registration is disabled: it previously granted immediate admin
+    // access. New admins must be provisioned by an existing admin (insert a row
+    // in public.user_roles with role='admin' for the new user's id).
+    throw new Error(
+      "Ro'yxatdan o'tish yopiq. Yangi admin qo'shish uchun mavjud admin bilan bog'laning.",
+    );
   };
 
   const loginAsWorker = async (pin: string) => {
