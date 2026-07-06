@@ -399,6 +399,37 @@ export default function SettingsPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
+                  <KeyRound className="w-4 h-4 text-primary" />
+                  Foydalanish muddati
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-muted/30 text-sm">
+                  {subExpiresAt ? (
+                    <>
+                      <p className="text-xs text-muted-foreground">Amal qilish muddati:</p>
+                      <p className="font-mono font-semibold">
+                        {subExpiresAt.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {(() => {
+                          const days = Math.ceil((subExpiresAt.getTime() - Date.now()) / 86400000);
+                          return days > 0 ? `${days} kun qoldi` : `${Math.abs(days)} kun oldin tugagan`;
+                        })()}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Muddat sozlanmagan</p>
+                  )}
+                </div>
+                <Button type="button" onClick={extendSubscription} disabled={extendingSub} className="gap-2">
+                  {extendingSub ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  6 oyga uzaytirish
+                </Button>
+              </div>
+
+
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
                   <Database className="w-4 h-4 text-primary" />
                   Ma'lumotlar zaxirasi (Backup)
                 </div>
