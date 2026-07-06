@@ -73,12 +73,17 @@ export default function SettingsPage() {
       const { data } = await supabase
         .from('app_settings')
         .select('key,value')
-        .in('key', ['worker_pin', 'backup_enabled', 'backup_email']);
+        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at']);
       const map = new Map((data || []).map((r: any) => [r.key, r.value]));
       if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
       setBackupEnabled(map.get('backup_enabled') === 'true');
       setBackupEmail((map.get('backup_email') as string) || '');
       setBackupEmailInput((map.get('backup_email') as string) || '');
+      const exp = map.get('subscription_expires_at') as string | undefined;
+      if (exp) {
+        const d = new Date(exp);
+        if (!isNaN(d.getTime())) setSubExpiresAt(d);
+      }
       setPinLoading(false);
     })();
   }, []);
