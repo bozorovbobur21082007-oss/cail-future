@@ -8,6 +8,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
+import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { webSerialService } from '@/lib/webSerialService';
 
 const navItems = [
