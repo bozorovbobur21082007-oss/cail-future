@@ -13,6 +13,7 @@ import QrScanner from '@/components/QrScanner';
 import { toast } from 'sonner';
 import { printLabel, THERMAL_15X40 } from '@/utils/printLabel';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QuickLabelDialogProps {
   open: boolean;
@@ -37,6 +38,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
   const [submitting, setSubmitting] = useState(false);
   const [createdProduct, setCreatedProduct] = useState<{ code: string; name: string } | null>(null);
   const [scannerMode] = useScannerMode();
+  const { role, getWorkerToken } = useAuth();
 
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
@@ -64,7 +66,39 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
 
     setSubmitting(true);
     try {
-      // Bir xil nomdagi mahsulot bor-yo'qligini tekshirish
+      if (role === 'worker') {
+        // Worker mode goes through the server-authoritative edge function.
+        // RLS forbids anon INSERT on products; only the service role (via
+        // worker-action with a valid signed token) may create products.
+        const token = getWorkerToken();
+        if (!token) {
+          toast.error('Ishchi sessiyasi topilmadi. Qayta kiring.');
+          setSubmitting(false);
+          return;
+        }
+        const payload: Record<string, unknown> = { name: trimmedName };
+        if (idMethod === 'manual' && manualCode.trim()) payload.product_code = manualCode.trim();
+        if (idMethod === 'nfc' && nfcId.trim()) payload.nfc_id = nfcId.trim();
+        const { data: resp, error } = await supabase.functions.invoke('worker-action', {
+          body: { token, action: 'create_product', payload },
+        });
+        if (error || !resp?.ok) {
+          if (resp?.error === 'Duplicate name') {
+            toast.error(`"${trimmedName}" nomli mahsulot allaqachon mavjud. Boshqa nom tanlang.`);
+          } else {
+            toast.error(resp?.error || 'Xatolik');
+          }
+          setSubmitting(false);
+          return;
+        }
+        setCreatedProduct({ code: resp.product.product_code, name: resp.product.name });
+        onCreated?.();
+        setStep(2);
+        toast.success("Mahsulot yaratildi — admin tasdig'i kutilmoqda");
+        return;
+      }
+
+      // Admin path: direct DB writes (RLS allows admins).
       const { data: existing } = await supabase
         .from('products')
         .select('id, name')

@@ -5,6 +5,17 @@
 
 import { toast } from 'sonner';
 
+/** Escape any DB-sourced string before embedding in document.write HTML. */
+export function escapeHtml(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
 export interface PrintLabelOptions {
   productCode: string;
   productName: string;
@@ -28,8 +39,9 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     return false;
   }
 
-  const safeName = (productName || '').replace(/</g, '&lt;');
-  const code = productCode;
+  const safeName = escapeHtml(productName || '');
+  const code = escapeHtml(productCode || '');
+  const safeSectorCode = escapeHtml(sectorCode || '');
   const cfg = size;
   const isHorizontal = cfg.layout === 'horizontal';
   const useCompact = !!compact && isHorizontal;
@@ -67,13 +79,14 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     }
   `;
 
-  const compactInner = `<div class="text">${sectorCode ? `<div class="sector">${sectorCode}</div>` : ''}<div class="${sectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
+  const compactInner = `<div class="text">${safeSectorCode ? `<div class="sector">${safeSectorCode}</div>` : ''}<div class="${safeSectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
   const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
   const altLabel = isBarcode ? 'Barkod' : 'QR';
+  const safeDataUrl = escapeHtml(codeImageDataUrl);
   const singleLabelHtml = isHorizontal
-    ? `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
-    : `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+    ? `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
+    : `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
   const labelHtml = Array.from({ length: copyCount }, () => singleLabelHtml).join('\n');
 
   printWindow.document.write(`

@@ -19,11 +19,29 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>;
   loginAsWorker: (pin: string) => Promise<void>;
   setWorkerName: (name: string) => void;
+  /** Read-only accessor for the current worker session token (used when
+   * calling worker-action edge function). Null for non-worker sessions. */
+  getWorkerToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const WORKER_FLAG_KEY = 'worker_session';
+const WORKER_TOKEN_KEY = 'worker_session_token';
 const WORKER_NAME_KEY = 'worker_name';
+
+// Client-side sanity check: is the stored token structurally valid and unexpired?
+// Server always re-verifies signatures, but this avoids obviously-dead sessions.
+function decodeExp(token: string): number | null {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  try {
+    const pad = 4 - (parts[1].length % 4 || 4);
+    const norm = parts[1].replace(/-/g, '+').replace(/_/g, '/') + (pad < 4 ? '='.repeat(pad) : '');
+    const payload = JSON.parse(atob(norm));
+    return typeof payload?.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -32,16 +50,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (session: Session | null) => {
     if (!session?.user) {
-      // Check if worker session is active
-      const isWorker = sessionStorage.getItem(WORKER_FLAG_KEY) === '1';
-      if (isWorker) {
-        const savedName = sessionStorage.getItem(WORKER_NAME_KEY) || 'Ishchi';
-        setUser({ id: 'worker', email: '', name: savedName });
-        setRole('worker');
-      } else {
-        setUser(null);
-        setRole(null);
+      // Worker session? Validate signed token server-side.
+      const token = sessionStorage.getItem(WORKER_TOKEN_KEY);
+      if (token) {
+        const exp = decodeExp(token);
+        if (exp && exp * 1000 > Date.now()) {
+          try {
+            const { data } = await supabase.functions.invoke('verify-worker-session', { body: { token } });
+            if (data?.valid) {
+              const savedName = sessionStorage.getItem(WORKER_NAME_KEY) || 'Ishchi';
+              setUser({ id: 'worker', email: '', name: savedName });
+              setRole('worker');
+              setLoading(false);
+              return;
+            }
+          } catch { /* fall through to signed-out */ }
+        }
+        sessionStorage.removeItem(WORKER_TOKEN_KEY);
+        sessionStorage.removeItem(WORKER_NAME_KEY);
       }
+      setUser(null);
+      setRole(null);
       setLoading(false);
       return;
     }
@@ -51,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', session.user.id)
       .single();
 
-    // Server-side role check via user_roles table (RLS-protected)
     const { data: isAdmin } = await supabase.rpc('has_role', {
       _user_id: session.user.id,
       _role: 'admin',
@@ -79,15 +107,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    sessionStorage.removeItem(WORKER_FLAG_KEY);
+    sessionStorage.removeItem(WORKER_TOKEN_KEY);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signup = async (_email: string, _password: string, _name: string) => {
-    // Public self-registration is disabled: it previously granted immediate admin
-    // access. New admins must be provisioned by an existing admin (insert a row
-    // in public.user_roles with role='admin' for the new user's id).
     throw new Error(
       "Ro'yxatdan o'tish yopiq. Yangi admin qo'shish uchun mavjud admin bilan bog'laning.",
     );
@@ -98,16 +123,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: { pin },
     });
     if (error) throw new Error('Server bilan aloqa xatosi');
-    if (!data?.valid) throw new Error("Noto'g'ri PIN kod");
+    if (!data?.valid || !data?.token) throw new Error("Noto'g'ri PIN kod");
 
-    sessionStorage.setItem(WORKER_FLAG_KEY, '1');
+    sessionStorage.setItem(WORKER_TOKEN_KEY, data.token);
     setUser({ id: 'worker', email: '', name: 'Ishchi' });
     setRole('worker');
     setLoading(false);
   };
 
   const logout = async () => {
-    sessionStorage.removeItem(WORKER_FLAG_KEY);
+    sessionStorage.removeItem(WORKER_TOKEN_KEY);
     sessionStorage.removeItem(WORKER_NAME_KEY);
     if (role === 'admin') {
       await supabase.auth.signOut();
@@ -122,8 +147,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => (prev ? { ...prev, name } : prev));
   };
 
+  const getWorkerToken = () => sessionStorage.getItem(WORKER_TOKEN_KEY);
+
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker, setWorkerName }}>
+    <AuthContext.Provider value={{ user, role, loading, login, logout, signup, loginAsWorker, setWorkerName, getWorkerToken }}>
       {children}
     </AuthContext.Provider>
   );

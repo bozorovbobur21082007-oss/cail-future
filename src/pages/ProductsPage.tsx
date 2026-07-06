@@ -19,6 +19,7 @@ import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
+import { escapeHtml } from '@/utils/printLabel';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -364,9 +365,9 @@ export default function ProductsPage() {
       toast.error("Brauzer chop etish oynasini bloklab qo'ydi. Pop-up ruxsatini bering.");
       return;
     }
-    const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
-    const code = qrProduct.product_code;
-    const sectorCode = sectors.find(s => s.id === qrProduct.sector_id)?.code || '';
+    const safeName = escapeHtml(qrProduct.name || '');
+    const code = escapeHtml(qrProduct.product_code);
+    const sectorCode = escapeHtml(sectors.find(s => s.id === qrProduct.sector_id)?.code || '');
     const cfg = labelSizeConfig[labelSize];
     const isHorizontal = cfg.layout === 'horizontal';
     const useCompact = compactLabel && isHorizontal;
@@ -407,9 +408,10 @@ export default function ProductsPage() {
     const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     const altLabel = isBarcode ? 'Barkod' : 'QR';
+    const safeDataUrl = escapeHtml(dataUrl);
     const labelHtml = isHorizontal
-      ? `<div class="label"><img class="code-img" src="${dataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
-      : `<div class="label"><img class="code-img" src="${dataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+      ? `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
+      : `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     printWindow.document.write(`
       <!DOCTYPE html>

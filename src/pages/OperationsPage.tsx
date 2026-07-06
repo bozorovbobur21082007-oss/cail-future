@@ -64,7 +64,7 @@ export default function OperationsPage() {
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
   const [scannerMode] = useScannerMode();
   const sound = useSoundFeedback();
-  const { role, setWorkerName } = useAuth();
+  const { role, setWorkerName, getWorkerToken } = useAuth();
 
   const workerInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -251,18 +251,43 @@ export default function OperationsPage() {
       }
 
 
-      const { error: updateError } = await supabase.from('products').update({ quantity: newQty }).eq('id', verifiedProduct.id);
-      if (updateError) throw updateError;
-
-      const { data: opData, error: opError } = await supabase.from('operations').insert({
-        worker_id: verifiedWorker.id,
-        product_id: verifiedProduct.id,
-        worker_name: verifiedWorker.full_name,
-        product_name: verifiedProduct.name,
-        action_type: actionType,
-        quantity,
-      }).select().single();
-      if (opError) throw opError;
+      let opData: any;
+      if (role === 'worker') {
+        // Worker mode: writes must go through the server-authoritative edge
+        // function that validates the signed worker session token. Direct
+        // client writes are blocked by RLS (admin-only) for anon sessions.
+        const token = getWorkerToken();
+        if (!token) throw new Error('Ishchi sessiyasi topilmadi. Qayta kiring.');
+        const { data: resp, error: fnErr } = await supabase.functions.invoke('worker-action', {
+          body: {
+            token,
+            action: 'record_operation',
+            payload: {
+              worker_id: verifiedWorker.id,
+              product_id: verifiedProduct.id,
+              worker_name: verifiedWorker.full_name,
+              product_name: verifiedProduct.name,
+              action_type: actionType,
+              quantity,
+            },
+          },
+        });
+        if (fnErr || !resp?.ok) throw new Error(resp?.error || 'Server xatosi');
+        opData = resp.operation;
+      } else {
+        const { error: updateError } = await supabase.from('products').update({ quantity: newQty }).eq('id', verifiedProduct.id);
+        if (updateError) throw updateError;
+        const { data, error: opError } = await supabase.from('operations').insert({
+          worker_id: verifiedWorker.id,
+          product_id: verifiedProduct.id,
+          worker_name: verifiedWorker.full_name,
+          product_name: verifiedProduct.name,
+          action_type: actionType,
+          quantity,
+        }).select().single();
+        if (opError) throw opError;
+        opData = data;
+      }
 
       sound.success();
       const label = actionType === 'OUT' ? 'Chiqim' : 'Kirim';
