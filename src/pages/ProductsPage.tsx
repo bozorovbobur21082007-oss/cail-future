@@ -408,9 +408,10 @@ export default function ProductsPage() {
     const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     const altLabel = isBarcode ? 'Barkod' : 'QR';
+    const safeDataUrl = escapeHtml(dataUrl);
     const labelHtml = isHorizontal
-      ? `<div class="label"><img class="code-img" src="${dataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
-      : `<div class="label"><img class="code-img" src="${dataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+      ? `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
+      : `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
