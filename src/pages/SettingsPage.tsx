@@ -48,9 +48,28 @@ export default function SettingsPage() {
     }
   };
 
-  // Subscription (6-month license)
+  // Subscription (license timer)
+  const [subEnabled, setSubEnabled] = useState(false);
   const [subExpiresAt, setSubExpiresAt] = useState<Date | null>(null);
+  const [subSaving, setSubSaving] = useState(false);
   const [extendingSub, setExtendingSub] = useState(false);
+  const [customDate, setCustomDate] = useState('');
+
+  const toggleSubEnabled = async (v: boolean) => {
+    setSubSaving(true);
+    // Ensure there is an expiry when enabling
+    if (v && !subExpiresAt) {
+      const next = new Date();
+      next.setMonth(next.getMonth() + 6);
+      await supabase.from('app_settings').update({ value: next.toISOString() }).eq('key', 'subscription_expires_at');
+      setSubExpiresAt(next);
+    }
+    const { error } = await supabase.from('app_settings').update({ value: v ? 'true' : 'false' }).eq('key', 'subscription_enabled');
+    setSubSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setSubEnabled(v);
+    toast.success(v ? 'Cheklov yoqildi' : "Cheklov o'chirildi");
+  };
 
   const extendSubscription = async () => {
     setExtendingSub(true);
@@ -67,18 +86,34 @@ export default function SettingsPage() {
     toast.success('Muddat 6 oyga uzaytirildi');
   };
 
+  const saveCustomExpiry = async () => {
+    if (!customDate) { toast.error('Sanani tanlang'); return; }
+    const d = new Date(customDate);
+    if (isNaN(d.getTime())) { toast.error("Sana noto'g'ri"); return; }
+    // Set to end of day
+    d.setHours(23, 59, 59, 999);
+    setSubSaving(true);
+    const { error } = await supabase.from('app_settings').update({ value: d.toISOString() }).eq('key', 'subscription_expires_at');
+    setSubSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setSubExpiresAt(d);
+    setCustomDate('');
+    toast.success('Yangi muddat saqlandi');
+  };
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
       const { data } = await supabase
         .from('app_settings')
         .select('key,value')
-        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at']);
+        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at', 'subscription_enabled']);
       const map = new Map((data || []).map((r: any) => [r.key, r.value]));
       if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
       setBackupEnabled(map.get('backup_enabled') === 'true');
       setBackupEmail((map.get('backup_email') as string) || '');
       setBackupEmailInput((map.get('backup_email') as string) || '');
+      setSubEnabled(map.get('subscription_enabled') === 'true');
       const exp = map.get('subscription_expires_at') as string | undefined;
       if (exp) {
         const d = new Date(exp);
