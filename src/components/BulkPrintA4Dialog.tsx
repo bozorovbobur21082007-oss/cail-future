@@ -8,6 +8,7 @@ import { Printer, QrCode, Barcode as BarcodeIcon, Search } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import { toast } from 'sonner';
+import { escapeHtml } from '@/utils/printLabel';
 
 interface ProductItem {
   id: string;
