@@ -39,8 +39,9 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     return false;
   }
 
-  const safeName = (productName || '').replace(/</g, '&lt;');
-  const code = productCode;
+  const safeName = escapeHtml(productName || '');
+  const code = escapeHtml(productCode || '');
+  const safeSectorCode = escapeHtml(sectorCode || '');
   const cfg = size;
   const isHorizontal = cfg.layout === 'horizontal';
   const useCompact = !!compact && isHorizontal;
