@@ -364,9 +364,9 @@ export default function ProductsPage() {
       toast.error("Brauzer chop etish oynasini bloklab qo'ydi. Pop-up ruxsatini bering.");
       return;
     }
-    const safeName = (qrProduct.name || '').replace(/</g, '&lt;');
-    const code = qrProduct.product_code;
-    const sectorCode = sectors.find(s => s.id === qrProduct.sector_id)?.code || '';
+    const safeName = escapeHtml(qrProduct.name || '');
+    const code = escapeHtml(qrProduct.product_code);
+    const sectorCode = escapeHtml(sectors.find(s => s.id === qrProduct.sector_id)?.code || '');
     const cfg = labelSizeConfig[labelSize];
     const isHorizontal = cfg.layout === 'horizontal';
     const useCompact = compactLabel && isHorizontal;
