@@ -14,6 +14,7 @@ const SETTING_KEY = 'subscription_expires_at';
 export default function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [enabled, setEnabled] = useState(false);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
   const [devCode, setDevCode] = useState('');
@@ -24,11 +25,13 @@ export default function SubscriptionGate({ children }: { children: React.ReactNo
   const load = async () => {
     const { data } = await supabase
       .from('app_settings')
-      .select('value')
-      .eq('key', SETTING_KEY)
-      .maybeSingle();
-    if (data?.value) {
-      const d = new Date(data.value);
+      .select('key,value')
+      .in('key', [SETTING_KEY, 'subscription_enabled']);
+    const map = new Map((data || []).map((r: any) => [r.key, r.value]));
+    setEnabled(map.get('subscription_enabled') === 'true');
+    const raw = map.get(SETTING_KEY) as string | undefined;
+    if (raw) {
+      const d = new Date(raw);
       setExpiresAt(isNaN(d.getTime()) ? null : d);
     } else {
       setExpiresAt(null);
@@ -42,7 +45,7 @@ export default function SubscriptionGate({ children }: { children: React.ReactNo
     return () => clearInterval(t);
   }, []);
 
-  const expired = expiresAt !== null && expiresAt.getTime() <= now.getTime();
+  const expired = enabled && expiresAt !== null && expiresAt.getTime() <= now.getTime();
 
   const tryUnlock = () => {
     if (devCode === DEV_CODE) {
