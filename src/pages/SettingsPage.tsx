@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [backupEmailInput, setBackupEmailInput] = useState('');
   const [backupSaving, setBackupSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
@@ -129,6 +130,40 @@ export default function SettingsPage() {
       toast.error('Zaxira yaratishda xatolik: ' + e.message);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleSendEmailNow = async () => {
+    if (!backupEmail) {
+      toast.error('Avval email manzilini saqlang');
+      return;
+    }
+    if (!backupEnabled) {
+      toast.error("Avval avtomatik zaxira o'chirgichini yoqing");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error('Tizimga kirilmagan');
+      const { data, error } = await supabase.functions.invoke('daily-backup-email', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (error) throw error;
+      if ((data as any)?.skipped) {
+        toast.info("Yuborilmadi: " + ((data as any).reason || ''));
+      } else if ((data as any)?.sent) {
+        toast.success(`Zaxira ${(data as any).to} manziliga jo'natildi`);
+      } else if ((data as any)?.error) {
+        throw new Error((data as any).error);
+      } else {
+        toast.success("Zaxira jo'natildi");
+      }
+    } catch (e: any) {
+      toast.error("Emailga jo'natishda xatolik: " + (e.message || String(e)));
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -413,7 +448,7 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <div className="pt-1">
+                <div className="pt-1 flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -424,8 +459,23 @@ export default function SettingsPage() {
                     {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     Zaxirani hozir yuklab olish (ZIP)
                   </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSendEmailNow}
+                    disabled={sendingEmail || !backupEmail || !backupEnabled}
+                    className="gap-2"
+                  >
+                    {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    Hoziroq emailga jo'natish
+                  </Button>
                 </div>
+                {(!backupEmail || !backupEnabled) && (
+                  <p className="text-xs text-muted-foreground">
+                    Emailga jo'natish uchun avval email manzilini kiriting va avtomatik zaxira o'chirgichini yoqing.
+                  </p>
+                )}
               </div>
+
 
               <div className="space-y-3 pt-4 border-t border-destructive/30">
                 <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
