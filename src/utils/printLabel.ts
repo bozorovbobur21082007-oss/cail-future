@@ -5,6 +5,17 @@
 
 import { toast } from 'sonner';
 
+/** Escape any DB-sourced string before embedding in document.write HTML. */
+export function escapeHtml(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
 export interface PrintLabelOptions {
   productCode: string;
   productName: string;
