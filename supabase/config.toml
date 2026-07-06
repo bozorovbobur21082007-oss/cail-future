@@ -6,3 +6,7 @@ verify_jwt = false
 [functions.daily-backup-email]
 verify_jwt = false
 
+[functions.verify-worker-badge]
+verify_jwt = false
+
+
