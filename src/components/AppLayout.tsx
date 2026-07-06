@@ -156,6 +156,7 @@ export default function AppLayout() {
         </div>
         <div className="flex-1" />
         <div className="flex items-center gap-3">
+          <SubscriptionBadge />
           <span className="text-sm text-muted-foreground hidden sm:block">{user?.name || 'Admin'}</span>
           <Button
             variant="ghost"
