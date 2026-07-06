@@ -13,6 +13,7 @@ import QrScanner from '@/components/QrScanner';
 import { toast } from 'sonner';
 import { printLabel, THERMAL_15X40 } from '@/utils/printLabel';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QuickLabelDialogProps {
   open: boolean;
