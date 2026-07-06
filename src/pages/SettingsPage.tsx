@@ -133,6 +133,40 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSendEmailNow = async () => {
+    if (!backupEmail) {
+      toast.error('Avval email manzilini saqlang');
+      return;
+    }
+    if (!backupEnabled) {
+      toast.error("Avval avtomatik zaxira o'chirgichini yoqing");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error('Tizimga kirilmagan');
+      const { data, error } = await supabase.functions.invoke('daily-backup-email', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (error) throw error;
+      if ((data as any)?.skipped) {
+        toast.info("Yuborilmadi: " + ((data as any).reason || ''));
+      } else if ((data as any)?.sent) {
+        toast.success(`Zaxira ${(data as any).to} manziliga jo'natildi`);
+      } else if ((data as any)?.error) {
+        throw new Error((data as any).error);
+      } else {
+        toast.success("Zaxira jo'natildi");
+      }
+    } catch (e: any) {
+      toast.error("Emailga jo'natishda xatolik: " + (e.message || String(e)));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handleRestore = async () => {
     if (!restoreFile) return;
     setRestoring(true);
