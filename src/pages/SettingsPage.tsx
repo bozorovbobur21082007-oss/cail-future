@@ -459,8 +459,26 @@ export default function SettingsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <KeyRound className="w-4 h-4 text-primary" />
-                  Foydalanish muddati
+                  Foydalanish muddati (litsenziya)
                 </div>
+
+                <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <Label htmlFor="sub-toggle" className="text-sm font-medium cursor-pointer">
+                      Cheklovni yoqish
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      O'chirilgan bo'lsa muddat tekshirilmaydi va sayt cheksiz ishlaydi. Yoqilgach — pastdagi sana o'tgach kirish bloklanadi.
+                    </p>
+                  </div>
+                  <Switch
+                    id="sub-toggle"
+                    checked={subEnabled}
+                    disabled={subSaving}
+                    onCheckedChange={toggleSubEnabled}
+                  />
+                </div>
+
                 <div className="p-3 rounded-lg border border-border bg-muted/30 text-sm">
                   {subExpiresAt ? (
                     <>
@@ -469,19 +487,39 @@ export default function SettingsPage() {
                         {subExpiresAt.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {(() => {
+                        {subEnabled ? (() => {
                           const days = Math.ceil((subExpiresAt.getTime() - Date.now()) / 86400000);
                           return days > 0 ? `${days} kun qoldi` : `${Math.abs(days)} kun oldin tugagan`;
-                        })()}
+                        })() : "Cheklov o'chirilgan"}
                       </p>
                     </>
                   ) : (
                     <p className="text-xs text-muted-foreground">Muddat sozlanmagan</p>
                   )}
                 </div>
-                <Button type="button" onClick={extendSubscription} disabled={extendingSub} className="gap-2">
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-expiry" className="text-sm">Cheklov tugash sanasini o'zgartirish</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="custom-expiry"
+                      type="date"
+                      value={customDate}
+                      onChange={(e) => setCustomDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 10)}
+                    />
+                    <Button type="button" onClick={saveCustomExpiry} disabled={subSaving || !customDate}>
+                      {subSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Saqlash'}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cheklov faqat "Cheklovni yoqish" tugmasi yoqilgan holatda ishlaydi.
+                  </p>
+                </div>
+
+                <Button type="button" variant="outline" onClick={extendSubscription} disabled={extendingSub} className="gap-2">
                   {extendingSub ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  6 oyga uzaytirish
+                  Joriy muddatga +6 oy qo'shish
                 </Button>
               </div>
 
