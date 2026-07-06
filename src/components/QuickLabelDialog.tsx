@@ -38,6 +38,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
   const [submitting, setSubmitting] = useState(false);
   const [createdProduct, setCreatedProduct] = useState<{ code: string; name: string } | null>(null);
   const [scannerMode] = useScannerMode();
+  const { role, getWorkerToken } = useAuth();
 
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
