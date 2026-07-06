@@ -308,144 +308,178 @@ export default function SettingsPage() {
       <Card className="shadow-sm border-primary/20">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Database className="w-4 h-4 text-primary" />
-            Ma'lumotlar zaxirasi (Backup)
+            <KeyRound className="w-4 h-4 text-primary" />
+            Dasturchi rejimi
           </CardTitle>
           <CardDescription>
-            Barcha mahsulot, sektor, shkaf, ishchi va operatsiya ma'lumotlarini ZIP fayl sifatida yuklab oling.
-            Avtomatik email yuborish uchun email domenini sozlash kerak.
+            Maxsus imkoniyatlar: ma'lumotlar zaxirasi va bazani qayta tiklash. Faqat dasturchi kodi bilan ochiladi.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
-            <div className="space-y-1 flex-1 min-w-0">
-              <Label htmlFor="backup-toggle" className="text-sm font-medium cursor-pointer">
-                Har kuni avtomatik email jo'natish
-              </Label>
+          {!devUnlocked ? (
+            <div className="space-y-2">
+              <Label htmlFor="dev-code">Dasturchi kodi</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="dev-code"
+                  type={showDevCode ? 'text' : 'password'}
+                  placeholder="Kodni kiriting"
+                  value={devCodeInput}
+                  onChange={(e) => setDevCodeInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') tryUnlockDev(); }}
+                  className="font-mono"
+                />
+                <Button type="button" variant="ghost" size="icon" onClick={() => setShowDevCode((v) => !v)}>
+                  {showDevCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+                <Button onClick={tryUnlockDev} disabled={!devCodeInput.trim()}>Ochish</Button>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Yoqilganda tizim har kuni bir marta zaxirani email manzilingizga jo'natadi.
-                O'chirilgan holatda hech qanday kredit ishlatilmaydi.
+                Ushbu bo'limdagi amallar ma'lumotlar bazasiga jiddiy ta'sir qiladi. Kod faqat administratorga beriladi.
               </p>
             </div>
-            <Switch
-              id="backup-toggle"
-              checked={backupEnabled}
-              disabled={backupSaving}
-              onCheckedChange={saveBackupEnabled}
-            />
-          </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5">
+                <p className="text-xs text-primary font-medium">Dasturchi rejimi ochilgan</p>
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setDevUnlocked(false); setDevCodeInput(''); }}>
+                  Yopish
+                </Button>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="backup-email" className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-muted-foreground" />
-              Zaxira uchun email manzili
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="backup-email"
-                type="email"
-                placeholder="misol@gmail.com"
-                value={backupEmailInput}
-                onChange={(e) => setBackupEmailInput(e.target.value)}
-              />
-              <Button
-                onClick={saveBackupEmail}
-                disabled={backupSaving || backupEmailInput.trim() === backupEmail}
-              >
-                {backupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Saqlash'}
-              </Button>
-            </div>
-            {backupEmail && (
-              <p className="text-xs text-muted-foreground">Joriy: <span className="font-mono">{backupEmail}</span></p>
-            )}
-          </div>
-
-          <div className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleExport}
-              disabled={exporting}
-              className="gap-2"
-            >
-              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Zaxirani hozir yuklab olish (ZIP)
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm border-destructive/30">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Upload className="w-4 h-4 text-destructive" />
-            Bazani qayta tiklash (Restore)
-          </CardTitle>
-          <CardDescription>
-            Avval yuklab olingan ZIP fayl orqali bazani qayta tiklash. Diqqat: joriy ma'lumotlar o'chib, ZIPdagilar bilan almashtiriladi.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
-            <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
-            <div className="text-xs">
-              <p className="font-medium text-destructive mb-1">Ogohlantirish</p>
-              <p className="text-foreground/80">
-                Bu amal joriy mahsulotlar, sektorlar, shkaflar, ishchilar va operatsiyalarni butunlay o'chirib,
-                ZIP fayldagi ma'lumotlar bilan almashtiradi. Avval joriy holatni ham yuklab olib qo'ying.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="restore-file">ZIP fayl</Label>
-            <Input
-              id="restore-file"
-              type="file"
-              accept=".zip"
-              onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
-              disabled={restoring}
-            />
-            {restoreFile && (
-              <p className="text-xs text-muted-foreground">Tanlangan: <span className="font-mono">{restoreFile.name}</span></p>
-            )}
-          </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                disabled={!restoreFile || restoring}
-                className="gap-2"
-              >
-                {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                Qayta tiklashni boshlash
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Bazani qayta tiklashni tasdiqlaysizmi?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Joriy barcha ma'lumotlar o'chiriladi va ZIP fayldagilar bilan almashtiriladi.
-                  Bu amalni bekor qilib bo'lmaydi.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
-                <AlertDialogAction onClick={handleRestore} className="bg-destructive hover:bg-destructive/90">
-                  Ha, tiklash
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {restoreLog.length > 0 && (
-            <div className="mt-3 p-3 rounded-lg border bg-muted/30 space-y-1 max-h-48 overflow-auto text-xs font-mono">
-              {restoreLog.map((p, i) => (
-                <div key={i} className={p.status === 'ok' ? 'text-success' : 'text-destructive'}>
-                  {p.status === 'ok' ? '✓' : '✗'} {p.table} — {p.count} qator {p.message ? `(${p.message})` : ''}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Database className="w-4 h-4 text-primary" />
+                  Ma'lumotlar zaxirasi (Backup)
                 </div>
-              ))}
+                <p className="text-xs text-muted-foreground">
+                  Barcha mahsulot, sektor, shkaf, ishchi va operatsiya ma'lumotlarini ZIP fayl sifatida yuklab oling.
+                </p>
+
+                <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <Label htmlFor="backup-toggle" className="text-sm font-medium cursor-pointer">
+                      Har kuni avtomatik email jo'natish
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Yoqilganda tizim har kuni bir marta zaxirani email manzilingizga jo'natadi.
+                    </p>
+                  </div>
+                  <Switch
+                    id="backup-toggle"
+                    checked={backupEnabled}
+                    disabled={backupSaving}
+                    onCheckedChange={saveBackupEnabled}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="backup-email" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    Zaxira uchun email manzili
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="backup-email"
+                      type="email"
+                      placeholder="misol@gmail.com"
+                      value={backupEmailInput}
+                      onChange={(e) => setBackupEmailInput(e.target.value)}
+                    />
+                    <Button
+                      onClick={saveBackupEmail}
+                      disabled={backupSaving || backupEmailInput.trim() === backupEmail}
+                    >
+                      {backupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Saqlash'}
+                    </Button>
+                  </div>
+                  {backupEmail && (
+                    <p className="text-xs text-muted-foreground">Joriy: <span className="font-mono">{backupEmail}</span></p>
+                  )}
+                </div>
+
+                <div className="pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="gap-2"
+                  >
+                    {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    Zaxirani hozir yuklab olish (ZIP)
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-destructive/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                  <Upload className="w-4 h-4" />
+                  Bazani qayta tiklash (Restore)
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+                  <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <p className="font-medium text-destructive mb-1">Ogohlantirish</p>
+                    <p className="text-foreground/80">
+                      Bu amal joriy mahsulotlar, sektorlar, shkaflar, ishchilar va operatsiyalarni butunlay o'chirib,
+                      ZIP fayldagi ma'lumotlar bilan almashtiradi. Avval joriy holatni ham yuklab olib qo'ying.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="restore-file">ZIP fayl</Label>
+                  <Input
+                    id="restore-file"
+                    type="file"
+                    accept=".zip"
+                    onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+                    disabled={restoring}
+                  />
+                  {restoreFile && (
+                    <p className="text-xs text-muted-foreground">Tanlangan: <span className="font-mono">{restoreFile.name}</span></p>
+                  )}
+                </div>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      disabled={!restoreFile || restoring}
+                      className="gap-2"
+                    >
+                      {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Qayta tiklashni boshlash
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Bazani qayta tiklashni tasdiqlaysizmi?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Joriy barcha ma'lumotlar o'chiriladi va ZIP fayldagilar bilan almashtiriladi.
+                        Bu amalni bekor qilib bo'lmaydi.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleRestore} className="bg-destructive hover:bg-destructive/90">
+                        Ha, tiklash
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                {restoreLog.length > 0 && (
+                  <div className="mt-3 p-3 rounded-lg border bg-muted/30 space-y-1 max-h-48 overflow-auto text-xs font-mono">
+                    {restoreLog.map((p, i) => (
+                      <div key={i} className={p.status === 'ok' ? 'text-success' : 'text-destructive'}>
+                        {p.status === 'ok' ? '✓' : '✗'} {p.table} — {p.count} qator {p.message ? `(${p.message})` : ''}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
