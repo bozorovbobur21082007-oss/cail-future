@@ -100,14 +100,16 @@ export default function BulkPrintA4Dialog({
     // Har bir katak: kod tasviri + nomi + product_code.
     const cellsHtml = items
       .map(it => {
-        const safeName = (it.name || '').replace(/</g, '&lt;');
+        const safeName = escapeHtml(it.name || '');
+        const safeCode = escapeHtml(it.product_code);
+        const safeDataUrl = escapeHtml(it.dataUrl);
         return `
           <div class="cell">
             <div class="code-wrap">
-              <img class="code-img" src="${it.dataUrl}" alt="${format === 'qr' ? 'QR' : 'Barkod'}" />
+              <img class="code-img" src="${safeDataUrl}" alt="${format === 'qr' ? 'QR' : 'Barkod'}" />
             </div>
             <div class="name">${safeName}</div>
-            <div class="code">${it.product_code}</div>
+            <div class="code">${safeCode}</div>
           </div>
         `;
       })
