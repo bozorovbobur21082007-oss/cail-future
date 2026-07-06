@@ -32,6 +32,21 @@ export default function SettingsPage() {
   const [restoring, setRestoring] = useState(false);
   const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
 
+  // Developer mode
+  const DEV_CODE = '21082007Bb';
+  const [devUnlocked, setDevUnlocked] = useState(false);
+  const [devCodeInput, setDevCodeInput] = useState('');
+  const [showDevCode, setShowDevCode] = useState(false);
+  const tryUnlockDev = () => {
+    if (devCodeInput === DEV_CODE) {
+      setDevUnlocked(true);
+      setDevCodeInput('');
+      toast.success('Dasturchi rejimi ochildi');
+    } else {
+      toast.error("Kod noto'g'ri");
+    }
+  };
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
