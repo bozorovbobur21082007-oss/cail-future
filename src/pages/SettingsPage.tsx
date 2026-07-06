@@ -48,6 +48,25 @@ export default function SettingsPage() {
     }
   };
 
+  // Subscription (6-month license)
+  const [subExpiresAt, setSubExpiresAt] = useState<Date | null>(null);
+  const [extendingSub, setExtendingSub] = useState(false);
+
+  const extendSubscription = async () => {
+    setExtendingSub(true);
+    const base = subExpiresAt && subExpiresAt > new Date() ? subExpiresAt : new Date();
+    const next = new Date(base);
+    next.setMonth(next.getMonth() + 6);
+    const { error } = await supabase
+      .from('app_settings')
+      .update({ value: next.toISOString() })
+      .eq('key', 'subscription_expires_at');
+    setExtendingSub(false);
+    if (error) { toast.error('Uzaytirishda xatolik: ' + error.message); return; }
+    setSubExpiresAt(next);
+    toast.success('Muddat 6 oyga uzaytirildi');
+  };
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
