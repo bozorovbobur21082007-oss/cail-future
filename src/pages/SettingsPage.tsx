@@ -48,9 +48,28 @@ export default function SettingsPage() {
     }
   };
 
-  // Subscription (6-month license)
+  // Subscription (license timer)
+  const [subEnabled, setSubEnabled] = useState(false);
   const [subExpiresAt, setSubExpiresAt] = useState<Date | null>(null);
+  const [subSaving, setSubSaving] = useState(false);
   const [extendingSub, setExtendingSub] = useState(false);
+  const [customDate, setCustomDate] = useState('');
+
+  const toggleSubEnabled = async (v: boolean) => {
+    setSubSaving(true);
+    // Ensure there is an expiry when enabling
+    if (v && !subExpiresAt) {
+      const next = new Date();
+      next.setMonth(next.getMonth() + 6);
+      await supabase.from('app_settings').update({ value: next.toISOString() }).eq('key', 'subscription_expires_at');
+      setSubExpiresAt(next);
+    }
+    const { error } = await supabase.from('app_settings').update({ value: v ? 'true' : 'false' }).eq('key', 'subscription_enabled');
+    setSubSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setSubEnabled(v);
+    toast.success(v ? 'Cheklov yoqildi' : "Cheklov o'chirildi");
+  };
 
   const extendSubscription = async () => {
     setExtendingSub(true);
@@ -67,18 +86,34 @@ export default function SettingsPage() {
     toast.success('Muddat 6 oyga uzaytirildi');
   };
 
+  const saveCustomExpiry = async () => {
+    if (!customDate) { toast.error('Sanani tanlang'); return; }
+    const d = new Date(customDate);
+    if (isNaN(d.getTime())) { toast.error("Sana noto'g'ri"); return; }
+    // Set to end of day
+    d.setHours(23, 59, 59, 999);
+    setSubSaving(true);
+    const { error } = await supabase.from('app_settings').update({ value: d.toISOString() }).eq('key', 'subscription_expires_at');
+    setSubSaving(false);
+    if (error) { toast.error('Saqlashda xatolik: ' + error.message); return; }
+    setSubExpiresAt(d);
+    setCustomDate('');
+    toast.success('Yangi muddat saqlandi');
+  };
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
       const { data } = await supabase
         .from('app_settings')
         .select('key,value')
-        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at']);
+        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at', 'subscription_enabled']);
       const map = new Map((data || []).map((r: any) => [r.key, r.value]));
       if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
       setBackupEnabled(map.get('backup_enabled') === 'true');
       setBackupEmail((map.get('backup_email') as string) || '');
       setBackupEmailInput((map.get('backup_email') as string) || '');
+      setSubEnabled(map.get('subscription_enabled') === 'true');
       const exp = map.get('subscription_expires_at') as string | undefined;
       if (exp) {
         const d = new Date(exp);
@@ -424,8 +459,26 @@ export default function SettingsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <KeyRound className="w-4 h-4 text-primary" />
-                  Foydalanish muddati
+                  Foydalanish muddati (litsenziya)
                 </div>
+
+                <div className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <Label htmlFor="sub-toggle" className="text-sm font-medium cursor-pointer">
+                      Cheklovni yoqish
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      O'chirilgan bo'lsa muddat tekshirilmaydi va sayt cheksiz ishlaydi. Yoqilgach — pastdagi sana o'tgach kirish bloklanadi.
+                    </p>
+                  </div>
+                  <Switch
+                    id="sub-toggle"
+                    checked={subEnabled}
+                    disabled={subSaving}
+                    onCheckedChange={toggleSubEnabled}
+                  />
+                </div>
+
                 <div className="p-3 rounded-lg border border-border bg-muted/30 text-sm">
                   {subExpiresAt ? (
                     <>
@@ -434,19 +487,39 @@ export default function SettingsPage() {
                         {subExpiresAt.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {(() => {
+                        {subEnabled ? (() => {
                           const days = Math.ceil((subExpiresAt.getTime() - Date.now()) / 86400000);
                           return days > 0 ? `${days} kun qoldi` : `${Math.abs(days)} kun oldin tugagan`;
-                        })()}
+                        })() : "Cheklov o'chirilgan"}
                       </p>
                     </>
                   ) : (
                     <p className="text-xs text-muted-foreground">Muddat sozlanmagan</p>
                   )}
                 </div>
-                <Button type="button" onClick={extendSubscription} disabled={extendingSub} className="gap-2">
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-expiry" className="text-sm">Cheklov tugash sanasini o'zgartirish</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="custom-expiry"
+                      type="date"
+                      value={customDate}
+                      onChange={(e) => setCustomDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 10)}
+                    />
+                    <Button type="button" onClick={saveCustomExpiry} disabled={subSaving || !customDate}>
+                      {subSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Saqlash'}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cheklov faqat "Cheklovni yoqish" tugmasi yoqilgan holatda ishlaydi.
+                  </p>
+                </div>
+
+                <Button type="button" variant="outline" onClick={extendSubscription} disabled={extendingSub} className="gap-2">
                   {extendingSub ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  6 oyga uzaytirish
+                  Joriy muddatga +6 oy qo'shish
                 </Button>
               </div>
 

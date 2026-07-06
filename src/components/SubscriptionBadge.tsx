@@ -5,25 +5,28 @@ import { cn } from '@/lib/utils';
 
 export default function SubscriptionBadge() {
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       const { data } = await supabase
         .from('app_settings')
-        .select('value')
-        .eq('key', 'subscription_expires_at')
-        .maybeSingle();
+        .select('key,value')
+        .in('key', ['subscription_expires_at', 'subscription_enabled']);
       if (!mounted) return;
-      if (data?.value) {
-        const d = new Date(data.value);
+      const map = new Map((data || []).map((r: any) => [r.key, r.value]));
+      setEnabled(map.get('subscription_enabled') === 'true');
+      const raw = map.get('subscription_expires_at') as string | undefined;
+      if (raw) {
+        const d = new Date(raw);
         if (!isNaN(d.getTime())) setExpiresAt(d);
       }
     })();
     return () => { mounted = false; };
   }, []);
 
-  if (!expiresAt) return null;
+  if (!enabled || !expiresAt) return null;
 
   const msLeft = expiresAt.getTime() - Date.now();
   const daysLeft = Math.ceil(msLeft / 86400000);
