@@ -79,13 +79,14 @@ export function printLabel(opts: PrintLabelOptions): boolean {
     }
   `;
 
-  const compactInner = `<div class="text">${sectorCode ? `<div class="sector">${sectorCode}</div>` : ''}<div class="${sectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
+  const compactInner = `<div class="text">${safeSectorCode ? `<div class="sector">${safeSectorCode}</div>` : ''}<div class="${safeSectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
   const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
 
   const altLabel = isBarcode ? 'Barkod' : 'QR';
+  const safeDataUrl = escapeHtml(codeImageDataUrl);
   const singleLabelHtml = isHorizontal
-    ? `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
-    : `<div class="label"><img class="code-img" src="${codeImageDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+    ? `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
+    : `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
   const labelHtml = Array.from({ length: copyCount }, () => singleLabelHtml).join('\n');
 
   printWindow.document.write(`
