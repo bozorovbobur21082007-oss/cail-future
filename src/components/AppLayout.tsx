@@ -8,6 +8,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
+import SubscriptionBadge from '@/components/SubscriptionBadge';
 import { webSerialService } from '@/lib/webSerialService';
 
 const navItems = [
@@ -155,6 +156,7 @@ export default function AppLayout() {
         </div>
         <div className="flex-1" />
         <div className="flex items-center gap-3">
+          <SubscriptionBadge />
           <span className="text-sm text-muted-foreground hidden sm:block">{user?.name || 'Admin'}</span>
           <Button
             variant="ghost"
