@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -50,7 +51,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/" element={<ProtectedRoute allowWorker><AppLayout /></ProtectedRoute>}>
+            <Route path="/" element={<ProtectedRoute allowWorker><SubscriptionGate><AppLayout /></SubscriptionGate></ProtectedRoute>}>
               <Route index element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="mahsulotlar" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
               <Route path="ishchilar" element={<ProtectedRoute><WorkersPage /></ProtectedRoute>} />

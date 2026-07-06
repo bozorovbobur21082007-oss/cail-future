@@ -48,18 +48,42 @@ export default function SettingsPage() {
     }
   };
 
+  // Subscription (6-month license)
+  const [subExpiresAt, setSubExpiresAt] = useState<Date | null>(null);
+  const [extendingSub, setExtendingSub] = useState(false);
+
+  const extendSubscription = async () => {
+    setExtendingSub(true);
+    const base = subExpiresAt && subExpiresAt > new Date() ? subExpiresAt : new Date();
+    const next = new Date(base);
+    next.setMonth(next.getMonth() + 6);
+    const { error } = await supabase
+      .from('app_settings')
+      .update({ value: next.toISOString() })
+      .eq('key', 'subscription_expires_at');
+    setExtendingSub(false);
+    if (error) { toast.error('Uzaytirishda xatolik: ' + error.message); return; }
+    setSubExpiresAt(next);
+    toast.success('Muddat 6 oyga uzaytirildi');
+  };
+
   useEffect(() => {
     (async () => {
       setPinLoading(true);
       const { data } = await supabase
         .from('app_settings')
         .select('key,value')
-        .in('key', ['worker_pin', 'backup_enabled', 'backup_email']);
+        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at']);
       const map = new Map((data || []).map((r: any) => [r.key, r.value]));
       if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
       setBackupEnabled(map.get('backup_enabled') === 'true');
       setBackupEmail((map.get('backup_email') as string) || '');
       setBackupEmailInput((map.get('backup_email') as string) || '');
+      const exp = map.get('subscription_expires_at') as string | undefined;
+      if (exp) {
+        const d = new Date(exp);
+        if (!isNaN(d.getTime())) setSubExpiresAt(d);
+      }
       setPinLoading(false);
     })();
   }, []);
@@ -396,6 +420,37 @@ export default function SettingsPage() {
                   Yopish
                 </Button>
               </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <KeyRound className="w-4 h-4 text-primary" />
+                  Foydalanish muddati
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-muted/30 text-sm">
+                  {subExpiresAt ? (
+                    <>
+                      <p className="text-xs text-muted-foreground">Amal qilish muddati:</p>
+                      <p className="font-mono font-semibold">
+                        {subExpiresAt.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {(() => {
+                          const days = Math.ceil((subExpiresAt.getTime() - Date.now()) / 86400000);
+                          return days > 0 ? `${days} kun qoldi` : `${Math.abs(days)} kun oldin tugagan`;
+                        })()}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Muddat sozlanmagan</p>
+                  )}
+                </div>
+                <Button type="button" onClick={extendSubscription} disabled={extendingSub} className="gap-2">
+                  {extendingSub ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  6 oyga uzaytirish
+                </Button>
+              </div>
+
+
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
