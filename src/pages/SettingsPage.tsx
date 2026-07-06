@@ -448,7 +448,7 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <div className="pt-1">
+                <div className="pt-1 flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -459,8 +459,23 @@ export default function SettingsPage() {
                     {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     Zaxirani hozir yuklab olish (ZIP)
                   </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSendEmailNow}
+                    disabled={sendingEmail || !backupEmail || !backupEnabled}
+                    className="gap-2"
+                  >
+                    {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    Hoziroq emailga jo'natish
+                  </Button>
                 </div>
+                {(!backupEmail || !backupEnabled) && (
+                  <p className="text-xs text-muted-foreground">
+                    Emailga jo'natish uchun avval email manzilini kiriting va avtomatik zaxira o'chirgichini yoqing.
+                  </p>
+                )}
               </div>
+
 
               <div className="space-y-3 pt-4 border-t border-destructive/30">
                 <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
