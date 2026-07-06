@@ -112,7 +112,8 @@ export default function OperationsPage() {
     setScanError(null);
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('workers').select('*').eq('badge_id', badge).single();
+      const { data: resp, error } = await supabase.functions.invoke('verify-worker-badge', { body: { badge_id: badge } });
+      const data = resp?.found ? resp.worker : null;
       if (error || !data) {
         setScanError({
           title: "Ishchi topilmadi",
