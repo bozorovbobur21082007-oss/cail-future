@@ -51,7 +51,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/" element={<ProtectedRoute allowWorker><AppLayout /></ProtectedRoute>}>
+            <Route path="/" element={<ProtectedRoute allowWorker><SubscriptionGate><AppLayout /></SubscriptionGate></ProtectedRoute>}>
               <Route index element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="mahsulotlar" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
               <Route path="ishchilar" element={<ProtectedRoute><WorkersPage /></ProtectedRoute>} />
