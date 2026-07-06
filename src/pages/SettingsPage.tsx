@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [backupEmailInput, setBackupEmailInput] = useState('');
   const [backupSaving, setBackupSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
