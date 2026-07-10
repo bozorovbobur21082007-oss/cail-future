@@ -11,7 +11,7 @@ import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
 import QrScanner from '@/components/QrScanner';
 import { toast } from 'sonner';
-import { printLabel, THERMAL_15X40 } from '@/utils/printLabel';
+import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useAuth } from '@/contexts/AuthContext';
 
