@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import { toast } from 'sonner';
-import { printLabel, THERMAL_15X40 } from '@/utils/printLabel';
+import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
 
 interface PrintLabelDialogProps {
   open: boolean;
