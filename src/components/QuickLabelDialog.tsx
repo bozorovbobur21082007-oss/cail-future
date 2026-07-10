@@ -11,7 +11,7 @@ import Barcode from '@/components/Barcode';
 import NfcScanner from '@/components/NfcScanner';
 import QrScanner from '@/components/QrScanner';
 import { toast } from 'sonner';
-import { printLabel, THERMAL_15X40 } from '@/utils/printLabel';
+import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -34,7 +34,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
   const [nfcId, setNfcId] = useState('');
   const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
-  const [format, setFormat] = useState<'qr' | 'barcode'>('qr');
+  const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [submitting, setSubmitting] = useState(false);
   const [createdProduct, setCreatedProduct] = useState<{ code: string; name: string } | null>(null);
   const [scannerMode] = useScannerMode();
@@ -52,7 +52,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setNfcId('');
       setShowNfcScanner(false);
       setShowQrScanner(false);
-      setFormat('qr');
+      setFormat('barcode');
       setCreatedProduct(null);
     }
   }, [open]);
@@ -155,7 +155,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       productName: createdProduct.name,
       codeImageDataUrl: dataUrl,
       format,
-      size: THERMAL_15X40,
+      size: THERMAL_76X39,
     });
   };
 

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import { toast } from 'sonner';
-import { printLabel, THERMAL_15X40 } from '@/utils/printLabel';
+import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
 
 interface PrintLabelDialogProps {
   open: boolean;
@@ -36,7 +36,7 @@ export default function PrintLabelDialog({
   contextHint,
   defaultCopies = 1,
 }: PrintLabelDialogProps) {
-  const [format, setFormat] = useState<'qr' | 'barcode'>('qr');
+  const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [copies, setCopies] = useState(() => clampCopies(defaultCopies));
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
@@ -58,7 +58,7 @@ export default function PrintLabelDialog({
       productName,
       codeImageDataUrl: dataUrl,
       format,
-      size: THERMAL_15X40,
+      size: THERMAL_76X39,
       copies,
     });
   };
@@ -166,7 +166,7 @@ export default function PrintLabelDialog({
           </div>
 
           <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-            Termal printer (15×40mm) uchun tayyor. Chop etib qutiga yopishtiring.
+            Xprinter (76×39mm) uchun tayyor. Barkod asosiy, tagida kod raqami va joylashuv chiqadi.
           </div>
         </div>
 
