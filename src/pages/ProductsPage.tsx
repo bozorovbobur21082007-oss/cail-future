@@ -100,9 +100,7 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
-    setIdMethod('code');
-    setShowNfcScanner(false);
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
@@ -111,9 +109,7 @@ export default function ProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
-    setIdMethod(p.nfc_id ? 'nfc' : 'code');
-    setShowNfcScanner(false);
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
@@ -164,47 +160,19 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const nfc = form.nfc_id.trim().toUpperCase();
     const trimmedName = form.name.trim();
-
-    // Identifikatsiya turini tekshirish
-    if (idMethod === 'nfc' && !nfc) {
-      toast.error("NFC ID kiritilmagan. NFC tegni skanerlang yoki QR/Barkod usulini tanlang.");
-      return;
-    }
 
     // Maxsus QR kod (mahsulot bilan kelgan) — tekshirish
     const customCodeVal = customCode.trim().toUpperCase();
-    if (idMethod === 'code' && useCustomCode && !customCodeVal) {
+    if (useCustomCode && !customCodeVal) {
       toast.error("Mahsulot QR/Barkodini kiriting yoki skanerlang.");
       return;
     }
 
     setSubmitting(true);
 
-    // NFC ID takrorlanmasligini oldindan tekshirish (do'stona xato xabari uchun)
-    if (idMethod === 'nfc' && nfc) {
-      const { data: existingNfc, error: checkErr } = await supabase
-        .from('products')
-        .select('id, name, product_code')
-        .eq('nfc_id', nfc)
-        .maybeSingle();
-      if (checkErr) {
-        toast.error("NFC ID ni tekshirishda xatolik: " + checkErr.message);
-        setSubmitting(false);
-        return;
-      }
-      if (existingNfc && existingNfc.id !== editing?.id) {
-        toast.error(
-          `Bu NFC ID allaqachon "${existingNfc.name}" (${existingNfc.product_code}) mahsulotiga biriktirilgan. Boshqa teg ishlatishingiz kerak.`
-        );
-        setSubmitting(false);
-        return;
-      }
-    }
-
     // Maxsus mahsulot kodi takrorlanmasligini tekshirish
-    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+    if (useCustomCode && customCodeVal) {
       const { data: existingCode, error: codeErr } = await supabase
         .from('products')
         .select('id, name')
@@ -229,9 +197,8 @@ export default function ProductsPage() {
       quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
-      nfc_id: idMethod === 'nfc' ? nfc : null,
     };
-    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+    if (useCustomCode && customCodeVal) {
       payload.product_code = customCodeVal;
     }
 
