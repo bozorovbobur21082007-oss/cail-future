@@ -155,7 +155,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       productName: createdProduct.name,
       codeImageDataUrl: dataUrl,
       format,
-      size: THERMAL_15X40,
+      size: THERMAL_76X39,
     });
   };
 
