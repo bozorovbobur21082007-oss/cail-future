@@ -908,6 +908,7 @@ export default function ProductsPage() {
               <Select value={labelSize} onValueChange={(v) => setLabelSize(v as typeof labelSize)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="xprinter_76x39">{labelSizeConfig.xprinter_76x39.label}</SelectItem>
                   <SelectItem value="thermal_15x40">{labelSizeConfig.thermal_15x40.label}</SelectItem>
                   <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
                   <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
