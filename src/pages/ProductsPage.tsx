@@ -667,10 +667,6 @@ export default function ProductsPage() {
             <DialogDescription>
               <strong>"{mergeTarget?.name}"</strong> nomli mahsulot allaqachon mavjud (hozir {mergeTarget?.quantity} ta).
               Uning soniga +1 qo'shilsinmi?
-              <br /><br />
-              <span className="text-xs text-muted-foreground">
-                Eslatma: NFC ID birlashtirilmaydi — har bir nakleyka alohida bo'lgani uchun, agar har bir mahsulotning o'z NFC tegi bo'lishini xohlasangiz, "Yangi alohida saqlash" ni tanlang.
-              </span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">

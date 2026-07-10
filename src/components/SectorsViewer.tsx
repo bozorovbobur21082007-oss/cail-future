@@ -271,7 +271,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
           <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
             <div className="flex flex-wrap items-end gap-2">
               <div className="space-y-1 flex-1 min-w-[180px]">
-                <Label className="text-[10px] text-muted-foreground">Mahsulot nomi, kodi yoki RFID</Label>
+                <Label className="text-[10px] text-muted-foreground">Mahsulot nomi yoki kodi</Label>
                 <Input
                   placeholder="Masalan: Olma yoki AB12CD34"
                   value={productQuery}

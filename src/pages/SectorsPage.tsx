@@ -842,7 +842,7 @@ export default function SectorsPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Mahsulot nomi, kodi yoki RFID..."
+                    placeholder="Mahsulot nomi yoki kodi..."
                     value={shelfSearch}
                     onChange={(e) => setShelfSearch(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runShelfSearch(shelfSearch); } }}
