@@ -19,7 +19,7 @@ import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
-import { escapeHtml } from '@/utils/printLabel';
+import { escapeHtml, printLabel } from '@/utils/printLabel';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -58,9 +58,9 @@ export default function ProductsPage() {
   const [customCode, setCustomCode] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [scannerMode] = useScannerMode();
-  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
+  const [labelSize, setLabelSize] = useState<'xprinter_76x39' | 'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('xprinter_76x39');
   const [compactLabel, setCompactLabel] = useState(false);
-  const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('qr');
+  const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('barcode');
   const [customW, setCustomW] = useState(50);
   const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
@@ -77,6 +77,7 @@ export default function ProductsPage() {
   })();
 
   const labelSizeConfig = {
+    xprinter_76x39: { label: 'Xprinter 76×39mm (Barkod asosiy)', layout: 'centered' as const, w: 76, h: 39, qr: 28 },
     thermal_15x40: { label: 'Termal 15×40mm (yonma-yon)', layout: 'horizontal' as const, w: 40, h: 15, qr: 12 },
     small: { label: 'Kichik 40×40mm', layout: 'vertical' as const, w: 40, h: 40, qr: 32 },
     medium: { label: "O'rta 60×60mm", layout: 'vertical' as const, w: 60, h: 60, qr: 50 },
@@ -360,86 +361,17 @@ export default function ProductsPage() {
       return;
     }
     const dataUrl = canvas.toDataURL('image/png');
-    const printWindow = window.open('', '_blank', 'width=400,height=500');
-    if (!printWindow) {
-      toast.error("Brauzer chop etish oynasini bloklab qo'ydi. Pop-up ruxsatini bering.");
-      return;
-    }
-    const safeName = escapeHtml(qrProduct.name || '');
-    const code = escapeHtml(qrProduct.product_code);
-    const sectorCode = escapeHtml(sectors.find(s => s.id === qrProduct.sector_id)?.code || '');
     const cfg = labelSizeConfig[labelSize];
-    const isHorizontal = cfg.layout === 'horizontal';
-    const useCompact = compactLabel && isHorizontal;
-    const isBarcode = codeFormat === 'barcode';
-
-    // Barkod o'lchamlari: yonma-yon — kenglikning ~60%, balandlikning ~70%; vertikal — to'liq kenglik
-    const bcW = isHorizontal ? Math.round(cfg.w * 0.6) : Math.round(cfg.w * 0.85);
-    const bcH = isHorizontal ? Math.max(6, cfg.h - 4) : Math.max(8, Math.round(cfg.h * 0.45));
-
-    const horizontalCss = `
-      .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
-      .label img.code-img { ${isBarcode ? `width: ${bcW}mm; height: ${bcH}mm;` : `width: ${cfg.qr}mm; height: ${cfg.qr}mm;`} flex-shrink: 0; display: block; object-fit: contain; }
-      .text { flex: 1; min-width: 0; overflow: hidden; }
-      .name { font-size: 7pt; font-weight: 700; line-height: 1.1; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      .sector { font-family: monospace; font-size: 9pt; font-weight: 700; line-height: 1.1; letter-spacing: 0.5px; }
-      .code { font-family: monospace; font-size: 6pt; color: #333; margin-top: 0.5mm; word-break: break-all; }
-      .code-big { font-family: monospace; font-size: 8pt; font-weight: 600; color: #111; margin-top: 1mm; word-break: break-all; }
-      @media print {
-        body { padding: 0; min-height: auto; display: block; }
-        .label { border: none; padding: 0.5mm; border-radius: 0; }
-        @page { size: ${cfg.w}mm ${cfg.h}mm; margin: 0; }
-      }
-    `;
-
-    const verticalCss = `
-      .label { border: 1px dashed #999; padding: 4mm; text-align: center; border-radius: 8px; width: ${cfg.w}mm; }
-      .label img.code-img { display: block; margin: 0 auto; ${isBarcode ? `width: ${bcW}mm; height: ${bcH}mm;` : `width: ${cfg.qr}mm; height: ${cfg.qr}mm;`} object-fit: contain; }
-      .name { font-size: ${Math.max(8, Math.round(cfg.w / 6))}pt; font-weight: 600; margin-top: 2mm; word-break: break-word; line-height: 1.2; }
-      .code { font-family: monospace; font-size: ${Math.max(6, Math.round(cfg.w / 8))}pt; color: #555; margin-top: 1mm; }
-      @media print {
-        body { padding: 0; min-height: auto; display: block; }
-        .label { border: none; padding: 2mm; border-radius: 0; }
-        @page { size: ${cfg.w + 4}mm ${cfg.h + 14}mm; margin: 2mm; }
-      }
-    `;
-
-    const compactInner = `<div class="text">${sectorCode ? `<div class="sector">${sectorCode}</div>` : ''}<div class="${sectorCode ? 'code-big' : 'sector'}">${code}</div></div>`;
-    const fullInner = `<div class="text"><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
-
-    const altLabel = isBarcode ? 'Barkod' : 'QR';
-    const safeDataUrl = escapeHtml(dataUrl);
-    const labelHtml = isHorizontal
-      ? `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
-      : `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${altLabel} — ${code}</title>
-          <style>
-            * { box-sizing: border-box; }
-            body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-            ${isHorizontal ? horizontalCss : verticalCss}
-          </style>
-        </head>
-        <body>
-          ${labelHtml}
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.focus();
-                window.print();
-                window.onafterprint = function() { window.close(); };
-              }, 200);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    toast.success(`Chop etish oynasi ochildi (${cfg.label}, ${altLabel})`);
+    const sectorCode = sectors.find(s => s.id === qrProduct.sector_id)?.code || '';
+    printLabel({
+      productCode: qrProduct.product_code,
+      productName: qrProduct.name || '',
+      sectorCode,
+      codeImageDataUrl: dataUrl,
+      format: codeFormat,
+      size: { w: cfg.w, h: cfg.h, qr: cfg.qr, layout: cfg.layout, label: cfg.label },
+      compact: compactLabel,
+    });
   };
 
   const pendingCount = products.filter(p => !p.approved).length;
@@ -976,6 +908,7 @@ export default function ProductsPage() {
               <Select value={labelSize} onValueChange={(v) => setLabelSize(v as typeof labelSize)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="xprinter_76x39">{labelSizeConfig.xprinter_76x39.label}</SelectItem>
                   <SelectItem value="thermal_15x40">{labelSizeConfig.thermal_15x40.label}</SelectItem>
                   <SelectItem value="small">{labelSizeConfig.small.label}</SelectItem>
                   <SelectItem value="medium">{labelSizeConfig.medium.label}</SelectItem>
