@@ -19,7 +19,7 @@ import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
-import { escapeHtml } from '@/utils/printLabel';
+import { escapeHtml, printLabel } from '@/utils/printLabel';
 
 interface Sector { id: string; name: string; code: string; }
 
