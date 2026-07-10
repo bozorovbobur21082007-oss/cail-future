@@ -166,7 +166,7 @@ export default function PrintLabelDialog({
           </div>
 
           <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-            Termal printer (15×40mm) uchun tayyor. Chop etib qutiga yopishtiring.
+            Xprinter (76×39mm) uchun tayyor. Barkod asosiy, tagida kod raqami va joylashuv chiqadi.
           </div>
         </div>
 
