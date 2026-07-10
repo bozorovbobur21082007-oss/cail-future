@@ -49,9 +49,7 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
-  const [idMethod, setIdMethod] = useState<'code' | 'nfc'>('code');
-  const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '' });
   const [useCustomCode, setUseCustomCode] = useState(false);
   const [customCode, setCustomCode] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
@@ -99,20 +97,6 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  // Dialog ochiq turganda Arduino RC522 (Web Serial) yoki boshqa global NFC o'qishlarni avtomatik qabul qilish
-  useEffect(() => {
-    if (!dialogOpen) return;
-    const handler = (e: Event) => {
-      const uid = (e as CustomEvent<string>).detail;
-      if (!uid) return;
-      setIdMethod('nfc');
-      setShowNfcScanner(false);
-      setForm((f) => ({ ...f, nfc_id: uid }));
-      toast.success(`NFC ID o'qildi: ${uid}`);
-    };
-    window.addEventListener('web-serial-uid', handler as EventListener);
-    return () => window.removeEventListener('web-serial-uid', handler as EventListener);
-  }, [dialogOpen]);
 
   const openCreate = () => {
     setEditing(null);
