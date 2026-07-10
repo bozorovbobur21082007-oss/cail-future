@@ -52,7 +52,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setNfcId('');
       setShowNfcScanner(false);
       setShowQrScanner(false);
-      setFormat('qr');
+      setFormat('barcode');
       setCreatedProduct(null);
     }
   }, [open]);
