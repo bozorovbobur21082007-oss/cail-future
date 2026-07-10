@@ -52,22 +52,24 @@ export function printLabel(opts: PrintLabelOptions): boolean {
   const bcH = isHorizontal ? Math.max(6, cfg.h - 4) : Math.max(8, Math.round(cfg.h * 0.45));
 
   // Centered layout — barkod asosiy, tagida kod raqami va joylashuv (76×39mm uchun)
-  const centeredBcW = Math.round(cfg.w * 0.9);
+  const centeredBcW = Math.round(cfg.w * 0.92);
   const centeredBcH = Math.max(10, Math.round(cfg.h * 0.55));
   const centeredQrSize = Math.min(cfg.h - 4, Math.round(cfg.w * 0.35));
 
   const centeredCss = `
-    .label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1.5mm; border: 1px dashed #999; border-radius: 1mm; gap: 0.8mm; }
+    html, body { width: ${cfg.w}mm; height: ${cfg.h}mm; }
+    .label { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; gap: 1mm; }
     .label img.code-img { ${isBarcode ? `width: ${centeredBcW}mm; height: ${centeredBcH}mm;` : `width: ${centeredQrSize}mm; height: ${centeredQrSize}mm;`} display: block; object-fit: contain; }
-    .code-main { font-family: 'Courier New', monospace; font-size: 14pt; font-weight: 700; line-height: 1; letter-spacing: 2px; color: #000; }
-    .sector-main { font-family: 'Courier New', monospace; font-size: 10pt; font-weight: 700; line-height: 1; letter-spacing: 1px; color: #000; }
+    .code-main { font-family: 'Courier New', monospace; font-size: 13pt; font-weight: 700; line-height: 1; letter-spacing: 2px; color: #000; text-align: center; }
+    .sector-main { font-family: 'Courier New', monospace; font-size: 9pt; font-weight: 700; line-height: 1; letter-spacing: 1px; color: #000; text-align: center; }
     @media print {
-      body { padding: 0; min-height: auto; display: block; }
+      html, body { margin: 0 !important; padding: 0 !important; width: ${cfg.w}mm; height: ${cfg.h}mm; display: block; min-height: auto; }
       .label { border: none; padding: 1mm; border-radius: 0; page-break-after: always; break-after: page; }
       .label:last-child { page-break-after: auto; break-after: auto; }
       @page { size: ${cfg.w}mm ${cfg.h}mm; margin: 0; }
     }
   `;
+
 
   const horizontalCss = `
     .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
