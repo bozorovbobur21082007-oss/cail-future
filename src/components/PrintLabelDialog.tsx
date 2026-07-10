@@ -58,7 +58,7 @@ export default function PrintLabelDialog({
       productName,
       codeImageDataUrl: dataUrl,
       format,
-      size: THERMAL_15X40,
+      size: THERMAL_76X39,
       copies,
     });
   };
