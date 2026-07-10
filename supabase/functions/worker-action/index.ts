@@ -124,9 +124,6 @@ Deno.serve(async (req) => {
       if (typeof p.product_code === 'string' && p.product_code.trim()) {
         insert.product_code = p.product_code.trim().toUpperCase().slice(0, 64);
       }
-      if (typeof p.nfc_id === 'string' && p.nfc_id.trim()) {
-        insert.nfc_id = p.nfc_id.trim().toUpperCase().slice(0, 64);
-      }
       const { data: dup } = await supabase
         .from('products').select('id').ilike('name', name).limit(1).maybeSingle();
       if (dup) {
