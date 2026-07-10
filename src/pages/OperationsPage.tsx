@@ -7,12 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio, Plus, Printer, MapPin
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Plus, Printer, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
-import NfcScanner from '@/components/NfcScanner';
 import QuickLabelDialog from '@/components/QuickLabelDialog';
 import PrintLabelDialog from '@/components/PrintLabelDialog';
 import SectorsViewer from '@/components/SectorsViewer';
@@ -33,7 +32,6 @@ interface Product {
   product_code: string;
   name: string;
   quantity: number;
-  nfc_id: string | null;
   sector_id: string | null;
 }
 
@@ -58,7 +56,6 @@ export default function OperationsPage() {
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
   
   const [showProductScanner, setShowProductScanner] = useState(false);
-  const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [quickLabelOpen, setQuickLabelOpen] = useState(false);
   const [sectorsViewerOpen, setSectorsViewerOpen] = useState(false);
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
@@ -79,31 +76,10 @@ export default function OperationsPage() {
 
   useEffect(() => { setScanError(null); }, [step]);
 
-  // Global Arduino RFID (Web Serial) UID — skaner gun rejimi yoqilgan bo'lsa,
-  // NfcScanner UI ochilmagan paytda ham UID kelsa hozirgi bosqichga yo'naltiramiz.
   const stepRef = useRef(step);
-  const verifyWorkerRef = useRef<(v: string) => void>(() => {});
-  const scanProductRef = useRef<(v: string) => void>(() => {});
   useEffect(() => { stepRef.current = step; }, [step]);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const uid = (e as CustomEvent<string>).detail;
-      if (!uid) return;
-      const s = stepRef.current;
-      if (s === 1) {
-        setWorkerBadge(uid);
-        verifyWorkerRef.current(uid);
-      } else if (s === 2) {
-        setProductCode(uid);
-        scanProductRef.current(uid);
-      } else {
-        // Bosqich 3 — keyingi mahsulotni skanerlash uchun 2-bosqichga qaytamiz va UID'ni yo'naltirib yuboramiz
-        toast.info(`UID qabul qilindi: ${uid} — avval amalni tasdiqlang`);
-      }
-    };
-    window.addEventListener('web-serial-uid', handler);
-    return () => window.removeEventListener('web-serial-uid', handler);
-  }, []);
+
+
 
 
   const verifyWorker = useCallback(async (badgeValue?: string) => {
