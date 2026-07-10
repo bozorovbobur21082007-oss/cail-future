@@ -58,9 +58,9 @@ export default function ProductsPage() {
   const [customCode, setCustomCode] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [scannerMode] = useScannerMode();
-  const [labelSize, setLabelSize] = useState<'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('thermal_15x40');
+  const [labelSize, setLabelSize] = useState<'xprinter_76x39' | 'thermal_15x40' | 'small' | 'medium' | 'large' | 'custom'>('xprinter_76x39');
   const [compactLabel, setCompactLabel] = useState(false);
-  const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('qr');
+  const [codeFormat, setCodeFormat] = useState<'qr' | 'barcode'>('barcode');
   const [customW, setCustomW] = useState(50);
   const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
