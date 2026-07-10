@@ -313,7 +313,7 @@ export default function SettingsPage() {
             Skaner gun rejimi
           </CardTitle>
           <CardDescription>
-            USB skaner gun yoki USB RFID o'quvchi bilan ishlash uchun optimallashtirilgan rejim.
+            USB skaner gun bilan ishlash uchun optimallashtirilgan rejim.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -323,7 +323,7 @@ export default function SettingsPage() {
                 Rejimni yoqish
               </Label>
               <p className="text-xs text-muted-foreground">
-                Yoqilganda kamera va telefon NFC tugmalari yashirinadi, skanerlash inputlariga avtomatik fokus beriladi.
+                Yoqilganda kamera tugmalari yashirinadi, skanerlash inputlariga avtomatik fokus beriladi.
               </p>
             </div>
             <Switch
@@ -354,7 +354,6 @@ export default function SettingsPage() {
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
                   <li>"Kamera orqali skanerlash" tugmasi</li>
-                  <li>"NFC skaner" tugmasi (telefon)</li>
                   <li>QR/Barkod skaner dialoglar</li>
                 </ul>
               </div>
@@ -366,7 +365,7 @@ export default function SettingsPage() {
             <div className="text-xs text-foreground/80">
               <p className="font-medium text-foreground mb-1">Maslahat</p>
               <p>
-                USB skaner gun yoki USB RFID o'quvchi klaviatura emulyatsiyasi (HID) rejimida ishlaydi —
+                USB skaner gun klaviatura emulyatsiyasi (HID) rejimida ishlaydi —
                 skanerlangan kod inputga yoziladi va Enter bosiladi. Hech qanday qo'shimcha drayver kerak emas.
               </p>
             </div>
