@@ -332,8 +332,7 @@ export default function ProductsPage() {
     if (!q) return true;
     return (
       p.name.toLowerCase().includes(q) ||
-      p.product_code.toLowerCase().includes(q) ||
-      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : false)
+      p.product_code.toLowerCase().includes(q)
     );
   });
 
@@ -370,7 +369,7 @@ export default function ProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <Input placeholder="Qidirish (nomi yoki kod)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button
@@ -443,25 +442,15 @@ export default function ProductsPage() {
               ) : (
                 filtered.map((p) => {
                   const isLow = p.quantity <= p.low_stock_threshold;
-                  const hasNfc = !!p.nfc_id;
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className="py-2">
-                        {hasNfc ? (
-                          <span
-                            title={`NFC: ${p.nfc_id}`}
-                            className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 text-primary"
-                          >
-                            <Radio className="w-3.5 h-3.5" />
-                          </span>
-                        ) : (
-                          <span
-                            title="QR / Barkod"
-                            className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
-                          >
-                            <QrCode className="w-3.5 h-3.5" />
-                          </span>
-                        )}
+                        <span
+                          title="QR / Barkod"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                        </span>
                       </TableCell>
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
                        <TableCell className="font-mono text-xs text-muted-foreground">
@@ -469,9 +458,8 @@ export default function ProductsPage() {
                            type="button"
                            title="Nusxa olish"
                            onClick={async () => {
-                             const value = hasNfc ? (p.nfc_id || '') : p.product_code;
                              try {
-                               await navigator.clipboard.writeText(value);
+                               await navigator.clipboard.writeText(p.product_code);
                                toast.success('Nusxa olindi');
                              } catch {
                                toast.error("Nusxa olib bo'lmadi");
@@ -479,7 +467,7 @@ export default function ProductsPage() {
                            }}
                            className="hover:text-foreground hover:underline underline-offset-2 transition-colors cursor-pointer"
                          >
-                           {hasNfc ? p.nfc_id : p.product_code}
+                           {p.product_code}
                          </button>
                        </TableCell>
                        <TableCell className="text-xs">
