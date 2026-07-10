@@ -24,7 +24,7 @@ export interface PrintLabelOptions {
   codeImageDataUrl: string;
   format: 'qr' | 'barcode';
   /** Yorliq o'lchami konfiguratsiyasi */
-  size: { w: number; h: number; qr: number; layout: 'horizontal' | 'vertical'; label: string };
+  size: { w: number; h: number; qr: number; layout: 'horizontal' | 'vertical' | 'centered'; label: string };
   compact?: boolean;
   /** Nechta nusxa chop etilsin (1-50). Default: 1 */
   copies?: number;
@@ -44,11 +44,30 @@ export function printLabel(opts: PrintLabelOptions): boolean {
   const safeSectorCode = escapeHtml(sectorCode || '');
   const cfg = size;
   const isHorizontal = cfg.layout === 'horizontal';
+  const isCentered = cfg.layout === 'centered';
   const useCompact = !!compact && isHorizontal;
   const isBarcode = format === 'barcode';
 
   const bcW = isHorizontal ? Math.round(cfg.w * 0.6) : Math.round(cfg.w * 0.85);
   const bcH = isHorizontal ? Math.max(6, cfg.h - 4) : Math.max(8, Math.round(cfg.h * 0.45));
+
+  // Centered layout — barkod asosiy, tagida kod raqami va joylashuv (76×39mm uchun)
+  const centeredBcW = Math.round(cfg.w * 0.9);
+  const centeredBcH = Math.max(10, Math.round(cfg.h * 0.55));
+  const centeredQrSize = Math.min(cfg.h - 4, Math.round(cfg.w * 0.35));
+
+  const centeredCss = `
+    .label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1.5mm; border: 1px dashed #999; border-radius: 1mm; gap: 0.8mm; }
+    .label img.code-img { ${isBarcode ? `width: ${centeredBcW}mm; height: ${centeredBcH}mm;` : `width: ${centeredQrSize}mm; height: ${centeredQrSize}mm;`} display: block; object-fit: contain; }
+    .code-main { font-family: 'Courier New', monospace; font-size: 14pt; font-weight: 700; line-height: 1; letter-spacing: 2px; color: #000; }
+    .sector-main { font-family: 'Courier New', monospace; font-size: 10pt; font-weight: 700; line-height: 1; letter-spacing: 1px; color: #000; }
+    @media print {
+      body { padding: 0; min-height: auto; display: block; }
+      .label { border: none; padding: 1mm; border-radius: 0; page-break-after: always; break-after: page; }
+      .label:last-child { page-break-after: auto; break-after: auto; }
+      @page { size: ${cfg.w}mm ${cfg.h}mm; margin: 0; }
+    }
+  `;
 
   const horizontalCss = `
     .label { display: flex; align-items: center; gap: 1.5mm; width: ${cfg.w}mm; height: ${cfg.h}mm; padding: 1mm; border: 1px dashed #999; border-radius: 1mm; }
@@ -84,10 +103,18 @@ export function printLabel(opts: PrintLabelOptions): boolean {
 
   const altLabel = isBarcode ? 'Barkod' : 'QR';
   const safeDataUrl = escapeHtml(codeImageDataUrl);
-  const singleLabelHtml = isHorizontal
-    ? `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`
-    : `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+
+  let singleLabelHtml: string;
+  if (isCentered) {
+    singleLabelHtml = `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="code-main">${code}</div>${safeSectorCode ? `<div class="sector-main">${safeSectorCode}</div>` : ''}</div>`;
+  } else if (isHorizontal) {
+    singleLabelHtml = `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" />${useCompact ? compactInner : fullInner}</div>`;
+  } else {
+    singleLabelHtml = `<div class="label"><img class="code-img" src="${safeDataUrl}" alt="${altLabel}" /><div class="name">${safeName}</div><div class="code">${code}</div></div>`;
+  }
   const labelHtml = Array.from({ length: copyCount }, () => singleLabelHtml).join('\n');
+
+  const layoutCss = isCentered ? centeredCss : isHorizontal ? horizontalCss : verticalCss;
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -97,7 +124,7 @@ export function printLabel(opts: PrintLabelOptions): boolean {
         <style>
           * { box-sizing: border-box; }
           body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; min-height: 100vh; }
-          ${isHorizontal ? horizontalCss : verticalCss}
+          ${layoutCss}
         </style>
       </head>
       <body>
@@ -119,7 +146,16 @@ export function printLabel(opts: PrintLabelOptions): boolean {
   return true;
 }
 
-/** Termal 15×40mm default konfiguratsiyasi */
+/** Xprinter 76×39mm — asosiy termal yorliq (barkod markazda, kod raqami va joylashuv ostida) */
+export const THERMAL_76X39 = {
+  w: 76,
+  h: 39,
+  qr: 28,
+  layout: 'centered' as const,
+  label: 'Xprinter 76×39mm',
+};
+
+/** Eski termal 15×40mm (kichik yorliqlar uchun) */
 export const THERMAL_15X40 = {
   w: 40,
   h: 15,
