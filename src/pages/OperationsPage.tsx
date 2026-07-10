@@ -118,18 +118,16 @@ export default function OperationsPage() {
     setScanError(null);
     setLoading(true);
     try {
-      // Ham product_code, ham nfc_id bo'yicha qidiramiz —
-      // shunda USB barkod skaner ham, USB RFID o'quvchi ham bir xil maydonga ishlay oladi.
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or(`product_code.eq.${code},nfc_id.eq.${code}`)
+        .eq('product_code', code)
         .maybeSingle();
       if (error || !data) {
         setScanError({
           title: "Mahsulot topilmadi",
-          detail: `"${code}" ID bilan mahsulot bazada mavjud emas.`,
-          hint: "Kod yoki NFC teg eskirgan, yoki mahsulot hali ombor tizimiga kiritilmagan."
+          detail: `"${code}" kod bilan mahsulot bazada mavjud emas.`,
+          hint: "Kod eskirgan, yoki mahsulot hali ombor tizimiga kiritilmagan."
         });
         sound.error();
         setProductCode('');
@@ -145,8 +143,7 @@ export default function OperationsPage() {
         } else {
           sound.success();
         }
-        const via = data.nfc_id && data.nfc_id.toUpperCase() === code ? 'NFC' : 'kod';
-        toast.success(`Mahsulot topildi (${via}): ${data.name} (${data.quantity} dona)`);
+        toast.success(`Mahsulot topildi: ${data.name} (${data.quantity} dona)`);
         setStep(3);
       }
     } catch {
@@ -156,46 +153,7 @@ export default function OperationsPage() {
     }
   }, [productCode, loading]);
 
-  // refs'ni so'nggi callback'lar bilan sinxron ushlab turamiz (Web Serial listener uchun)
-  useEffect(() => { verifyWorkerRef.current = (v: string) => verifyWorker(v); }, [verifyWorker]);
-  useEffect(() => { scanProductRef.current = (v: string) => scanProduct(v); }, [scanProduct]);
 
-  const scanByNfc = useCallback(async (nfcId: string) => {
-    const id = nfcId.trim().toUpperCase();
-    if (!id || loading) return;
-    setShowNfcScanner(false);
-    setScanError(null);
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.from('products').select('*').eq('nfc_id', id).single();
-      if (error || !data) {
-        setScanError({
-          title: "NFC teg ro'yxatdan o'tmagan",
-          detail: `"${id}" NFC ID bilan mahsulot topilmadi.`,
-          hint: "Bu nakleyka biror mahsulotga biriktirilmagan. Avval Mahsulotlar bo'limida ro'yxatdan o'tkazing."
-        });
-        sound.error();
-      } else {
-        setVerifiedProduct(data);
-        if (data.quantity <= 0) {
-          setScanError({
-            title: "Mahsulot tugagan",
-            detail: `"${data.name}" omborda qolmagan (0 dona).`,
-            hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
-          });
-          sound.error();
-        } else {
-          sound.success();
-        }
-        toast.success(`NFC orqali topildi: ${data.name} (${data.quantity} dona)`);
-        setStep(3);
-      }
-    } catch {
-      setScanError({ title: "Server xatosi", detail: "Ma'lumotlar bazasiga ulanishda xatolik." });
-    } finally {
-      setLoading(false);
-    }
-  }, [loading]);
 
   const executeOperation = async () => {
     if (!verifiedWorker || !verifiedProduct) return;
