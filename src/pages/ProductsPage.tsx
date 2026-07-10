@@ -77,6 +77,7 @@ export default function ProductsPage() {
   })();
 
   const labelSizeConfig = {
+    xprinter_76x39: { label: 'Xprinter 76×39mm (Barkod asosiy)', layout: 'centered' as const, w: 76, h: 39, qr: 28 },
     thermal_15x40: { label: 'Termal 15×40mm (yonma-yon)', layout: 'horizontal' as const, w: 40, h: 15, qr: 12 },
     small: { label: 'Kichik 40×40mm', layout: 'vertical' as const, w: 40, h: 40, qr: 32 },
     medium: { label: "O'rta 60×60mm", layout: 'vertical' as const, w: 60, h: 60, qr: 50 },
