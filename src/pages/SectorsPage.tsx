@@ -53,7 +53,7 @@ interface Product {
   sector_id?: string | null;
   quantity: number;
   product_code: string | null;
-  nfc_id: string | null;
+  
 }
 
 interface Placement {
@@ -147,7 +147,7 @@ export default function SectorsPage() {
     const [secRes, shRes, pRes, plRes] = await Promise.all([
       supabase.from('sectors').select('*').order('code'),
       supabase.from('shelves').select('*').order('code'),
-      supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id').order('name'),
+      supabase.from('products').select('id, name, sector_id, quantity, product_code').order('name'),
       supabase.from('product_placements').select('*'),
     ]);
     if (secRes.error) toast.error('Xonalarni yuklashda xatolik');
@@ -448,9 +448,7 @@ export default function SectorsPage() {
     const ql = q.toLowerCase();
     const matches = (p: Product) =>
       p.name.toLowerCase().includes(ql) ||
-      (p.product_code || '').toLowerCase().includes(ql) ||
-      (p.nfc_id || '').toLowerCase() === ql ||
-      (p.nfc_id || '').toLowerCase().includes(ql);
+      (p.product_code || '').toLowerCase().includes(ql);
     // 1) Aniq placement?
     for (const [key, val] of placementsMap.entries()) {
       if (matches(val.product)) {
@@ -470,17 +468,6 @@ export default function SectorsPage() {
     }
   }, [openShelfData]);
 
-  // Listen for RFID
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const uid = (e as CustomEvent<string>).detail;
-      if (!uid || !openShelfId) return;
-      setShelfSearch(uid);
-      runShelfSearch(uid);
-    };
-    window.addEventListener('web-serial-uid', handler as EventListener);
-    return () => window.removeEventListener('web-serial-uid', handler as EventListener);
-  }, [openShelfId, runShelfSearch]);
 
   // Slot click → info
   const onSlotClick = (slot: HighlightSlot) => {
@@ -928,12 +915,6 @@ export default function SectorsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Kod:</span>
                   <span className="font-mono text-xs">{slotInfo.product.product_code}</span>
-                </div>
-              )}
-              {slotInfo.product.nfc_id && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">RFID:</span>
-                  <span className="font-mono text-xs">{slotInfo.product.nfc_id}</span>
                 </div>
               )}
               <div className="flex items-center justify-between">
