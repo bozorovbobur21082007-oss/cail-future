@@ -48,7 +48,7 @@ interface Product {
   sector_id?: string | null;
   quantity: number;
   product_code?: string | null;
-  nfc_id?: string | null;
+  
 }
 
 interface Placement {
@@ -130,7 +130,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
     const [s, sh, p, pl] = await Promise.all([
       supabase.from('sectors').select('*').order('code'),
       supabase.from('shelves').select('*').order('code'),
-      supabase.from('products').select('id, name, sector_id, quantity, product_code, nfc_id'),
+      supabase.from('products').select('id, name, sector_id, quantity, product_code'),
       supabase.from('product_placements').select('*'),
     ]);
     if (s.error) { toast.error('Xonalarni yuklashda xatolik'); setLoading(false); return; }
@@ -194,8 +194,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
     const needle = raw.toLowerCase();
     const match = (p: Product) =>
       p.name.toLowerCase().includes(needle) ||
-      (p.product_code || '').toLowerCase() === needle ||
-      (p.nfc_id || '').toLowerCase() === needle;
+      (p.product_code || '').toLowerCase() === needle;
 
     for (const sh of shelves) {
       const shelfProds = productsBySector.get(sh.sector_id) || [];
@@ -223,18 +222,6 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
     toast.error(`"${raw}" topilmadi`);
   }, [shelves, sectors, productsBySector, placementsByShelf]);
 
-  // RFID
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: Event) => {
-      const uid = (e as CustomEvent<string>).detail;
-      if (!uid) return;
-      setProductQuery(uid);
-      globalFind(uid);
-    };
-    window.addEventListener('web-serial-uid', handler as EventListener);
-    return () => window.removeEventListener('web-serial-uid', handler as EventListener);
-  }, [open, globalFind]);
 
   // Slot info computation (read-only)
   const slotInfoProduct = useMemo(() => {
@@ -566,12 +553,6 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
                       <>
                         <div className="text-muted-foreground">Kod:</div>
                         <div className="font-medium font-mono text-right">{slotInfoProduct.product.product_code}</div>
-                      </>
-                    )}
-                    {slotInfoProduct.product.nfc_id && (
-                      <>
-                        <div className="text-muted-foreground">NFC:</div>
-                        <div className="font-medium font-mono text-right">{slotInfoProduct.product.nfc_id}</div>
                       </>
                     )}
                   </div>
