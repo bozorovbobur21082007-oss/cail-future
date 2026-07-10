@@ -9,7 +9,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
-import { webSerialService } from '@/lib/webSerialService';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Bosh sahifa' },
@@ -52,9 +51,6 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Web Serial (Arduino RFID) ulanishini global darajada hayotda saqlash —
-  // skaner gun rejimi yoqilgan bo'lsa ham, NfcScanner UI ko'rinmasa ham ulanish saqlanib turadi.
-  useEffect(() => { webSerialService.init(); }, []);
 
   const handleLogout = async () => {
     await logout();
