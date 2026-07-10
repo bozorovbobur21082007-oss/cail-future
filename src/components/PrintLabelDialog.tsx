@@ -167,7 +167,7 @@ export default function PrintLabelDialog({
           </div>
 
           <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-            Xprinter (76×39mm) uchun tayyor. Barkod asosiy, tagida kod raqami va joylashuv chiqadi.
+            Xprinter (58×40mm) uchun tayyor. Barkod asosiy, tagida kod raqami va joylashuv chiqadi.
           </div>
         </div>
 

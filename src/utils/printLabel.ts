@@ -148,13 +148,13 @@ export function printLabel(opts: PrintLabelOptions): boolean {
   return true;
 }
 
-/** Xprinter 76×39mm — asosiy termal yorliq (barkod markazda, kod raqami va joylashuv ostida) */
+/** Xprinter 58×40mm — asosiy termal yorliq (barkod markazda, kod raqami va joylashuv ostida) */
 export const THERMAL_76X39 = {
-  w: 76,
-  h: 39,
+  w: 58,
+  h: 40,
   qr: 28,
   layout: 'centered' as const,
-  label: 'Xprinter 76×39mm',
+  label: 'Xprinter 58×40mm',
 };
 
 /** Eski termal 15×40mm (kichik yorliqlar uchun) */
