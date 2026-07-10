@@ -36,7 +36,7 @@ export default function PrintLabelDialog({
   contextHint,
   defaultCopies = 1,
 }: PrintLabelDialogProps) {
-  const [format, setFormat] = useState<'qr' | 'barcode'>('qr');
+  const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [copies, setCopies] = useState(() => clampCopies(defaultCopies));
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
