@@ -587,159 +587,67 @@ export default function ProductsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Identifikatsiya turi</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setIdMethod('code'); setShowNfcScanner(false); }}
-                  className={`flex flex-col items-start gap-1 rounded-md border p-3 text-left transition ${
-                    idMethod === 'code'
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <QrCode className="w-4 h-4 text-primary" /> QR / Barkod
-                  </div>
-                  <span className="text-[11px] text-muted-foreground leading-tight">
-                    Avtomatik kod yaratiladi, yorliqni chop etib mahsulotga yopishtirasiz.
+            <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useCustomCode}
+                  onChange={(e) => {
+                    setUseCustomCode(e.target.checked);
+                    if (!e.target.checked) { setCustomCode(''); setShowQrScanner(false); }
+                  }}
+                  className="mt-0.5"
+                />
+                <span className="text-sm">
+                  Mahsulot o'z QR/Barkodi bilan kelgan
+                  <span className="block text-[11px] text-muted-foreground leading-tight">
+                    Tayyor kodini ro'yxatdan o'tkazing — avtomatik kod o'rniga shu kod ishlatiladi.
                   </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIdMethod('nfc')}
-                  className={`flex flex-col items-start gap-1 rounded-md border p-3 text-left transition ${
-                    idMethod === 'nfc'
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Radio className="w-4 h-4 text-primary" /> NFC nakleyka
-                  </div>
-                  <span className="text-[11px] text-muted-foreground leading-tight">
-                    Mahsulotda NFC teg bor — uni skanerlab biriktirasiz.
-                  </span>
-                </button>
-              </div>
-            </div>
+                </span>
+              </label>
 
-            {idMethod === 'code' && (
-              <div className="space-y-2 rounded-md border border-dashed border-border p-3">
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useCustomCode}
-                    onChange={(e) => {
-                      setUseCustomCode(e.target.checked);
-                      if (!e.target.checked) { setCustomCode(''); setShowQrScanner(false); }
-                    }}
-                    className="mt-0.5"
-                  />
-                  <span className="text-sm">
-                    Mahsulot o'z QR/Barkodi bilan kelgan
-                    <span className="block text-[11px] text-muted-foreground leading-tight">
-                      Tayyor kodini ro'yxatdan o'tkazing — avtomatik kod o'rniga shu kod ishlatiladi.
-                    </span>
-                  </span>
-                </label>
-
-                {useCustomCode && (
-                  <>
-                    {showQrScanner ? (
-                      <QrScanner
-                        onScan={(code) => {
-                          setCustomCode(code.trim().toUpperCase());
-                          setShowQrScanner(false);
-                          toast.success(`Kod o'qildi: ${code}`);
-                        }}
-                        onClose={() => setShowQrScanner(false)}
-                      />
-                    ) : (
-                      <div className="flex gap-2">
-                        <Input
-                          value={customCode}
-                          onChange={(e) => setCustomCode(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && customCode.trim()) {
-                              e.preventDefault();
-                              toast.success(`Kod qabul qilindi: ${customCode.trim().toUpperCase()}`);
-                            }
-                          }}
-                          placeholder="QR/Barkodni skanerlang yoki kiriting..."
-                          className="font-mono uppercase"
-                          autoFocus
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowQrScanner(true)}
-                          title="Kamera orqali skanerlash"
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                    <p className="text-[11px] text-muted-foreground">
-                      USB QR/Barkod o'quvchi avtomatik kiritadi. Kamera uchun yondagi tugmani bosing. Kod takrorlanmasligi tekshiriladi.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
-
-            {idMethod === 'nfc' && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Radio className="w-3.5 h-3.5 text-primary" />
-                  NFC ID <span className="text-destructive text-xs font-normal">*majburiy</span>
-                </Label>
-                {!scannerMode && showNfcScanner ? (
-                  <NfcScanner
-                    onScan={(uid) => {
-                      setForm({ ...form, nfc_id: uid });
-                      setShowNfcScanner(false);
-                      toast.success(`NFC ID o'qildi: ${uid}`);
-                    }}
-                    onClose={() => setShowNfcScanner(false)}
-                  />
-                ) : (
-                  <>
+              {useCustomCode && (
+                <>
+                  {showQrScanner ? (
+                    <QrScanner
+                      onScan={(code) => {
+                        setCustomCode(code.trim().toUpperCase());
+                        setShowQrScanner(false);
+                        toast.success(`Kod o'qildi: ${code}`);
+                      }}
+                      onClose={() => setShowQrScanner(false)}
+                    />
+                  ) : (
                     <div className="flex gap-2">
                       <Input
-                        value={form.nfc_id}
-                        onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
+                        value={customCode}
+                        onChange={(e) => setCustomCode(e.target.value)}
                         onKeyDown={(e) => {
-                          // USB RFID o'quvchi UID + Enter yuboradi.
-                          // Enter formni jo'natmasin — faqat UID qabul qilinganini tasdiqlaymiz.
-                          if (e.key === 'Enter' && form.nfc_id.trim()) {
+                          if (e.key === 'Enter' && customCode.trim()) {
                             e.preventDefault();
-                            toast.success(`NFC ID qabul qilindi: ${form.nfc_id.trim().toUpperCase()}`);
+                            toast.success(`Kod qabul qilindi: ${customCode.trim().toUpperCase()}`);
                           }
                         }}
-                        placeholder="NFC tegni telefon, USB RFID o'quvchi yoki klaviatura orqali kiriting..."
-                        className="font-mono"
+                        placeholder="QR/Barkodni skanerlang yoki kiriting..."
+                        className="font-mono uppercase"
                         autoFocus
                       />
-                      {!scannerMode && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowNfcScanner(true)}
-                          title="Telefon NFC orqali skanerlash"
-                        >
-                          <Radio className="w-4 h-4" />
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowQrScanner(true)}
+                        title="Kamera orqali skanerlash"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      USB RFID o'quvchiga kartani tekkizing — UID avtomatik kiritiladi. Telefon NFC uchun yondagi tugmani bosing.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    USB QR/Barkod o'quvchi avtomatik kiritadi. Kamera uchun yondagi tugmani bosing. Kod takrorlanmasligi tekshiriladi.
+                  </p>
+                </>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
               <Button type="submit" disabled={submitting}>
