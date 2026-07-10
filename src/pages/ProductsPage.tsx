@@ -31,7 +31,6 @@ interface Product {
   created_at: string;
   sector_id: string | null;
   approved: boolean;
-  approved: boolean;
 }
 
 export default function ProductsPage() {
