@@ -398,13 +398,7 @@ export default function OperationsPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!scannerMode && showNfcScanner ? (
-              <NfcScanner
-                onScan={(uid) => scanByNfc(uid)}
-                onClose={() => setShowNfcScanner(false)}
-                title="Mahsulot NFC tegini skanerlang"
-              />
-            ) : !scannerMode && showProductScanner ? (
+            {!scannerMode && showProductScanner ? (
               <QrScanner
                 onScan={(result) => {
                   setShowProductScanner(false);
@@ -423,7 +417,7 @@ export default function OperationsPage() {
                       value={productCode}
                       onChange={(e) => setProductCode(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
-                      placeholder={scannerMode ? "Skaner gun yoki RFID bilan skanerlang..." : "QR/Barkod yoki NFC ID..."}
+                      placeholder={scannerMode ? "Skaner gun bilan skanerlang..." : "QR / Barkod kodi..."}
                       autoFocus={scannerMode}
                     />
                     <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
@@ -432,16 +426,10 @@ export default function OperationsPage() {
                   </div>
                 </div>
                 {!scannerMode && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="gap-2" onClick={() => setShowProductScanner(true)}>
-                      <Camera className="w-4 h-4" />
-                      Kamera (QR)
-                    </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => setShowNfcScanner(true)}>
-                      <Radio className="w-4 h-4" />
-                      NFC skaner
-                    </Button>
-                  </div>
+                  <Button variant="outline" className="gap-2 w-full" onClick={() => setShowProductScanner(true)}>
+                    <Camera className="w-4 h-4" />
+                    Kamera orqali skanerlash
+                  </Button>
                 )}
               </div>
             )}
