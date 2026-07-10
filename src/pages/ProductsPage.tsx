@@ -883,7 +883,8 @@ export default function ProductsPage() {
                   format="CODE128"
                   width={2}
                   height={80}
-                  fontSize={16}
+                  displayValue={false}
+                  margin={0}
                 />
               )}
             </div>
