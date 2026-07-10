@@ -118,7 +118,8 @@ export default function PrintLabelDialog({
                 format="CODE128"
                 width={2}
                 height={60}
-                fontSize={14}
+                displayValue={false}
+                margin={0}
               />
             )}
             <div className="text-center">
