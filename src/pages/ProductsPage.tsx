@@ -9,12 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
-import NfcScanner from '@/components/NfcScanner';
 import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
@@ -31,7 +30,7 @@ interface Product {
   low_stock_threshold: number;
   created_at: string;
   sector_id: string | null;
-  nfc_id: string | null;
+  approved: boolean;
   approved: boolean;
 }
 
