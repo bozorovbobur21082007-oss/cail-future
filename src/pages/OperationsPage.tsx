@@ -7,12 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   ScanLine, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle,
-  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Radio, Plus, Printer, MapPin
+  Loader2, UserCheck, Package, AlertTriangle, Info, Camera, Plus, Printer, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import QrScanner from '@/components/QrScanner';
-import NfcScanner from '@/components/NfcScanner';
 import QuickLabelDialog from '@/components/QuickLabelDialog';
 import PrintLabelDialog from '@/components/PrintLabelDialog';
 import SectorsViewer from '@/components/SectorsViewer';
@@ -33,7 +32,6 @@ interface Product {
   product_code: string;
   name: string;
   quantity: number;
-  nfc_id: string | null;
   sector_id: string | null;
 }
 
@@ -58,7 +56,6 @@ export default function OperationsPage() {
   const [batchLogs, setBatchLogs] = useState<BatchLog[]>([]);
   
   const [showProductScanner, setShowProductScanner] = useState(false);
-  const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [quickLabelOpen, setQuickLabelOpen] = useState(false);
   const [sectorsViewerOpen, setSectorsViewerOpen] = useState(false);
   const [printLabelFor, setPrintLabelFor] = useState<{ code: string; name: string; addedQty: number } | null>(null);
@@ -79,31 +76,10 @@ export default function OperationsPage() {
 
   useEffect(() => { setScanError(null); }, [step]);
 
-  // Global Arduino RFID (Web Serial) UID — skaner gun rejimi yoqilgan bo'lsa,
-  // NfcScanner UI ochilmagan paytda ham UID kelsa hozirgi bosqichga yo'naltiramiz.
   const stepRef = useRef(step);
-  const verifyWorkerRef = useRef<(v: string) => void>(() => {});
-  const scanProductRef = useRef<(v: string) => void>(() => {});
   useEffect(() => { stepRef.current = step; }, [step]);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const uid = (e as CustomEvent<string>).detail;
-      if (!uid) return;
-      const s = stepRef.current;
-      if (s === 1) {
-        setWorkerBadge(uid);
-        verifyWorkerRef.current(uid);
-      } else if (s === 2) {
-        setProductCode(uid);
-        scanProductRef.current(uid);
-      } else {
-        // Bosqich 3 — keyingi mahsulotni skanerlash uchun 2-bosqichga qaytamiz va UID'ni yo'naltirib yuboramiz
-        toast.info(`UID qabul qilindi: ${uid} — avval amalni tasdiqlang`);
-      }
-    };
-    window.addEventListener('web-serial-uid', handler);
-    return () => window.removeEventListener('web-serial-uid', handler);
-  }, []);
+
+
 
 
   const verifyWorker = useCallback(async (badgeValue?: string) => {
@@ -142,18 +118,16 @@ export default function OperationsPage() {
     setScanError(null);
     setLoading(true);
     try {
-      // Ham product_code, ham nfc_id bo'yicha qidiramiz —
-      // shunda USB barkod skaner ham, USB RFID o'quvchi ham bir xil maydonga ishlay oladi.
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or(`product_code.eq.${code},nfc_id.eq.${code}`)
+        .eq('product_code', code)
         .maybeSingle();
       if (error || !data) {
         setScanError({
           title: "Mahsulot topilmadi",
-          detail: `"${code}" ID bilan mahsulot bazada mavjud emas.`,
-          hint: "Kod yoki NFC teg eskirgan, yoki mahsulot hali ombor tizimiga kiritilmagan."
+          detail: `"${code}" kod bilan mahsulot bazada mavjud emas.`,
+          hint: "Kod eskirgan, yoki mahsulot hali ombor tizimiga kiritilmagan."
         });
         sound.error();
         setProductCode('');
@@ -169,8 +143,7 @@ export default function OperationsPage() {
         } else {
           sound.success();
         }
-        const via = data.nfc_id && data.nfc_id.toUpperCase() === code ? 'NFC' : 'kod';
-        toast.success(`Mahsulot topildi (${via}): ${data.name} (${data.quantity} dona)`);
+        toast.success(`Mahsulot topildi: ${data.name} (${data.quantity} dona)`);
         setStep(3);
       }
     } catch {
@@ -180,46 +153,7 @@ export default function OperationsPage() {
     }
   }, [productCode, loading]);
 
-  // refs'ni so'nggi callback'lar bilan sinxron ushlab turamiz (Web Serial listener uchun)
-  useEffect(() => { verifyWorkerRef.current = (v: string) => verifyWorker(v); }, [verifyWorker]);
-  useEffect(() => { scanProductRef.current = (v: string) => scanProduct(v); }, [scanProduct]);
 
-  const scanByNfc = useCallback(async (nfcId: string) => {
-    const id = nfcId.trim().toUpperCase();
-    if (!id || loading) return;
-    setShowNfcScanner(false);
-    setScanError(null);
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.from('products').select('*').eq('nfc_id', id).single();
-      if (error || !data) {
-        setScanError({
-          title: "NFC teg ro'yxatdan o'tmagan",
-          detail: `"${id}" NFC ID bilan mahsulot topilmadi.`,
-          hint: "Bu nakleyka biror mahsulotga biriktirilmagan. Avval Mahsulotlar bo'limida ro'yxatdan o'tkazing."
-        });
-        sound.error();
-      } else {
-        setVerifiedProduct(data);
-        if (data.quantity <= 0) {
-          setScanError({
-            title: "Mahsulot tugagan",
-            detail: `"${data.name}" omborda qolmagan (0 dona).`,
-            hint: "Mahsulotlar bo'limidan miqdorni yangilang yoki yangi mahsulot qo'shing."
-          });
-          sound.error();
-        } else {
-          sound.success();
-        }
-        toast.success(`NFC orqali topildi: ${data.name} (${data.quantity} dona)`);
-        setStep(3);
-      }
-    } catch {
-      setScanError({ title: "Server xatosi", detail: "Ma'lumotlar bazasiga ulanishda xatolik." });
-    } finally {
-      setLoading(false);
-    }
-  }, [loading]);
 
   const executeOperation = async () => {
     if (!verifiedWorker || !verifiedProduct) return;
@@ -464,13 +398,7 @@ export default function OperationsPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!scannerMode && showNfcScanner ? (
-              <NfcScanner
-                onScan={(uid) => scanByNfc(uid)}
-                onClose={() => setShowNfcScanner(false)}
-                title="Mahsulot NFC tegini skanerlang"
-              />
-            ) : !scannerMode && showProductScanner ? (
+            {!scannerMode && showProductScanner ? (
               <QrScanner
                 onScan={(result) => {
                   setShowProductScanner(false);
@@ -489,7 +417,7 @@ export default function OperationsPage() {
                       value={productCode}
                       onChange={(e) => setProductCode(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && scanProduct()}
-                      placeholder={scannerMode ? "Skaner gun yoki RFID bilan skanerlang..." : "QR/Barkod yoki NFC ID..."}
+                      placeholder={scannerMode ? "Skaner gun bilan skanerlang..." : "QR / Barkod kodi..."}
                       autoFocus={scannerMode}
                     />
                     <Button onClick={() => scanProduct()} disabled={loading || !productCode.trim()}>
@@ -498,16 +426,10 @@ export default function OperationsPage() {
                   </div>
                 </div>
                 {!scannerMode && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="gap-2" onClick={() => setShowProductScanner(true)}>
-                      <Camera className="w-4 h-4" />
-                      Kamera (QR)
-                    </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => setShowNfcScanner(true)}>
-                      <Radio className="w-4 h-4" />
-                      NFC skaner
-                    </Button>
-                  </div>
+                  <Button variant="outline" className="gap-2 w-full" onClick={() => setShowProductScanner(true)}>
+                    <Camera className="w-4 h-4" />
+                    Kamera orqali skanerlash
+                  </Button>
                 )}
               </div>
             )}

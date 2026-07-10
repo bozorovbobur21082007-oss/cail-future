@@ -30,7 +30,7 @@ interface Product {
   name: string;
   quantity: number;
   sector_id: string | null;
-  nfc_id: string | null;
+  
 }
 
 export default function TransferPage() {
@@ -48,7 +48,7 @@ export default function TransferPage() {
     setLoading(true);
     const [pRes, sRes, shRes] = await Promise.all([
       supabase.from('products')
-        .select('id, product_code, name, quantity, sector_id, nfc_id')
+        .select('id, product_code, name, quantity, sector_id')
         .order('name'),
       supabase.from('sectors')
         .select('id, name, code')
@@ -90,8 +90,7 @@ export default function TransferPage() {
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
-        p.product_code.toLowerCase().includes(q) ||
-        (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : false)
+        p.product_code.toLowerCase().includes(q)
       );
     });
   }, [products, search, sourceFilter]);
@@ -296,7 +295,7 @@ export default function TransferPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Nom, kod yoki NFC ID bo'yicha izlash..."
+                placeholder="Nom yoki kod bo'yicha izlash..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"

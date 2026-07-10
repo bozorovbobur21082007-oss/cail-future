@@ -9,12 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Radio, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
-import NfcScanner from '@/components/NfcScanner';
 import QrScanner from '@/components/QrScanner';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
@@ -31,7 +30,6 @@ interface Product {
   low_stock_threshold: number;
   created_at: string;
   sector_id: string | null;
-  nfc_id: string | null;
   approved: boolean;
 }
 
@@ -51,9 +49,7 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
-  const [idMethod, setIdMethod] = useState<'code' | 'nfc'>('code');
-  const [showNfcScanner, setShowNfcScanner] = useState(false);
+  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '' });
   const [useCustomCode, setUseCustomCode] = useState(false);
   const [customCode, setCustomCode] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
@@ -101,26 +97,10 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  // Dialog ochiq turganda Arduino RC522 (Web Serial) yoki boshqa global NFC o'qishlarni avtomatik qabul qilish
-  useEffect(() => {
-    if (!dialogOpen) return;
-    const handler = (e: Event) => {
-      const uid = (e as CustomEvent<string>).detail;
-      if (!uid) return;
-      setIdMethod('nfc');
-      setShowNfcScanner(false);
-      setForm((f) => ({ ...f, nfc_id: uid }));
-      toast.success(`NFC ID o'qildi: ${uid}`);
-    };
-    window.addEventListener('web-serial-uid', handler as EventListener);
-    return () => window.removeEventListener('web-serial-uid', handler as EventListener);
-  }, [dialogOpen]);
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', nfc_id: '' });
-    setIdMethod('code');
-    setShowNfcScanner(false);
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
@@ -129,9 +109,7 @@ export default function ProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', nfc_id: p.nfc_id || '' });
-    setIdMethod(p.nfc_id ? 'nfc' : 'code');
-    setShowNfcScanner(false);
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
@@ -182,47 +160,19 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const nfc = form.nfc_id.trim().toUpperCase();
     const trimmedName = form.name.trim();
-
-    // Identifikatsiya turini tekshirish
-    if (idMethod === 'nfc' && !nfc) {
-      toast.error("NFC ID kiritilmagan. NFC tegni skanerlang yoki QR/Barkod usulini tanlang.");
-      return;
-    }
 
     // Maxsus QR kod (mahsulot bilan kelgan) — tekshirish
     const customCodeVal = customCode.trim().toUpperCase();
-    if (idMethod === 'code' && useCustomCode && !customCodeVal) {
+    if (useCustomCode && !customCodeVal) {
       toast.error("Mahsulot QR/Barkodini kiriting yoki skanerlang.");
       return;
     }
 
     setSubmitting(true);
 
-    // NFC ID takrorlanmasligini oldindan tekshirish (do'stona xato xabari uchun)
-    if (idMethod === 'nfc' && nfc) {
-      const { data: existingNfc, error: checkErr } = await supabase
-        .from('products')
-        .select('id, name, product_code')
-        .eq('nfc_id', nfc)
-        .maybeSingle();
-      if (checkErr) {
-        toast.error("NFC ID ni tekshirishda xatolik: " + checkErr.message);
-        setSubmitting(false);
-        return;
-      }
-      if (existingNfc && existingNfc.id !== editing?.id) {
-        toast.error(
-          `Bu NFC ID allaqachon "${existingNfc.name}" (${existingNfc.product_code}) mahsulotiga biriktirilgan. Boshqa teg ishlatishingiz kerak.`
-        );
-        setSubmitting(false);
-        return;
-      }
-    }
-
     // Maxsus mahsulot kodi takrorlanmasligini tekshirish
-    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+    if (useCustomCode && customCodeVal) {
       const { data: existingCode, error: codeErr } = await supabase
         .from('products')
         .select('id, name')
@@ -247,9 +197,8 @@ export default function ProductsPage() {
       quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
       sector_id: form.sector_id || null,
-      nfc_id: idMethod === 'nfc' ? nfc : null,
     };
-    if (idMethod === 'code' && useCustomCode && customCodeVal) {
+    if (useCustomCode && customCodeVal) {
       payload.product_code = customCodeVal;
     }
 
@@ -383,8 +332,7 @@ export default function ProductsPage() {
     if (!q) return true;
     return (
       p.name.toLowerCase().includes(q) ||
-      p.product_code.toLowerCase().includes(q) ||
-      (p.nfc_id ? p.nfc_id.toLowerCase().includes(q) : false)
+      p.product_code.toLowerCase().includes(q)
     );
   });
 
@@ -421,7 +369,7 @@ export default function ProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Qidirish (nomi, kod yoki NFC ID)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <Input placeholder="Qidirish (nomi yoki kod)..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button
@@ -494,25 +442,15 @@ export default function ProductsPage() {
               ) : (
                 filtered.map((p) => {
                   const isLow = p.quantity <= p.low_stock_threshold;
-                  const hasNfc = !!p.nfc_id;
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className="py-2">
-                        {hasNfc ? (
-                          <span
-                            title={`NFC: ${p.nfc_id}`}
-                            className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 text-primary"
-                          >
-                            <Radio className="w-3.5 h-3.5" />
-                          </span>
-                        ) : (
-                          <span
-                            title="QR / Barkod"
-                            className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
-                          >
-                            <QrCode className="w-3.5 h-3.5" />
-                          </span>
-                        )}
+                        <span
+                          title="QR / Barkod"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                        </span>
                       </TableCell>
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
                        <TableCell className="font-mono text-xs text-muted-foreground">
@@ -520,9 +458,8 @@ export default function ProductsPage() {
                            type="button"
                            title="Nusxa olish"
                            onClick={async () => {
-                             const value = hasNfc ? (p.nfc_id || '') : p.product_code;
                              try {
-                               await navigator.clipboard.writeText(value);
+                               await navigator.clipboard.writeText(p.product_code);
                                toast.success('Nusxa olindi');
                              } catch {
                                toast.error("Nusxa olib bo'lmadi");
@@ -530,7 +467,7 @@ export default function ProductsPage() {
                            }}
                            className="hover:text-foreground hover:underline underline-offset-2 transition-colors cursor-pointer"
                          >
-                           {hasNfc ? p.nfc_id : p.product_code}
+                           {p.product_code}
                          </button>
                        </TableCell>
                        <TableCell className="text-xs">
@@ -650,159 +587,67 @@ export default function ProductsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Identifikatsiya turi</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setIdMethod('code'); setShowNfcScanner(false); }}
-                  className={`flex flex-col items-start gap-1 rounded-md border p-3 text-left transition ${
-                    idMethod === 'code'
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <QrCode className="w-4 h-4 text-primary" /> QR / Barkod
-                  </div>
-                  <span className="text-[11px] text-muted-foreground leading-tight">
-                    Avtomatik kod yaratiladi, yorliqni chop etib mahsulotga yopishtirasiz.
+            <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useCustomCode}
+                  onChange={(e) => {
+                    setUseCustomCode(e.target.checked);
+                    if (!e.target.checked) { setCustomCode(''); setShowQrScanner(false); }
+                  }}
+                  className="mt-0.5"
+                />
+                <span className="text-sm">
+                  Mahsulot o'z QR/Barkodi bilan kelgan
+                  <span className="block text-[11px] text-muted-foreground leading-tight">
+                    Tayyor kodini ro'yxatdan o'tkazing — avtomatik kod o'rniga shu kod ishlatiladi.
                   </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIdMethod('nfc')}
-                  className={`flex flex-col items-start gap-1 rounded-md border p-3 text-left transition ${
-                    idMethod === 'nfc'
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Radio className="w-4 h-4 text-primary" /> NFC nakleyka
-                  </div>
-                  <span className="text-[11px] text-muted-foreground leading-tight">
-                    Mahsulotda NFC teg bor — uni skanerlab biriktirasiz.
-                  </span>
-                </button>
-              </div>
-            </div>
+                </span>
+              </label>
 
-            {idMethod === 'code' && (
-              <div className="space-y-2 rounded-md border border-dashed border-border p-3">
-                <label className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useCustomCode}
-                    onChange={(e) => {
-                      setUseCustomCode(e.target.checked);
-                      if (!e.target.checked) { setCustomCode(''); setShowQrScanner(false); }
-                    }}
-                    className="mt-0.5"
-                  />
-                  <span className="text-sm">
-                    Mahsulot o'z QR/Barkodi bilan kelgan
-                    <span className="block text-[11px] text-muted-foreground leading-tight">
-                      Tayyor kodini ro'yxatdan o'tkazing — avtomatik kod o'rniga shu kod ishlatiladi.
-                    </span>
-                  </span>
-                </label>
-
-                {useCustomCode && (
-                  <>
-                    {showQrScanner ? (
-                      <QrScanner
-                        onScan={(code) => {
-                          setCustomCode(code.trim().toUpperCase());
-                          setShowQrScanner(false);
-                          toast.success(`Kod o'qildi: ${code}`);
-                        }}
-                        onClose={() => setShowQrScanner(false)}
-                      />
-                    ) : (
-                      <div className="flex gap-2">
-                        <Input
-                          value={customCode}
-                          onChange={(e) => setCustomCode(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && customCode.trim()) {
-                              e.preventDefault();
-                              toast.success(`Kod qabul qilindi: ${customCode.trim().toUpperCase()}`);
-                            }
-                          }}
-                          placeholder="QR/Barkodni skanerlang yoki kiriting..."
-                          className="font-mono uppercase"
-                          autoFocus
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowQrScanner(true)}
-                          title="Kamera orqali skanerlash"
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                    <p className="text-[11px] text-muted-foreground">
-                      USB QR/Barkod o'quvchi avtomatik kiritadi. Kamera uchun yondagi tugmani bosing. Kod takrorlanmasligi tekshiriladi.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
-
-            {idMethod === 'nfc' && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Radio className="w-3.5 h-3.5 text-primary" />
-                  NFC ID <span className="text-destructive text-xs font-normal">*majburiy</span>
-                </Label>
-                {!scannerMode && showNfcScanner ? (
-                  <NfcScanner
-                    onScan={(uid) => {
-                      setForm({ ...form, nfc_id: uid });
-                      setShowNfcScanner(false);
-                      toast.success(`NFC ID o'qildi: ${uid}`);
-                    }}
-                    onClose={() => setShowNfcScanner(false)}
-                  />
-                ) : (
-                  <>
+              {useCustomCode && (
+                <>
+                  {showQrScanner ? (
+                    <QrScanner
+                      onScan={(code) => {
+                        setCustomCode(code.trim().toUpperCase());
+                        setShowQrScanner(false);
+                        toast.success(`Kod o'qildi: ${code}`);
+                      }}
+                      onClose={() => setShowQrScanner(false)}
+                    />
+                  ) : (
                     <div className="flex gap-2">
                       <Input
-                        value={form.nfc_id}
-                        onChange={(e) => setForm({ ...form, nfc_id: e.target.value })}
+                        value={customCode}
+                        onChange={(e) => setCustomCode(e.target.value)}
                         onKeyDown={(e) => {
-                          // USB RFID o'quvchi UID + Enter yuboradi.
-                          // Enter formni jo'natmasin — faqat UID qabul qilinganini tasdiqlaymiz.
-                          if (e.key === 'Enter' && form.nfc_id.trim()) {
+                          if (e.key === 'Enter' && customCode.trim()) {
                             e.preventDefault();
-                            toast.success(`NFC ID qabul qilindi: ${form.nfc_id.trim().toUpperCase()}`);
+                            toast.success(`Kod qabul qilindi: ${customCode.trim().toUpperCase()}`);
                           }
                         }}
-                        placeholder="NFC tegni telefon, USB RFID o'quvchi yoki klaviatura orqali kiriting..."
-                        className="font-mono"
+                        placeholder="QR/Barkodni skanerlang yoki kiriting..."
+                        className="font-mono uppercase"
                         autoFocus
                       />
-                      {!scannerMode && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowNfcScanner(true)}
-                          title="Telefon NFC orqali skanerlash"
-                        >
-                          <Radio className="w-4 h-4" />
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowQrScanner(true)}
+                        title="Kamera orqali skanerlash"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      USB RFID o'quvchiga kartani tekkizing — UID avtomatik kiritiladi. Telefon NFC uchun yondagi tugmani bosing.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    USB QR/Barkod o'quvchi avtomatik kiritadi. Kamera uchun yondagi tugmani bosing. Kod takrorlanmasligi tekshiriladi.
+                  </p>
+                </>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Bekor qilish</Button>
               <Button type="submit" disabled={submitting}>
@@ -822,10 +667,6 @@ export default function ProductsPage() {
             <DialogDescription>
               <strong>"{mergeTarget?.name}"</strong> nomli mahsulot allaqachon mavjud (hozir {mergeTarget?.quantity} ta).
               Uning soniga +1 qo'shilsinmi?
-              <br /><br />
-              <span className="text-xs text-muted-foreground">
-                Eslatma: NFC ID birlashtirilmaydi — har bir nakleyka alohida bo'lgani uchun, agar har bir mahsulotning o'z NFC tegi bo'lishini xohlasangiz, "Yangi alohida saqlash" ni tanlang.
-              </span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">

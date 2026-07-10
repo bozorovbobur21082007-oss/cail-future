@@ -5,10 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Printer, QrCode, Barcode as BarcodeIcon, Camera, Radio } from 'lucide-react';
+import { Loader2, Printer, QrCode, Barcode as BarcodeIcon, Camera } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
-import NfcScanner from '@/components/NfcScanner';
 import QrScanner from '@/components/QrScanner';
 import { toast } from 'sonner';
 import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
@@ -24,15 +23,13 @@ interface QuickLabelDialogProps {
   onCreated?: () => void;
 }
 
-type IdMethod = 'auto' | 'manual' | 'nfc';
+type IdMethod = 'auto' | 'manual';
 
 export default function QuickLabelDialog({ open, onOpenChange, approved = false, onCreated }: QuickLabelDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
   const [idMethod, setIdMethod] = useState<IdMethod>('auto');
   const [manualCode, setManualCode] = useState('');
-  const [nfcId, setNfcId] = useState('');
-  const [showNfcScanner, setShowNfcScanner] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [submitting, setSubmitting] = useState(false);
@@ -49,8 +46,6 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setName('');
       setIdMethod('auto');
       setManualCode('');
-      setNfcId('');
-      setShowNfcScanner(false);
       setShowQrScanner(false);
       setFormat('barcode');
       setCreatedProduct(null);
@@ -67,9 +62,6 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
     setSubmitting(true);
     try {
       if (role === 'worker') {
-        // Worker mode goes through the server-authoritative edge function.
-        // RLS forbids anon INSERT on products; only the service role (via
-        // worker-action with a valid signed token) may create products.
         const token = getWorkerToken();
         if (!token) {
           toast.error('Ishchi sessiyasi topilmadi. Qayta kiring.');
@@ -78,7 +70,6 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
         }
         const payload: Record<string, unknown> = { name: trimmedName };
         if (idMethod === 'manual' && manualCode.trim()) payload.product_code = manualCode.trim();
-        if (idMethod === 'nfc' && nfcId.trim()) payload.nfc_id = nfcId.trim();
         const { data: resp, error } = await supabase.functions.invoke('worker-action', {
           body: { token, action: 'create_product', payload },
         });
@@ -98,7 +89,6 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
         return;
       }
 
-      // Admin path: direct DB writes (RLS allows admins).
       const { data: existing } = await supabase
         .from('products')
         .select('id, name')
@@ -119,9 +109,6 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       };
       if (idMethod === 'manual' && manualCode.trim()) {
         payload.product_code = manualCode.trim().toUpperCase();
-      }
-      if (idMethod === 'nfc' && nfcId.trim()) {
-        payload.nfc_id = nfcId.trim().toUpperCase();
       }
 
       const { data, error } = await supabase
@@ -203,13 +190,6 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
                     <span className="text-xs text-muted-foreground">Mahsulotda zavod barkod bo'lsa, skanerlang yoki kiriting</span>
                   </Label>
                 </div>
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-border hover:bg-muted/30 cursor-pointer" onClick={() => setIdMethod('nfc')}>
-                  <RadioGroupItem value="nfc" id="nfc" className="mt-0.5" />
-                  <Label htmlFor="nfc" className="flex-1 cursor-pointer font-normal">
-                    <span className="font-medium block">NFC teg</span>
-                    <span className="text-xs text-muted-foreground">Mahsulotga NFC nakleyka yopishtirilgan bo'lsa</span>
-                  </Label>
-                </div>
               </RadioGroup>
             </div>
 
@@ -232,36 +212,10 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
               </div>
             )}
 
-            {idMethod === 'nfc' && (
-              <div className="space-y-2">
-                <Label>NFC ID</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={nfcId}
-                    onChange={(e) => setNfcId(e.target.value)}
-                    placeholder="USB RFID o'quvchi yoki qo'lda..."
-                    autoFocus={scannerMode}
-                  />
-                  {!scannerMode && (
-                    <Button type="button" variant="outline" size="icon" onClick={() => setShowNfcScanner(true)}>
-                      <Radio className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-
             {showQrScanner && (
               <QrScanner
                 onScan={(v) => { setShowQrScanner(false); setManualCode(v); }}
                 onClose={() => setShowQrScanner(false)}
-              />
-            )}
-            {showNfcScanner && (
-              <NfcScanner
-                onScan={(v) => { setShowNfcScanner(false); setNfcId(v); }}
-                onClose={() => setShowNfcScanner(false)}
-                title="NFC tegni skanerlang"
               />
             )}
           </div>
@@ -322,7 +276,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
             </div>
 
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-              Termal printer (15×40mm) uchun tayyor. Chop etib mahsulotga yopishtiring.
+              Termal printer uchun tayyor. Chop etib mahsulotga yopishtiring.
               {!approved && <span className="block mt-1 text-warning">⚠ Admin tasdig'i kutilmoqda — Kirim/Chiqim hozircha ishlaydi.</span>}
             </div>
           </div>
