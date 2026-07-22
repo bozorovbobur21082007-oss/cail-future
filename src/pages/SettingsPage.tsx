@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle } from 'lucide-react';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle, Trash2 } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +32,48 @@ export default function SettingsPage() {
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
+
+  // Cleanup state
+  const [cleaningOps, setCleaningOps] = useState(false);
+  const [cleaningAll, setCleaningAll] = useState(false);
+
+  const cleanupOperations = async () => {
+    setCleaningOps(true);
+    try {
+      const { error } = await supabase.from('operations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+      toast.success("Barcha operatsiyalar (loglar) o'chirildi");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Xatolik: ${e.message || e}`);
+    } finally {
+      setCleaningOps(false);
+    }
+  };
+
+  const cleanupAllData = async () => {
+    setCleaningAll(true);
+    try {
+      // FK tartib: operations -> product_placements -> products
+      const zeroId = '00000000-0000-0000-0000-000000000000';
+      const opsRes = await supabase.from('operations').delete().neq('id', zeroId);
+      if (opsRes.error) throw new Error(`Operatsiyalar: ${opsRes.error.message}`);
+
+      const plRes = await supabase.from('product_placements').delete().neq('id', zeroId);
+      if (plRes.error) throw new Error(`Joylashuvlar: ${plRes.error.message}`);
+
+      const prRes = await supabase.from('products').delete().neq('id', zeroId);
+      if (prRes.error) throw new Error(`Mahsulotlar: ${prRes.error.message}`);
+
+      toast.success("Barcha mahsulotlar, joylashuvlar va operatsiyalar butunlay o'chirildi");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Xatolik: ${e.message || e}`);
+    } finally {
+      setCleaningAll(false);
+    }
+  };
+
 
   // Developer mode
   const DEV_CODE = '21082007Bb';
@@ -603,8 +645,67 @@ export default function SettingsPage() {
                 )}
               </div>
 
+              <div className="space-y-3 pt-4 border-t border-destructive/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                  <Trash2 className="w-4 h-4" />
+                  Ma'lumotlarni tozalash
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Loglarni yoki barcha mahsulotlarni bazadan butunlay o'chirish. Ushbu amallar qaytarib bo'lmaydi.
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" disabled={cleaningOps} className="gap-2">
+                        {cleaningOps ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Faqat operatsiyalarni (loglarni) o'chirish
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Operatsiyalarni o'chirish</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Barcha kirim/chiqim operatsiyalari va loglar bazadan butunlay o'chiriladi. Mahsulotlar va joylashuvlar saqlanib qoladi. Davom etasizmi?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                        <AlertDialogAction onClick={cleanupOperations} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Ha, o'chirish
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={cleaningAll} className="gap-2">
+                        {cleaningAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Mahsulotlar va operatsiyalarni butunlay tozalash
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Butunlay tozalash</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Barcha <strong>mahsulotlar</strong>, ularning <strong>joylashuvlari</strong> (product_placements) va barcha <strong>operatsiyalar</strong> bazadan butunlay o'chiriladi.
+                          Sektorlar, shkaflar va ishchilar saqlanib qoladi. Bu amalni qaytarib bo'lmaydi.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                        <AlertDialogAction onClick={cleanupAllData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Ha, butunlay o'chirish
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
 
               <div className="space-y-3 pt-4 border-t border-destructive/30">
+
                 <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
                   <Upload className="w-4 h-4" />
                   Bazani qayta tiklash (Restore)
