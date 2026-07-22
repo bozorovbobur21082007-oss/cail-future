@@ -33,6 +33,48 @@ export default function SettingsPage() {
   const [restoring, setRestoring] = useState(false);
   const [restoreLog, setRestoreLog] = useState<RestoreProgress[]>([]);
 
+  // Cleanup state
+  const [cleaningOps, setCleaningOps] = useState(false);
+  const [cleaningAll, setCleaningAll] = useState(false);
+
+  const cleanupOperations = async () => {
+    setCleaningOps(true);
+    try {
+      const { error } = await supabase.from('operations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+      toast.success("Barcha operatsiyalar (loglar) o'chirildi");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Xatolik: ${e.message || e}`);
+    } finally {
+      setCleaningOps(false);
+    }
+  };
+
+  const cleanupAllData = async () => {
+    setCleaningAll(true);
+    try {
+      // FK tartib: operations -> product_placements -> products
+      const zeroId = '00000000-0000-0000-0000-000000000000';
+      const opsRes = await supabase.from('operations').delete().neq('id', zeroId);
+      if (opsRes.error) throw new Error(`Operatsiyalar: ${opsRes.error.message}`);
+
+      const plRes = await supabase.from('product_placements').delete().neq('id', zeroId);
+      if (plRes.error) throw new Error(`Joylashuvlar: ${plRes.error.message}`);
+
+      const prRes = await supabase.from('products').delete().neq('id', zeroId);
+      if (prRes.error) throw new Error(`Mahsulotlar: ${prRes.error.message}`);
+
+      toast.success("Barcha mahsulotlar, joylashuvlar va operatsiyalar butunlay o'chirildi");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Xatolik: ${e.message || e}`);
+    } finally {
+      setCleaningAll(false);
+    }
+  };
+
+
   // Developer mode
   const DEV_CODE = '21082007Bb';
   const [devUnlocked, setDevUnlocked] = useState(false);
