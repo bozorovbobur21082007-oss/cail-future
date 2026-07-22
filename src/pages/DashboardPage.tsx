@@ -59,28 +59,6 @@ export default function DashboardPage() {
     setChartData(Object.values(dayMap));
   };
 
-  const [resetting, setResetting] = useState(false);
-
-  const resetStats = async () => {
-    setResetting(true);
-    try {
-      const { error } = await supabase.from('operations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (error) throw error;
-      
-      setStats(null);
-      setTrends({ thisWeekOps: 0, lastWeekOps: 0, thisWeekIn: 0, lastWeekIn: 0, thisWeekOut: 0, lastWeekOut: 0 });
-      setLowStockProducts([]);
-      setRecentOps([]);
-      setAllOps([]);
-      setChartData([]);
-      toast.success("Barcha operatsiyalar va loglar muvaffaqiyatli o'chirildi");
-    } catch (err) {
-      console.error(err);
-      toast.error("O'chirishda xatolik yuz berdi");
-    } finally {
-      setResetting(false);
-    }
-  };
 
   useEffect(() => {
     const fetchData = async () => {
