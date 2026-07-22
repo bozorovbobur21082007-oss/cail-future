@@ -645,8 +645,67 @@ export default function SettingsPage() {
                 )}
               </div>
 
+              <div className="space-y-3 pt-4 border-t border-destructive/30">
+                <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                  <Trash2 className="w-4 h-4" />
+                  Ma'lumotlarni tozalash
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Loglarni yoki barcha mahsulotlarni bazadan butunlay o'chirish. Ushbu amallar qaytarib bo'lmaydi.
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" disabled={cleaningOps} className="gap-2">
+                        {cleaningOps ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Faqat operatsiyalarni (loglarni) o'chirish
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Operatsiyalarni o'chirish</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Barcha kirim/chiqim operatsiyalari va loglar bazadan butunlay o'chiriladi. Mahsulotlar va joylashuvlar saqlanib qoladi. Davom etasizmi?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                        <AlertDialogAction onClick={cleanupOperations} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Ha, o'chirish
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={cleaningAll} className="gap-2">
+                        {cleaningAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Mahsulotlar va operatsiyalarni butunlay tozalash
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Butunlay tozalash</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Barcha <strong>mahsulotlar</strong>, ularning <strong>joylashuvlari</strong> (product_placements) va barcha <strong>operatsiyalar</strong> bazadan butunlay o'chiriladi.
+                          Sektorlar, shkaflar va ishchilar saqlanib qoladi. Bu amalni qaytarib bo'lmaydi.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                        <AlertDialogAction onClick={cleanupAllData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Ha, butunlay o'chirish
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
 
               <div className="space-y-3 pt-4 border-t border-destructive/30">
+
                 <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
                   <Upload className="w-4 h-4" />
                   Bazani qayta tiklash (Restore)
