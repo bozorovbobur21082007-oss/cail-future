@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle } from 'lucide-react';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle, Trash2 } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { supabase } from '@/integrations/supabase/client';
