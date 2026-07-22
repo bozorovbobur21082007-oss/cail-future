@@ -14,8 +14,9 @@ import {
 import {
   Package, Users, ArrowLeftRight, AlertTriangle,
   ArrowDownCircle, ArrowUpCircle, Boxes, BarChart3, TrendingUp,
-  RotateCcw, Trash2
+  RotateCcw
 } from 'lucide-react';
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Legend
