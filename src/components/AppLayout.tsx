@@ -83,7 +83,7 @@ export default function AppLayout() {
   // Worker mode — minimal layout, only shows the Outlet (operations page)
   if (role === 'worker') {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen app-surface">
         <header className="h-14 border-b border-border bg-card sticky top-0 z-40 flex items-center px-4 gap-3">
           <div className="flex items-center gap-2 shrink-0">
             <BrandLogo variant="mark" className="w-7 h-7 object-contain" />
@@ -116,7 +116,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen app-surface">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-col w-64 border-r border-border bg-card h-screen fixed left-0 top-0 z-30">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
