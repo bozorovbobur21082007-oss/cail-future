@@ -4,8 +4,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle, Trash2 } from 'lucide-react';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle, Trash2, MonitorSmartphone } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useKioskMode } from '@/hooks/useKioskMode';
 import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,6 +37,33 @@ export default function SettingsPage() {
   // Cleanup state
   const [cleaningOps, setCleaningOps] = useState(false);
   const [cleaningAll, setCleaningAll] = useState(false);
+
+  // Kiosk rejimi
+  const { enabled: kioskEnabled, enable: enableKioskMode } = useKioskMode();
+  const [kioskPin, setKioskPin] = useState('');
+  const [kioskPin2, setKioskPin2] = useState('');
+  const [kioskSaving, setKioskSaving] = useState(false);
+
+  const activateKiosk = async () => {
+    if (kioskPin.trim().length < 4) {
+      toast.error("PIN kamida 4 ta belgidan iborat bo'lsin");
+      return;
+    }
+    if (kioskPin !== kioskPin2) {
+      toast.error('PIN kodlar mos kelmadi');
+      return;
+    }
+    setKioskSaving(true);
+    try {
+      await enableKioskMode(kioskPin);
+      setKioskPin('');
+      setKioskPin2('');
+      toast.success('Kiosk rejimi yoqildi');
+    } finally {
+      setKioskSaving(false);
+    }
+  };
+
 
   const cleanupOperations = async () => {
     setCleaningOps(true);
@@ -454,6 +482,73 @@ export default function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <MonitorSmartphone className="w-4 h-4 text-primary" />
+            Kiosk rejimi (planshet uchun)
+          </CardTitle>
+          <CardDescription>
+            Planshet faqat shu ilovada qoladi: to'liq ekran, orqaga tugmasi va brauzer tugmalari bloklanadi.
+            Chiqish faqat PIN kod orqali. Sozlama shu qurilmada saqlanadi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {kioskEnabled ? (
+            <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 space-y-1">
+              <p className="text-sm font-medium text-primary">Kiosk rejimi yoqilgan</p>
+              <p className="text-xs text-muted-foreground">
+                Chiqish uchun ekranning pastki chap burchagidagi qulf tugmasini bosing va PIN kodni kiriting.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="kiosk-pin">Chiqish PIN kodi</Label>
+                  <Input
+                    id="kiosk-pin"
+                    type="password"
+                    inputMode="numeric"
+                    value={kioskPin}
+                    onChange={(e) => setKioskPin(e.target.value)}
+                    placeholder="Kamida 4 belgi"
+                    className="font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="kiosk-pin2">PIN kodni takrorlang</Label>
+                  <Input
+                    id="kiosk-pin2"
+                    type="password"
+                    inputMode="numeric"
+                    value={kioskPin2}
+                    onChange={(e) => setKioskPin2(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') void activateKiosk(); }}
+                    placeholder="Takror kiriting"
+                    className="font-mono"
+                  />
+                </div>
+              </div>
+              <Button onClick={() => void activateKiosk()} disabled={kioskSaving} className="gap-2">
+                {kioskSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <MonitorSmartphone className="w-4 h-4" />}
+                Kiosk rejimini yoqish
+              </Button>
+            </>
+          )}
+
+          <div className="flex gap-2 p-3 rounded-lg bg-muted/40 border border-border">
+            <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              To'liq himoya uchun planshetda ham cheklov qo'ying: Android'da <strong>Ekranni mahkamlash
+              (Screen pinning)</strong> yoqing yoki <strong>Fully Kiosk Browser</strong> ilovasini o'rnatib,
+              undan chiqishga parol qo'ying. Brauzer ilovasi o'zi Android tizim tugmalarini to'liq bloklay olmaydi.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
 
       <Card className="shadow-sm border-primary/20">
         <CardHeader>

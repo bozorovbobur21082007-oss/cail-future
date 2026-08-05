@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import SubscriptionGate from "@/components/SubscriptionGate";
+import KioskGuard from "@/components/KioskGuard";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -64,7 +65,9 @@ const App = () => (
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        <KioskGuard />
         <Toaster position="top-right" richColors />
+
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
