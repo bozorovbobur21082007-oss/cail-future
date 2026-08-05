@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BrandLogo from '@/components/BrandLogo';
 import { Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
