@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
+import KioskPinPrompt from '@/components/KioskPinPrompt';
+import { useKioskMode } from '@/hooks/useKioskMode';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Bosh sahifa' },
@@ -50,12 +52,32 @@ export default function AppLayout() {
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { enabled: kioskEnabled } = useKioskMode();
+  const [pinOpen, setPinOpen] = useState(false);
 
-
-  const handleLogout = async () => {
+  const doLogout = async () => {
     await logout();
     navigate('/login');
   };
+
+  const handleLogout = async () => {
+    if (kioskEnabled) {
+      setPinOpen(true);
+      return;
+    }
+    await doLogout();
+  };
+
+  const pinDialog = (
+    <KioskPinPrompt
+      open={pinOpen}
+      onOpenChange={setPinOpen}
+      title="Chiqish uchun PIN"
+      description="Kiosk rejimi yoqilgan. Chiqish uchun kiosk PIN kodini kiriting."
+      actionLabel="Chiqish"
+      onSuccess={doLogout}
+    />
+  );
 
   // Worker mode — minimal layout, only shows the Outlet (operations page)
   if (role === 'worker') {
@@ -87,6 +109,7 @@ export default function AppLayout() {
         <main className="p-4 sm:p-6 min-h-[calc(100vh-3.5rem)]">
           <Outlet />
         </main>
+        {pinDialog}
       </div>
     );
   }
@@ -169,6 +192,7 @@ export default function AppLayout() {
       <main className="lg:ml-64 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-3.5rem)]">
         <Outlet />
       </main>
+      {pinDialog}
     </div>
   );
 }
