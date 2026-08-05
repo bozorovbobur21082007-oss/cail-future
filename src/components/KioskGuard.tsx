@@ -131,6 +131,28 @@ export default function KioskGuard() {
 
   return (
     <>
+      {locked && !askExit && (
+        <div className="fixed inset-0 z-[80] bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <Lock className="w-10 h-10 text-primary" />
+          <div>
+            <p className="text-lg font-semibold text-foreground">Kiosk rejimi qulflangan</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ilovadan chiqish faqat PIN kod orqali mumkin.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              void document.documentElement.requestFullscreen().catch(() => {});
+            }}
+          >
+            Davom etish
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setAskExit(true)}>
+            PIN kod bilan chiqish
+          </Button>
+        </div>
+      )}
+
       <button
         type="button"
         aria-label="Kiosk rejimidan chiqish"
@@ -141,6 +163,7 @@ export default function KioskGuard() {
       </button>
 
       <Dialog open={askExit} onOpenChange={(o) => { setAskExit(o); if (!o) setPin(''); }}>
+
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
