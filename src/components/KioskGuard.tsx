@@ -22,16 +22,26 @@ export default function KioskGuard() {
   const [askExit, setAskExit] = useState(false);
   const [pin, setPin] = useState('');
   const [checking, setChecking] = useState(false);
+  const [locked, setLocked] = useState(false); // to'liq ekrandan chiqib ketilgan holat
 
   // To'liq ekran + brauzer chiqish yo'llarini bloklash
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setLocked(false);
+      return;
+    }
 
     const requestFs = async () => {
       try {
         if (!document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
         }
+        // Chrome: Esc tugmasi to'liq ekrandan chiqarmasligi uchun
+        const kb = (navigator as any).keyboard;
+        if (kb?.lock) {
+          try { await kb.lock(['Escape', 'F11']); } catch { /* ignore */ }
+        }
+        setLocked(false);
       } catch {
         // brauzer ruxsat bermasa — jim o'tamiz
       }
@@ -44,7 +54,7 @@ export default function KioskGuard() {
       const k = e.key.toLowerCase();
       const blockedCombo =
         (e.ctrlKey || e.metaKey) && ['r', 'w', 't', 'n', 'p', 'u', 'shift'].includes(k);
-      const blockedKey = ['f5', 'f11', 'f12'].includes(k);
+      const blockedKey = ['f5', 'f11', 'f12', 'escape'].includes(k);
       const altNav = e.altKey && (k === 'arrowleft' || k === 'arrowright');
       if (blockedCombo || blockedKey || altNav) {
         e.preventDefault();
@@ -65,15 +75,21 @@ export default function KioskGuard() {
 
     const onFsChange = () => {
       if (!document.fullscreenElement) {
-        // foydalanuvchi chiqib ketsa — keyingi tegishda qayta ochiladi
-        setTimeout(() => { void requestFs(); }, 300);
+        // foydalanuvchi chiqib ketsa — ekranni bloklaymiz va qayta ochishga urinamiz
+        setLocked(true);
+        setTimeout(() => { void requestFs(); }, 200);
+      } else {
+        setLocked(false);
       }
     };
+
+    void requestFs();
 
     document.addEventListener('click', onInteract);
     document.addEventListener('touchend', onInteract);
     document.addEventListener('contextmenu', onContextMenu);
     document.addEventListener('keydown', onKeyDown, true);
+    document.addEventListener('keyup', onKeyDown, true);
     document.addEventListener('fullscreenchange', onFsChange);
     window.addEventListener('beforeunload', onBeforeUnload);
     window.addEventListener('popstate', onPopState);
@@ -83,13 +99,17 @@ export default function KioskGuard() {
       document.removeEventListener('touchend', onInteract);
       document.removeEventListener('contextmenu', onContextMenu);
       document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('keyup', onKeyDown, true);
       document.removeEventListener('fullscreenchange', onFsChange);
       window.removeEventListener('beforeunload', onBeforeUnload);
       window.removeEventListener('popstate', onPopState);
+      const kb = (navigator as any).keyboard;
+      if (kb?.unlock) { try { kb.unlock(); } catch { /* ignore */ } }
     };
   }, [enabled]);
 
   if (!enabled) return null;
+
 
   const tryExit = async () => {
     setChecking(true);
