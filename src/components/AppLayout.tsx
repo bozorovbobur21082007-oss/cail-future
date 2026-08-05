@@ -85,7 +85,7 @@ export default function AppLayout() {
       <div className="min-h-screen bg-background">
         <header className="h-14 border-b border-border bg-card sticky top-0 z-40 flex items-center px-4 gap-3">
           <div className="flex items-center gap-2 shrink-0">
-            <Warehouse className="w-5 h-5 text-primary" strokeWidth={2} />
+            <BrandLogo variant="mark" className="w-7 h-7 object-contain" />
             <span className="text-base font-bold text-foreground hidden sm:inline">Ishchi rejimi</span>
           </div>
           <div className="flex-1 min-w-0 text-center sm:text-left">
