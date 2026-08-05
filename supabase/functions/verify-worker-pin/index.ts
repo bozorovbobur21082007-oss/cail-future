@@ -49,8 +49,8 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from('app_settings')
       .select('value')
-      .eq('key', 'worker_pin')
-      .single();
+      .eq('key', 'worker_pin_hash')
+      .maybeSingle();
 
     if (error || !data) {
       return new Response(JSON.stringify({ valid: false, error: 'PIN not configured' }), {
@@ -59,7 +59,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const valid = data.value === pin;
+    const digest = new Uint8Array(
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin)),
+    );
+    const pinHash = Array.from(digest).map((b) => b.toString(16).padStart(2, '0')).join('');
+    const valid = data.value === pinHash;
     if (!valid) {
       return new Response(JSON.stringify({ valid: false }), {
         status: 200,
