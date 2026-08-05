@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
 import SubscriptionBadge from '@/components/SubscriptionBadge';
+import KioskPinPrompt from '@/components/KioskPinPrompt';
+import { useKioskMode } from '@/hooks/useKioskMode';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Bosh sahifa' },
