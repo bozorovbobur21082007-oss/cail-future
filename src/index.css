@@ -84,7 +84,7 @@
     background-image: url('/__l5e/assets-v1/51ea04c7-a804-422a-9e08-597442ad62c0/cotton-bg.jpg');
     background-size: cover;
     background-position: center;
-    opacity: 0.55;
+    opacity: 1;
   }
 
   .app-surface::after {
@@ -94,7 +94,7 @@
     z-index: -1;
     background:
       radial-gradient(900px 520px at 100% -5%, hsl(var(--primary) / 0.14), transparent 60%),
-      linear-gradient(180deg, hsl(0 0% 100% / 0.72), hsl(0 0% 100% / 0.82));
+      linear-gradient(180deg, hsl(40 30% 99% / 0.55), hsl(40 30% 99% / 0.7));
   }
 }
 
