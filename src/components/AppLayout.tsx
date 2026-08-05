@@ -50,12 +50,32 @@ export default function AppLayout() {
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { enabled: kioskEnabled } = useKioskMode();
+  const [pinOpen, setPinOpen] = useState(false);
 
-
-  const handleLogout = async () => {
+  const doLogout = async () => {
     await logout();
     navigate('/login');
   };
+
+  const handleLogout = async () => {
+    if (kioskEnabled) {
+      setPinOpen(true);
+      return;
+    }
+    await doLogout();
+  };
+
+  const pinDialog = (
+    <KioskPinPrompt
+      open={pinOpen}
+      onOpenChange={setPinOpen}
+      title="Chiqish uchun PIN"
+      description="Kiosk rejimi yoqilgan. Chiqish uchun kiosk PIN kodini kiriting."
+      actionLabel="Chiqish"
+      onSuccess={doLogout}
+    />
+  );
 
   // Worker mode — minimal layout, only shows the Outlet (operations page)
   if (role === 'worker') {
