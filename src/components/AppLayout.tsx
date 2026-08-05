@@ -3,8 +3,9 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Package, Users, ArrowLeftRight,
-  ClipboardList, LogOut, Menu, Warehouse, MapPin, Settings, Move
+  ClipboardList, LogOut, Menu, MapPin, Settings, Move
 } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
