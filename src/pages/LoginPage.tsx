@@ -55,12 +55,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-border shadow-lg">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 bg-background bg-cover bg-center relative"
+      style={{ backgroundImage: `url(${bgTextile})` }}
+    >
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" />
+      <Card className="w-full max-w-md border-border shadow-2xl relative z-10 bg-card/95">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
-            <Warehouse className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <BrandLogo className="mx-auto h-14 w-auto object-contain mb-4" />
           <CardTitle className="text-2xl font-bold tracking-tight">
             Aqlli Omborxona
           </CardTitle>
