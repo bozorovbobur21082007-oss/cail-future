@@ -21,7 +21,7 @@ export function getKioskPinHash(): string | null {
 
 export async function verifyKioskPin(pin: string): Promise<boolean> {
   const stored = getKioskPinHash();
-  if (!stored) return true;
+  if (!stored) return false;
   return (await hashPin(pin)) === stored;
 }
 
