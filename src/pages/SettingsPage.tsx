@@ -4,8 +4,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle, Trash2 } from 'lucide-react';
+import { ScanLine, Camera, Keyboard, Info, Volume2, Play, KeyRound, Loader2, Eye, EyeOff, Database, Download, Upload, Mail, AlertTriangle, Trash2, MonitorSmartphone } from 'lucide-react';
 import { useScannerMode } from '@/hooks/useScannerMode';
+import { useKioskMode } from '@/hooks/useKioskMode';
 import { useSoundEnabled, useSoundFeedback } from '@/hooks/useSoundFeedback';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,6 +37,33 @@ export default function SettingsPage() {
   // Cleanup state
   const [cleaningOps, setCleaningOps] = useState(false);
   const [cleaningAll, setCleaningAll] = useState(false);
+
+  // Kiosk rejimi
+  const { enabled: kioskEnabled, enable: enableKioskMode } = useKioskMode();
+  const [kioskPin, setKioskPin] = useState('');
+  const [kioskPin2, setKioskPin2] = useState('');
+  const [kioskSaving, setKioskSaving] = useState(false);
+
+  const activateKiosk = async () => {
+    if (kioskPin.trim().length < 4) {
+      toast.error("PIN kamida 4 ta belgidan iborat bo'lsin");
+      return;
+    }
+    if (kioskPin !== kioskPin2) {
+      toast.error('PIN kodlar mos kelmadi');
+      return;
+    }
+    setKioskSaving(true);
+    try {
+      await enableKioskMode(kioskPin);
+      setKioskPin('');
+      setKioskPin2('');
+      toast.success('Kiosk rejimi yoqildi');
+    } finally {
+      setKioskSaving(false);
+    }
+  };
+
 
   const cleanupOperations = async () => {
     setCleaningOps(true);
