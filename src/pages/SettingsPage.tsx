@@ -338,25 +338,16 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Joriy PIN</p>
-                <p className="text-2xl font-mono font-bold tracking-widest">
-                  {pinLoading ? '...' : showPin ? workerPin : '•'.repeat(workerPin.length || 4)}
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowPin(!showPin)}
-                title={showPin ? 'Yashirish' : "Ko'rsatish"}
-              >
-                {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
+          <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-1">
+            <p className="text-xs text-muted-foreground">Joriy PIN</p>
+            <p className="text-2xl font-mono font-bold tracking-widest">
+              {pinLoading ? '...' : workerPin ? '••••' : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              PIN xavfsizlik uchun shifrlangan holda saqlanadi va ko'rsatilmaydi. Unutilgan bo'lsa, yangisini o'rnating.
+            </p>
           </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="new-pin">Yangi PIN kod</Label>
