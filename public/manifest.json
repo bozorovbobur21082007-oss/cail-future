@@ -1,13 +1,13 @@
 {
-  "name": "Aqilli Omborxona",
-  "short_name": "Omborxona",
+  "name": "BAHT TEXTILE — Aqlli Omborxona",
+  "short_name": "BAHT Ombor",
   "description": "Smart warehouse management — products, workers, operations.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#2563EB",
+  "theme_color": "#016647",
   "icons": [
     {
       "src": "/icon-192.png",

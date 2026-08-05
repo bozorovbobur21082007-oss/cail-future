@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import BrandLogo from '@/components/BrandLogo';
 import { Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -139,6 +140,7 @@ export default function KioskGuard() {
     <>
       {locked && !askExit && (
         <div className="fixed inset-0 z-[80] bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <BrandLogo className="h-12 w-auto object-contain mb-2" />
           <Lock className="w-10 h-10 text-primary" />
           <div>
             <p className="text-lg font-semibold text-foreground">Kiosk rejimi qulflangan</p>

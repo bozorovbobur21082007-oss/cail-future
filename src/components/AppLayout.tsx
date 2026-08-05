@@ -3,8 +3,9 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Package, Users, ArrowLeftRight,
-  ClipboardList, LogOut, Menu, Warehouse, MapPin, Settings, Move
+  ClipboardList, LogOut, Menu, MapPin, Settings, Move
 } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import InstallPwaButton from '@/components/InstallPwaButton';
@@ -85,7 +86,7 @@ export default function AppLayout() {
       <div className="min-h-screen bg-background">
         <header className="h-14 border-b border-border bg-card sticky top-0 z-40 flex items-center px-4 gap-3">
           <div className="flex items-center gap-2 shrink-0">
-            <Warehouse className="w-5 h-5 text-primary" strokeWidth={2} />
+            <BrandLogo variant="mark" className="w-7 h-7 object-contain" />
             <span className="text-base font-bold text-foreground hidden sm:inline">Ishchi rejimi</span>
           </div>
           <div className="flex-1 min-w-0 text-center sm:text-left">
@@ -119,10 +120,13 @@ export default function AppLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-col w-64 border-r border-border bg-card h-screen fixed left-0 top-0 z-30">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
-          <Warehouse className="w-6 h-6 text-primary" strokeWidth={2} />
-          <h1 className="text-lg font-bold tracking-tight text-foreground">
-            Omborxona
-          </h1>
+          <BrandLogo variant="mark" className="w-8 h-8 object-contain shrink-0" />
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold tracking-tight text-primary leading-tight">
+              BAHT TEXTILE
+            </h1>
+            <p className="text-[11px] text-muted-foreground leading-tight">Aqlli Omborxona</p>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
@@ -164,8 +168,11 @@ export default function AppLayout() {
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
               <SheetTitle className="sr-only">Menyu</SheetTitle>
               <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border shrink-0">
-                <Warehouse className="w-6 h-6 text-primary" />
-                <span className="text-lg font-bold text-foreground">Omborxona</span>
+                <BrandLogo variant="mark" className="w-8 h-8 object-contain shrink-0" />
+                <div className="min-w-0">
+                  <span className="block text-sm font-bold text-primary leading-tight">BAHT TEXTILE</span>
+                  <span className="block text-[11px] text-muted-foreground leading-tight">Aqlli Omborxona</span>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto">
                 <SidebarNav onNavigate={() => setMobileOpen(false)} />
