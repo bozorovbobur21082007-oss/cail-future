@@ -120,10 +120,13 @@ export default function AppLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-col w-64 border-r border-border bg-card h-screen fixed left-0 top-0 z-30">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
-          <Warehouse className="w-6 h-6 text-primary" strokeWidth={2} />
-          <h1 className="text-lg font-bold tracking-tight text-foreground">
-            Omborxona
-          </h1>
+          <BrandLogo variant="mark" className="w-8 h-8 object-contain shrink-0" />
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold tracking-tight text-primary leading-tight">
+              BAHT TEXTILE
+            </h1>
+            <p className="text-[11px] text-muted-foreground leading-tight">Aqlli Omborxona</p>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <SidebarNav />
