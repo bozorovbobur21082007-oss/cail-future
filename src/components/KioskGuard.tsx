@@ -164,7 +164,7 @@ export default function KioskGuard() {
 
       <Dialog open={askExit} onOpenChange={(o) => { setAskExit(o); if (!o) setPin(''); }}>
 
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm z-[90]" onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Unlock className="w-5 h-5 text-primary" />
