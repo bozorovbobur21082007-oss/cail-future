@@ -67,10 +67,16 @@ export default function KioskGuard() {
       e.returnValue = '';
     };
 
-    // Orqaga tugmasi tuzog'i
-    history.pushState(null, '', window.location.href);
+    // Android hardware Back va brauzer Back tugmasi tuzog'i.
+    // Joriy manzil ustiga qo'shimcha tarix yozuvi qo'yiladi; Back bosilganda
+    // foydalanuvchi sahifadan chiqmaydi va faqat PIN oynasi ochiladi.
+    const kioskHistoryState = { kioskGuard: true };
+    history.replaceState(kioskHistoryState, '', window.location.href);
+    history.pushState(kioskHistoryState, '', window.location.href);
     const onPopState = () => {
-      history.pushState(null, '', window.location.href);
+      history.pushState(kioskHistoryState, '', window.location.href);
+      setAskExit(true);
+      setPin('');
     };
 
     const onFsChange = () => {
