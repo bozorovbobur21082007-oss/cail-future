@@ -168,8 +168,11 @@ export default function AppLayout() {
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
               <SheetTitle className="sr-only">Menyu</SheetTitle>
               <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border shrink-0">
-                <Warehouse className="w-6 h-6 text-primary" />
-                <span className="text-lg font-bold text-foreground">Omborxona</span>
+                <BrandLogo variant="mark" className="w-8 h-8 object-contain shrink-0" />
+                <div className="min-w-0">
+                  <span className="block text-sm font-bold text-primary leading-tight">BAHT TEXTILE</span>
+                  <span className="block text-[11px] text-muted-foreground leading-tight">Aqlli Omborxona</span>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto">
                 <SidebarNav onNavigate={() => setMobileOpen(false)} />
