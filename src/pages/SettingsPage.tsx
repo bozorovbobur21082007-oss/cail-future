@@ -177,9 +177,9 @@ export default function SettingsPage() {
       const { data } = await supabase
         .from('app_settings')
         .select('key,value')
-        .in('key', ['worker_pin', 'backup_enabled', 'backup_email', 'subscription_expires_at', 'subscription_enabled']);
+        .in('key', ['worker_pin_hash', 'backup_enabled', 'backup_email', 'subscription_expires_at', 'subscription_enabled']);
       const map = new Map((data || []).map((r: any) => [r.key, r.value]));
-      if (map.get('worker_pin')) setWorkerPin(map.get('worker_pin') as string);
+      if (map.get('worker_pin_hash')) setWorkerPin('••••');
       setBackupEnabled(map.get('backup_enabled') === 'true');
       setBackupEmail((map.get('backup_email') as string) || '');
       setBackupEmailInput((map.get('backup_email') as string) || '');
@@ -193,6 +193,11 @@ export default function SettingsPage() {
     })();
   }, []);
 
+  const sha256Hex = async (text: string) => {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const savePin = async () => {
     const trimmed = newPin.trim();
     if (trimmed.length < 3 || trimmed.length > 12) {
@@ -200,16 +205,17 @@ export default function SettingsPage() {
       return;
     }
     setPinSaving(true);
+    const hash = await sha256Hex(trimmed);
     const { error } = await supabase
       .from('app_settings')
-      .update({ value: trimmed })
-      .eq('key', 'worker_pin');
+      .update({ value: hash })
+      .eq('key', 'worker_pin_hash');
     setPinSaving(false);
     if (error) {
       toast.error('Saqlashda xatolik: ' + error.message);
       return;
     }
-    setWorkerPin(trimmed);
+    setWorkerPin('••••');
     setNewPin('');
     toast.success('Ishchi PIN kodi yangilandi');
   };
