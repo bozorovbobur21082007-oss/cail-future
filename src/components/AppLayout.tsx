@@ -192,6 +192,7 @@ export default function AppLayout() {
       <main className="lg:ml-64 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-3.5rem)]">
         <Outlet />
       </main>
+      {pinDialog}
     </div>
   );
 }
