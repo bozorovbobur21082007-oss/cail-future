@@ -98,7 +98,7 @@ export default function LoginPage() {
                 className="w-full h-14 justify-start gap-3 text-base"
                 onClick={() => { setMode('admin'); setError(''); }}
               >
-                <Warehouse className="w-5 h-5" />
+                <ShieldCheck className="w-5 h-5" />
                 <div className="text-left">
                   <div className="font-semibold">Admin sifatida kirish</div>
                   <div className="text-xs text-muted-foreground font-normal">Email va parol orqali</div>
