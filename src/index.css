@@ -80,21 +80,20 @@
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 0;
+    z-index: -2;
     background-image:
-      url('/__l5e/assets-v1/51ea04c7-a804-422a-9e08-597442ad62c0/cotton-bg.jpg'),
-      url('/__l5e/assets-v1/f9f2bfdd-ef5a-4136-a411-9d180197eb76/fabric-tile.jpg');
+      url('./assets/cotton-bg.jpg'),
+      url('./assets/fabric-tile.jpg');
     background-repeat: no-repeat, repeat;
     background-size: 46vw auto, 340px 340px;
     background-position: right -6vw bottom -4vw, top left;
-    opacity: 1;
   }
 
   .app-surface::after {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 0;
+    z-index: -1;
     background:
       radial-gradient(900px 520px at 100% -5%, hsl(var(--primary) / 0.14), transparent 60%),
       linear-gradient(180deg, hsl(40 30% 99% / 0.5), hsl(40 30% 99% / 0.62));
