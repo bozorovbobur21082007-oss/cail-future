@@ -19,7 +19,6 @@ export default function SettingsPage() {
   const { test } = useSoundFeedback();
   const [workerPin, setWorkerPin] = useState('');
   const [newPin, setNewPin] = useState('');
-  const [showPin, setShowPin] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
   const [pinSaving, setPinSaving] = useState(false);
 
