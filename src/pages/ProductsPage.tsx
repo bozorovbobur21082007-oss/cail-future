@@ -87,6 +87,17 @@ export default function ProductsPage() {
     custom: customConfig,
   } as const;
 
+  const loadThumbs = useCallback(async (list: Product[]) => {
+    const paths = list.map(p => p.image_url).filter((v): v is string => !!v);
+    if (paths.length === 0) { setThumbs({}); return; }
+    const { data } = await supabase.storage.from('product-images').createSignedUrls(paths, 3600);
+    const map: Record<string, string> = {};
+    (data || []).forEach(item => {
+      if (item.path && item.signedUrl) map[item.path] = item.signedUrl;
+    });
+    setThumbs(map);
+  }, []);
+
   const fetchProducts = useCallback(async () => {
     const [prodRes, secRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
@@ -95,14 +106,31 @@ export default function ProductsPage() {
     if (prodRes.error) {
       toast.error('Mahsulotlarni yuklashda xatolik');
     } else {
-      setProducts(prodRes.data || []);
+      const list = (prodRes.data || []) as Product[];
+      setProducts(list);
+      loadThumbs(list);
     }
     setSectors(secRes.data || []);
     setLoading(false);
-  }, []);
+  }, [loadThumbs]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
+  const pickImage = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Faqat rasm fayli tanlang'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Rasm hajmi 5MB dan oshmasin"); return; }
+    setImageFile(file);
+    setRemoveImage(false);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -110,6 +138,9 @@ export default function ProductsPage() {
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(false);
     setDialogOpen(true);
   };
 
@@ -119,6 +150,9 @@ export default function ProductsPage() {
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
+    setImageFile(null);
+    setImagePreview(p.image_url ? thumbs[p.image_url] || null : null);
+    setRemoveImage(false);
     setDialogOpen(true);
   };
 
