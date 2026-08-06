@@ -19,6 +19,7 @@ import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { escapeHtml, printLabel } from '@/utils/printLabel';
+import { compressImage } from '@/utils/compressImage';
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -242,13 +243,13 @@ export default function ProductsPage() {
       payload.product_code = customCodeVal;
     }
 
-    // Rasm yuklash (ixtiyoriy)
+    // Rasm yuklash (ixtiyoriy) — avtomatik siqiladi
     if (imageFile) {
-      const ext = (imageFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const { blob, ext, contentType } = await compressImage(imageFile);
       const path = `${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('product-images')
-        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
+        .upload(path, blob, { contentType, upsert: false });
       if (upErr) {
         toast.error('Rasmni yuklashda xatolik: ' + upErr.message);
         setSubmitting(false);
