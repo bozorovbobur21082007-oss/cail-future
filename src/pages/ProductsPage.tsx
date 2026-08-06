@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, QrCode, Search, Loader2, Download, Printer, Barcode as BarcodeIcon, CheckCircle2, Clock, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -31,6 +31,7 @@ interface Product {
   created_at: string;
   sector_id: string | null;
   approved: boolean;
+  image_url: string | null;
 }
 
 export default function ProductsPage() {
@@ -60,6 +61,11 @@ export default function ProductsPage() {
   const [customW, setCustomW] = useState(50);
   const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Maxsus o'lcham: kenglik balandlikdan ≥1.5× katta bo'lsa yonma-yon, aks holda vertical.
   const customConfig = (() => {
@@ -81,6 +87,17 @@ export default function ProductsPage() {
     custom: customConfig,
   } as const;
 
+  const loadThumbs = useCallback(async (list: Product[]) => {
+    const paths = list.map(p => p.image_url).filter((v): v is string => !!v);
+    if (paths.length === 0) { setThumbs({}); return; }
+    const { data } = await supabase.storage.from('product-images').createSignedUrls(paths, 3600);
+    const map: Record<string, string> = {};
+    (data || []).forEach(item => {
+      if (item.path && item.signedUrl) map[item.path] = item.signedUrl;
+    });
+    setThumbs(map);
+  }, []);
+
   const fetchProducts = useCallback(async () => {
     const [prodRes, secRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
@@ -89,14 +106,31 @@ export default function ProductsPage() {
     if (prodRes.error) {
       toast.error('Mahsulotlarni yuklashda xatolik');
     } else {
-      setProducts(prodRes.data || []);
+      const list = (prodRes.data || []) as Product[];
+      setProducts(list);
+      loadThumbs(list);
     }
     setSectors(secRes.data || []);
     setLoading(false);
-  }, []);
+  }, [loadThumbs]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
+  const pickImage = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Faqat rasm fayli tanlang'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Rasm hajmi 5MB dan oshmasin"); return; }
+    setImageFile(file);
+    setRemoveImage(false);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -104,6 +138,9 @@ export default function ProductsPage() {
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(false);
     setDialogOpen(true);
   };
 
@@ -113,6 +150,9 @@ export default function ProductsPage() {
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
+    setImageFile(null);
+    setImagePreview(p.image_url ? thumbs[p.image_url] || null : null);
+    setRemoveImage(false);
     setDialogOpen(true);
   };
 
@@ -202,6 +242,27 @@ export default function ProductsPage() {
       payload.product_code = customCodeVal;
     }
 
+    // Rasm yuklash (ixtiyoriy)
+    if (imageFile) {
+      const ext = (imageFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('product-images')
+        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
+      if (upErr) {
+        toast.error('Rasmni yuklashda xatolik: ' + upErr.message);
+        setSubmitting(false);
+        return;
+      }
+      payload.image_url = path;
+      if (editing?.image_url) {
+        await supabase.storage.from('product-images').remove([editing.image_url]);
+      }
+    } else if (removeImage && editing?.image_url) {
+      await supabase.storage.from('product-images').remove([editing.image_url]);
+      payload.image_url = null;
+    }
+
     // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
     if (payload.sector_id) {
       const delta = editing
@@ -269,6 +330,9 @@ export default function ProductsPage() {
     try {
       const { error } = await supabase.from('products').delete().eq('id', deleting.id);
       if (error) throw error;
+      if (deleting.image_url) {
+        await supabase.storage.from('product-images').remove([deleting.image_url]);
+      }
       toast.success("Mahsulot o'chirildi");
       setDeleteDialogOpen(false);
       fetchProducts();
@@ -415,7 +479,7 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
                <TableRow className="bg-muted/50">
-                 <TableHead className="text-xs uppercase text-muted-foreground w-10"></TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground w-14">Rasm</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
@@ -445,13 +509,23 @@ export default function ProductsPage() {
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className="py-2">
-                        <span
-                          title="QR / Barkod"
-                          className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                        </span>
+                        {p.image_url && thumbs[p.image_url] ? (
+                          <img
+                            src={thumbs[p.image_url]}
+                            alt={`${p.name} rasmi`}
+                            loading="lazy"
+                            className="w-9 h-9 rounded-md object-cover border border-border"
+                          />
+                        ) : (
+                          <span
+                            title="Rasm yo'q"
+                            className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-muted text-muted-foreground"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                          </span>
+                        )}
                       </TableCell>
+
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
                        <TableCell className="font-mono text-xs text-muted-foreground">
                          <button
@@ -573,10 +647,47 @@ export default function ProductsPage() {
               </div>
             )}
             <div className="space-y-2">
+              <Label>Mahsulot rasmi (ixtiyoriy)</Label>
+              <div className="flex items-center gap-3">
+                {imagePreview ? (
+                  <div className="relative">
+                    <img src={imagePreview} alt="Mahsulot rasmi" className="w-20 h-20 rounded-md object-cover border border-border" />
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      title="Rasmni olib tashlash"
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-md border border-dashed border-border flex items-center justify-center text-muted-foreground">
+                    <ImageIcon className="w-6 h-6" />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => pickImage(e.target.files?.[0] || null)}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="w-4 h-4" />
+                    {imagePreview ? "Rasmni almashtirish" : "Rasm tanlash"}
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground">JPG/PNG, 5MB gacha</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
                <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} min={1} />
                <p className="text-[11px] text-muted-foreground">Soni shu chegaradan past tushsa, "Kam" deb belgilanadi.</p>
             </div>
+
             <div className="space-y-2">
               <Label>Sektor</Label>
               <Select value={form.sector_id} onValueChange={(v) => setForm({ ...form, sector_id: v === 'none' ? '' : v })}>
