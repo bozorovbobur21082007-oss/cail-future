@@ -479,7 +479,7 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
                <TableRow className="bg-muted/50">
-                 <TableHead className="text-xs uppercase text-muted-foreground w-10"></TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground w-14">Rasm</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Nomi</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">ID</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
