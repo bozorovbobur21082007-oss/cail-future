@@ -506,13 +506,23 @@ export default function ProductsPage() {
                   return (
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className="py-2">
-                        <span
-                          title="QR / Barkod"
-                          className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-muted text-muted-foreground"
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                        </span>
+                        {p.image_url && thumbs[p.image_url] ? (
+                          <img
+                            src={thumbs[p.image_url]}
+                            alt={`${p.name} rasmi`}
+                            loading="lazy"
+                            className="w-9 h-9 rounded-md object-cover border border-border"
+                          />
+                        ) : (
+                          <span
+                            title="Rasm yo'q"
+                            className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-muted text-muted-foreground"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                          </span>
+                        )}
                       </TableCell>
+
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
                        <TableCell className="font-mono text-xs text-muted-foreground">
                          <button
