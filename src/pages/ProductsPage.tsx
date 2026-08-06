@@ -644,10 +644,47 @@ export default function ProductsPage() {
               </div>
             )}
             <div className="space-y-2">
+              <Label>Mahsulot rasmi (ixtiyoriy)</Label>
+              <div className="flex items-center gap-3">
+                {imagePreview ? (
+                  <div className="relative">
+                    <img src={imagePreview} alt="Mahsulot rasmi" className="w-20 h-20 rounded-md object-cover border border-border" />
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      title="Rasmni olib tashlash"
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-md border border-dashed border-border flex items-center justify-center text-muted-foreground">
+                    <ImageIcon className="w-6 h-6" />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => pickImage(e.target.files?.[0] || null)}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="w-4 h-4" />
+                    {imagePreview ? "Rasmni almashtirish" : "Rasm tanlash"}
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground">JPG/PNG, 5MB gacha</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label>Kam qolish chegarasi</Label>
                <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} min={1} />
                <p className="text-[11px] text-muted-foreground">Soni shu chegaradan past tushsa, "Kam" deb belgilanadi.</p>
             </div>
+
             <div className="space-y-2">
               <Label>Sektor</Label>
               <Select value={form.sector_id} onValueChange={(v) => setForm({ ...form, sector_id: v === 'none' ? '' : v })}>
