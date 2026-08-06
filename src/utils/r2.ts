@@ -21,6 +21,15 @@ export function isR2Url(v: string | null | undefined): boolean {
   return !!v && /^https?:\/\//.test(v);
 }
 
+/** R2 rasmni ko'rsatish uchun ochiq proxy havola (bucket public bo'lmasa ham ishlaydi). */
+export function r2DisplayUrl(url: string): string {
+  const key = r2KeyFromUrl(url);
+  if (!key) return url;
+  const base = import.meta.env.VITE_SUPABASE_URL;
+  return `${base}/functions/v1/r2-image?key=${encodeURIComponent(key)}`;
+}
+
+
 function r2KeyFromUrl(url: string): string | null {
   try {
     return new URL(url).pathname.replace(/^\/+/, '');

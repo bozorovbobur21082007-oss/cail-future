@@ -20,7 +20,7 @@ import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { escapeHtml, printLabel } from '@/utils/printLabel';
 import { compressImage } from '@/utils/compressImage';
-import { uploadToR2, deleteFromR2, isR2Url } from '@/utils/r2';
+import { uploadToR2, deleteFromR2, isR2Url, r2DisplayUrl } from '@/utils/r2';
 
 
 interface Sector { id: string; name: string; code: string; }
@@ -94,7 +94,7 @@ export default function ProductsPage() {
     const all = list.map(p => p.image_url).filter((v): v is string => !!v);
     const map: Record<string, string> = {};
     // R2 (to'liq URL) — to'g'ridan-to'g'ri ishlatiladi
-    all.filter(isR2Url).forEach(u => { map[u] = u; });
+    all.filter(isR2Url).forEach(u => { map[u] = r2DisplayUrl(u); });
     // Eski Lovable Storage yo'llari — signed URL
     const legacy = all.filter(u => !isR2Url(u));
     if (legacy.length > 0) {
