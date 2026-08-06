@@ -61,6 +61,11 @@ export default function ProductsPage() {
   const [customW, setCustomW] = useState(50);
   const [customH, setCustomH] = useState(30);
   const qrRef = useRef<HTMLCanvasElement>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Maxsus o'lcham: kenglik balandlikdan ≥1.5× katta bo'lsa yonma-yon, aks holda vertical.
   const customConfig = (() => {
