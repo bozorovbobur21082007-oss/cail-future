@@ -20,6 +20,8 @@ import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { escapeHtml, printLabel } from '@/utils/printLabel';
 import { compressImage } from '@/utils/compressImage';
+import { uploadToR2, deleteFromR2, isR2Url } from '@/utils/r2';
+
 
 interface Sector { id: string; name: string; code: string; }
 
