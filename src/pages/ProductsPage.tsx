@@ -89,15 +89,21 @@ export default function ProductsPage() {
   } as const;
 
   const loadThumbs = useCallback(async (list: Product[]) => {
-    const paths = list.map(p => p.image_url).filter((v): v is string => !!v);
-    if (paths.length === 0) { setThumbs({}); return; }
-    const { data } = await supabase.storage.from('product-images').createSignedUrls(paths, 3600);
+    const all = list.map(p => p.image_url).filter((v): v is string => !!v);
     const map: Record<string, string> = {};
-    (data || []).forEach(item => {
-      if (item.path && item.signedUrl) map[item.path] = item.signedUrl;
-    });
+    // R2 (to'liq URL) — to'g'ridan-to'g'ri ishlatiladi
+    all.filter(isR2Url).forEach(u => { map[u] = u; });
+    // Eski Lovable Storage yo'llari — signed URL
+    const legacy = all.filter(u => !isR2Url(u));
+    if (legacy.length > 0) {
+      const { data } = await supabase.storage.from('product-images').createSignedUrls(legacy, 3600);
+      (data || []).forEach(item => {
+        if (item.path && item.signedUrl) map[item.path] = item.signedUrl;
+      });
+    }
     setThumbs(map);
   }, []);
+
 
   const fetchProducts = useCallback(async () => {
     const [prodRes, secRes] = await Promise.all([
