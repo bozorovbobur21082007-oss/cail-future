@@ -330,6 +330,9 @@ export default function ProductsPage() {
     try {
       const { error } = await supabase.from('products').delete().eq('id', deleting.id);
       if (error) throw error;
+      if (deleting.image_url) {
+        await supabase.storage.from('product-images').remove([deleting.image_url]);
+      }
       toast.success("Mahsulot o'chirildi");
       setDeleteDialogOpen(false);
       fetchProducts();
