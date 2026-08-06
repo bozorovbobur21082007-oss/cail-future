@@ -251,26 +251,27 @@ export default function ProductsPage() {
       payload.product_code = customCodeVal;
     }
 
-    // Rasm yuklash (ixtiyoriy) — avtomatik siqiladi
+    // Rasm yuklash (ixtiyoriy) — siqiladi va Cloudflare R2 ga yuklanadi
+    const removeOldImage = async (old: string) => {
+      if (isR2Url(old)) await deleteFromR2(old);
+      else await supabase.storage.from('product-images').remove([old]);
+    };
+
     if (imageFile) {
       const { blob, ext, contentType } = await compressImage(imageFile);
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('product-images')
-        .upload(path, blob, { contentType, upsert: false });
-      if (upErr) {
-        toast.error('Rasmni yuklashda xatolik: ' + upErr.message);
+      try {
+        payload.image_url = await uploadToR2(blob, ext, contentType);
+      } catch (err: any) {
+        toast.error('Rasmni yuklashda xatolik: ' + (err?.message || ''));
         setSubmitting(false);
         return;
       }
-      payload.image_url = path;
-      if (editing?.image_url) {
-        await supabase.storage.from('product-images').remove([editing.image_url]);
-      }
+      if (editing?.image_url) await removeOldImage(editing.image_url);
     } else if (removeImage && editing?.image_url) {
-      await supabase.storage.from('product-images').remove([editing.image_url]);
+      await removeOldImage(editing.image_url);
       payload.image_url = null;
     }
+
 
     // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
     if (payload.sector_id) {
