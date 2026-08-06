@@ -19,6 +19,7 @@ import { useScannerMode } from '@/hooks/useScannerMode';
 import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { escapeHtml, printLabel } from '@/utils/printLabel';
+import { compressImage } from '@/utils/compressImage';
 
 interface Sector { id: string; name: string; code: string; }
 
