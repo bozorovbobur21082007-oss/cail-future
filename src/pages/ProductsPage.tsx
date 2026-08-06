@@ -242,6 +242,27 @@ export default function ProductsPage() {
       payload.product_code = customCodeVal;
     }
 
+    // Rasm yuklash (ixtiyoriy)
+    if (imageFile) {
+      const ext = (imageFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('product-images')
+        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
+      if (upErr) {
+        toast.error('Rasmni yuklashda xatolik: ' + upErr.message);
+        setSubmitting(false);
+        return;
+      }
+      payload.image_url = path;
+      if (editing?.image_url) {
+        await supabase.storage.from('product-images').remove([editing.image_url]);
+      }
+    } else if (removeImage && editing?.image_url) {
+      await supabase.storage.from('product-images').remove([editing.image_url]);
+      payload.image_url = null;
+    }
+
     // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
     if (payload.sector_id) {
       const delta = editing
