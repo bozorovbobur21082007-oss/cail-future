@@ -20,6 +20,8 @@ import BulkPrintA4Dialog from '@/components/BulkPrintA4Dialog';
 import { checkSectorCapacity } from '@/utils/sectorCapacity';
 import { escapeHtml, printLabel } from '@/utils/printLabel';
 import { compressImage } from '@/utils/compressImage';
+import { uploadToR2, deleteFromR2, isR2Url } from '@/utils/r2';
+
 
 interface Sector { id: string; name: string; code: string; }
 
@@ -89,15 +91,21 @@ export default function ProductsPage() {
   } as const;
 
   const loadThumbs = useCallback(async (list: Product[]) => {
-    const paths = list.map(p => p.image_url).filter((v): v is string => !!v);
-    if (paths.length === 0) { setThumbs({}); return; }
-    const { data } = await supabase.storage.from('product-images').createSignedUrls(paths, 3600);
+    const all = list.map(p => p.image_url).filter((v): v is string => !!v);
     const map: Record<string, string> = {};
-    (data || []).forEach(item => {
-      if (item.path && item.signedUrl) map[item.path] = item.signedUrl;
-    });
+    // R2 (to'liq URL) — to'g'ridan-to'g'ri ishlatiladi
+    all.filter(isR2Url).forEach(u => { map[u] = u; });
+    // Eski Lovable Storage yo'llari — signed URL
+    const legacy = all.filter(u => !isR2Url(u));
+    if (legacy.length > 0) {
+      const { data } = await supabase.storage.from('product-images').createSignedUrls(legacy, 3600);
+      (data || []).forEach(item => {
+        if (item.path && item.signedUrl) map[item.path] = item.signedUrl;
+      });
+    }
     setThumbs(map);
   }, []);
+
 
   const fetchProducts = useCallback(async () => {
     const [prodRes, secRes] = await Promise.all([
@@ -243,26 +251,27 @@ export default function ProductsPage() {
       payload.product_code = customCodeVal;
     }
 
-    // Rasm yuklash (ixtiyoriy) — avtomatik siqiladi
+    // Rasm yuklash (ixtiyoriy) — siqiladi va Cloudflare R2 ga yuklanadi
+    const removeOldImage = async (old: string) => {
+      if (isR2Url(old)) await deleteFromR2(old);
+      else await supabase.storage.from('product-images').remove([old]);
+    };
+
     if (imageFile) {
       const { blob, ext, contentType } = await compressImage(imageFile);
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('product-images')
-        .upload(path, blob, { contentType, upsert: false });
-      if (upErr) {
-        toast.error('Rasmni yuklashda xatolik: ' + upErr.message);
+      try {
+        payload.image_url = await uploadToR2(blob, ext, contentType);
+      } catch (err: any) {
+        toast.error('Rasmni yuklashda xatolik: ' + (err?.message || ''));
         setSubmitting(false);
         return;
       }
-      payload.image_url = path;
-      if (editing?.image_url) {
-        await supabase.storage.from('product-images').remove([editing.image_url]);
-      }
+      if (editing?.image_url) await removeOldImage(editing.image_url);
     } else if (removeImage && editing?.image_url) {
-      await supabase.storage.from('product-images').remove([editing.image_url]);
+      await removeOldImage(editing.image_url);
       payload.image_url = null;
     }
+
 
     // Sektor sig'imini tekshirish — qo'shilayotgan delta (yangi mahsulot bo'lsa to'liq qty)
     if (payload.sector_id) {
@@ -332,8 +341,10 @@ export default function ProductsPage() {
       const { error } = await supabase.from('products').delete().eq('id', deleting.id);
       if (error) throw error;
       if (deleting.image_url) {
-        await supabase.storage.from('product-images').remove([deleting.image_url]);
+        if (isR2Url(deleting.image_url)) await deleteFromR2(deleting.image_url);
+        else await supabase.storage.from('product-images').remove([deleting.image_url]);
       }
+
       toast.success("Mahsulot o'chirildi");
       setDeleteDialogOpen(false);
       fetchProducts();
