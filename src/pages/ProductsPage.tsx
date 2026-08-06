@@ -522,21 +522,24 @@ export default function ProductsPage() {
                     <TableRow key={p.id} className={isLow ? 'bg-destructive/5' : ''}>
                       <TableCell className="py-2">
                         {p.image_url && thumbs[p.image_url] ? (
-                          <img
-                            src={thumbs[p.image_url]}
-                            alt={`${p.name} rasmi`}
-                            loading="lazy"
-                            className="w-9 h-9 rounded-md object-cover border border-border"
-                          />
+                          <a href={thumbs[p.image_url]} target="_blank" rel="noreferrer" title="Kattalashtirish">
+                            <img
+                              src={thumbs[p.image_url]}
+                              alt={`${p.name} rasmi`}
+                              loading="lazy"
+                              className="w-16 h-16 rounded-md object-cover border border-border hover:opacity-90 transition-opacity"
+                            />
+                          </a>
                         ) : (
                           <span
                             title="Rasm yo'q"
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-muted text-muted-foreground"
+                            className="inline-flex items-center justify-center w-16 h-16 rounded-md bg-muted text-muted-foreground"
                           >
-                            <ImageIcon className="w-4 h-4" />
+                            <ImageIcon className="w-6 h-6" />
                           </span>
                         )}
                       </TableCell>
+
 
                       <TableCell className={`font-medium ${isLow ? 'text-destructive' : ''}`}>{p.name}</TableCell>
                        <TableCell className="font-mono text-xs text-muted-foreground">
