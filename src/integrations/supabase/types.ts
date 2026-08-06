@@ -152,6 +152,7 @@ export type Database = {
           approved: boolean
           created_at: string
           id: string
+          image_url: string | null
           low_stock_threshold: number
           name: string
           nfc_id: string | null
@@ -164,6 +165,7 @@ export type Database = {
           approved?: boolean
           created_at?: string
           id?: string
+          image_url?: string | null
           low_stock_threshold?: number
           name: string
           nfc_id?: string | null
@@ -176,6 +178,7 @@ export type Database = {
           approved?: boolean
           created_at?: string
           id?: string
+          image_url?: string | null
           low_stock_threshold?: number
           name?: string
           nfc_id?: string | null
