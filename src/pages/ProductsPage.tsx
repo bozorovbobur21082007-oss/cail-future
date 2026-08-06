@@ -242,13 +242,13 @@ export default function ProductsPage() {
       payload.product_code = customCodeVal;
     }
 
-    // Rasm yuklash (ixtiyoriy)
+    // Rasm yuklash (ixtiyoriy) — avtomatik siqiladi
     if (imageFile) {
-      const ext = (imageFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const { blob, ext, contentType } = await compressImage(imageFile);
       const path = `${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('product-images')
-        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
+        .upload(path, blob, { contentType, upsert: false });
       if (upErr) {
         toast.error('Rasmni yuklashda xatolik: ' + upErr.message);
         setSubmitting(false);
