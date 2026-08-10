@@ -144,9 +144,12 @@ Deno.serve(async (req) => {
 
     const raw = b64urlEncode(new TextEncoder().encode(mime));
 
-    // Send via Gmail gateway
+    // Send via mail API gateway
+    const MAIL_GATEWAY_URL = Deno.env.get("MAIL_GATEWAY_URL") ??
+      "https://connector-gateway.lovable.dev/google_mail";
     const gmailRes = await fetch(
-      "https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send",
+      `${MAIL_GATEWAY_URL}/gmail/v1/users/me/messages/send`,
+
       {
         method: "POST",
         headers: {

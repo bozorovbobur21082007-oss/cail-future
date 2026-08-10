@@ -95,7 +95,7 @@ export default function ProductsPage() {
     const map: Record<string, string> = {};
     // R2 (to'liq URL) — to'g'ridan-to'g'ri ishlatiladi
     all.filter(isR2Url).forEach(u => { map[u] = r2DisplayUrl(u); });
-    // Eski Lovable Storage yo'llari — signed URL
+    // Eski ichki storage yo'llari — signed URL
     const legacy = all.filter(u => !isR2Url(u));
     if (legacy.length > 0) {
       const { data } = await supabase.storage.from('product-images').createSignedUrls(legacy, 3600);
