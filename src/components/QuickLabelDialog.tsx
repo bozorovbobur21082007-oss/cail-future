@@ -37,6 +37,8 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
   const [lowStock, setLowStock] = useState(10);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [capturedFile, setCapturedFile] = useState<File | null>(null);
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +60,8 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setLowStock(10);
       setImageFile(null);
       setImagePreview(null);
+      setCapturedFile(null);
+      setCapturedPreview(null);
       setShowQrScanner(false);
       setFormat('barcode');
       setCreatedProduct(null);
@@ -72,6 +76,29 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleCameraCapture = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Faqat rasm fayli tanlang');
+      return;
+    }
+    setCapturedFile(file);
+    setCapturedPreview(URL.createObjectURL(file));
+  };
+
+  const confirmCapture = () => {
+    if (!capturedFile || !capturedPreview) return;
+    setImageFile(capturedFile);
+    setImagePreview(capturedPreview);
+    setCapturedFile(null);
+    setCapturedPreview(null);
+  };
+
+  const retakeCapture = () => {
+    setCapturedFile(null);
+    setCapturedPreview(null);
   };
 
 
@@ -231,7 +258,21 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
 
                 <div className="space-y-2">
                   <Label>Mahsulot rasmi</Label>
-                  {imagePreview ? (
+                  {capturedPreview ? (
+                    <div className="space-y-3">
+                      <div className="relative w-full max-w-xs aspect-video">
+                        <img src={capturedPreview} alt="Tasdiqlash uchun rasm" className="w-full h-full object-cover rounded-md border border-border" />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm" onClick={confirmCapture}>
+                          Tasdiqlash
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={retakeCapture}>
+                          Qayta olish
+                        </Button>
+                      </div>
+                    </div>
+                  ) : imagePreview ? (
                     <div className="relative w-24 h-24">
                       <img src={imagePreview} alt="Mahsulot rasmi" className="w-24 h-24 object-cover rounded-md border border-border" />
                       <Button
@@ -264,7 +305,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
                           accept="image/*"
                           capture="environment"
                           className="hidden"
-                          onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+                          onChange={(e) => handleCameraCapture(e.target.files?.[0] ?? null)}
                         />
                       </label>
                     </div>
