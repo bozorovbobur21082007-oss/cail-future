@@ -33,12 +33,17 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
   const [name, setName] = useState('');
   const [idMethod, setIdMethod] = useState<IdMethod>('auto');
   const [manualCode, setManualCode] = useState('');
+  const [price, setPrice] = useState(0);
+  const [lowStock, setLowStock] = useState(10);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [submitting, setSubmitting] = useState(false);
   const [createdProduct, setCreatedProduct] = useState<{ code: string; name: string } | null>(null);
   const [scannerMode] = useScannerMode();
   const { role, getWorkerToken } = useAuth();
+  const isAdmin = role !== 'worker';
 
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
@@ -49,11 +54,27 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setName('');
       setIdMethod('auto');
       setManualCode('');
+      setPrice(0);
+      setLowStock(10);
+      setImageFile(null);
+      setImagePreview(null);
       setShowQrScanner(false);
       setFormat('barcode');
       setCreatedProduct(null);
     }
   }, [open]);
+
+  const pickImage = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Faqat rasm fayli tanlang');
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+
 
   const handleCreate = async () => {
     const trimmedName = name.trim();
