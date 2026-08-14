@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter, ChevronLeft, ChevronRight, Download, ArrowDownToLine, ArrowUpFromLine, TrendingUp, TrendingDown, FileSpreadsheet } from 'lucide-react';
-import { exportCSV, exportPDF } from '@/utils/exportLogs';
 import { buildReport1CData, download1CReport, download1CCsv } from '@/utils/export1C';
 import { toast } from 'sonner';
 
@@ -168,14 +167,6 @@ export default function LogsPage() {
           <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="w-4 h-4 mr-2" />
             Filterlar
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => exportCSV(operations)} disabled={operations.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => exportPDF(operations)} disabled={operations.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            PDF
           </Button>
         </div>
       </div>
