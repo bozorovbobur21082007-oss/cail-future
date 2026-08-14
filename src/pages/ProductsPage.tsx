@@ -144,7 +144,7 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', price: 0 });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
