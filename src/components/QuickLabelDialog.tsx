@@ -258,7 +258,21 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
 
                 <div className="space-y-2">
                   <Label>Mahsulot rasmi</Label>
-                  {imagePreview ? (
+                  {capturedPreview ? (
+                    <div className="space-y-3">
+                      <div className="relative w-full max-w-xs aspect-video">
+                        <img src={capturedPreview} alt="Tasdiqlash uchun rasm" className="w-full h-full object-cover rounded-md border border-border" />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm" onClick={confirmCapture}>
+                          Tasdiqlash
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={retakeCapture}>
+                          Qayta olish
+                        </Button>
+                      </div>
+                    </div>
+                  ) : imagePreview ? (
                     <div className="relative w-24 h-24">
                       <img src={imagePreview} alt="Mahsulot rasmi" className="w-24 h-24 object-cover rounded-md border border-border" />
                       <Button
@@ -291,7 +305,7 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
                           accept="image/*"
                           capture="environment"
                           className="hidden"
-                          onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+                          onChange={(e) => handleCameraCapture(e.target.files?.[0] ?? null)}
                         />
                       </label>
                     </div>
