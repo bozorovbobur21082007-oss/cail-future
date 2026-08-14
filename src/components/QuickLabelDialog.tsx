@@ -60,6 +60,8 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setLowStock(10);
       setImageFile(null);
       setImagePreview(null);
+      setCapturedFile(null);
+      setCapturedPreview(null);
       setShowQrScanner(false);
       setFormat('barcode');
       setCreatedProduct(null);
