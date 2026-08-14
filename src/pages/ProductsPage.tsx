@@ -54,7 +54,7 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '' });
+  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', price: 0 });
   const [useCustomCode, setUseCustomCode] = useState(false);
   const [customCode, setCustomCode] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
