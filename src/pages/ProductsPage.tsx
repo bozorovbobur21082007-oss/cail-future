@@ -710,6 +710,19 @@ export default function ProductsPage() {
             </div>
 
             <div className="space-y-2">
+              <Label>Narxi (birlik, so'm)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+              />
+              <p className="text-[11px] text-muted-foreground">1C hisobotidagi "сумма" ustunlari shu narx asosida hisoblanadi.</p>
+            </div>
+
+
+            <div className="space-y-2">
               <Label>Sektor</Label>
               <Select value={form.sector_id} onValueChange={(v) => setForm({ ...form, sector_id: v === 'none' ? '' : v })}>
                 <SelectTrigger><SelectValue placeholder="Sektorsiz" /></SelectTrigger>
