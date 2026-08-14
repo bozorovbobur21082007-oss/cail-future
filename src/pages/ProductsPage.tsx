@@ -246,6 +246,7 @@ export default function ProductsPage() {
       name: trimmedName,
       quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
+      price: Number(form.price) || 0,
       sector_id: form.sector_id || null,
     };
     if (useCustomCode && customCodeVal) {
