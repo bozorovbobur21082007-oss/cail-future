@@ -31,6 +31,7 @@ interface Product {
   name: string;
   quantity: number;
   low_stock_threshold: number;
+  price: number;
   created_at: string;
   sector_id: string | null;
   approved: boolean;
