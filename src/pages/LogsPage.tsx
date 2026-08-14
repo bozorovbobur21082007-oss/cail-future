@@ -43,6 +43,31 @@ export default function LogsPage() {
   const [stats, setStats] = useState({ inQty: 0, outQty: 0, inCount: 0, outCount: 0 });
   const [statsLoading, setStatsLoading] = useState(false);
 
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [reportHead, setReportHead] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
+  const handle1CExport = async (format: 'xls' | 'csv') => {
+    if (!reportMonth) { toast.error('Oyni tanlang'); return; }
+    setReportLoading(true);
+    try {
+      const rows = await buildReport1CData(reportMonth);
+      if (rows.length === 0) { toast.error("Bu oy uchun ma'lumot topilmadi"); return; }
+      if (format === 'xls') {
+        download1CReport(rows, { month: reportMonth, headName: reportHead, warehouseName: 'Ombor' });
+      } else {
+        download1CCsv(rows, reportMonth);
+      }
+      toast.success('Hisobot yuklandi');
+    } catch (e) {
+      toast.error('Hisobotni tayyorlashda xatolik');
+      console.error(e);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+
   const limit = 20;
 
   const fetchLogs = useCallback(async () => {
