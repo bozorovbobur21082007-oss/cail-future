@@ -78,6 +78,29 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handleCameraCapture = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Faqat rasm fayli tanlang');
+      return;
+    }
+    setCapturedFile(file);
+    setCapturedPreview(URL.createObjectURL(file));
+  };
+
+  const confirmCapture = () => {
+    if (!capturedFile || !capturedPreview) return;
+    setImageFile(capturedFile);
+    setImagePreview(capturedPreview);
+    setCapturedFile(null);
+    setCapturedPreview(null);
+  };
+
+  const retakeCapture = () => {
+    setCapturedFile(null);
+    setCapturedPreview(null);
+  };
+
 
 
   const handleCreate = async () => {
