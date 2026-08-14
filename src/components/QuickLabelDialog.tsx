@@ -245,17 +245,31 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
                       </Button>
                     </div>
                   ) : (
-                    <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/30 text-sm text-muted-foreground">
-                      <ImagePlus className="w-4 h-4" />
-                      Rasm tanlash
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
-                      />
-                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/30 text-sm text-muted-foreground">
+                        <ImagePlus className="w-4 h-4" />
+                        Rasm tanlash
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/30 text-sm text-muted-foreground">
+                        <Camera className="w-4 h-4" />
+                        Rasmga olish
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+                        />
+                      </label>
+                    </div>
                   )}
+
                   <p className="text-[11px] text-muted-foreground">Rasm avtomatik siqiladi (WebP, ~100KB).</p>
                 </div>
               </>
