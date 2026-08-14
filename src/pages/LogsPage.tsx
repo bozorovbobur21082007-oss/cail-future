@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter, ChevronLeft, ChevronRight, Download, ArrowDownToLine, ArrowUpFromLine, TrendingUp, TrendingDown, FileSpreadsheet } from 'lucide-react';
-import { buildReport1CData, download1CReport, download1CCsv } from '@/utils/export1C';
+import { buildReport1CData, download1CReport } from '@/utils/export1C';
 import { toast } from 'sonner';
 
 interface Operation {
@@ -46,17 +46,13 @@ export default function LogsPage() {
   const [reportHead, setReportHead] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
 
-  const handle1CExport = async (format: 'xls' | 'csv') => {
+  const handle1CExport = async () => {
     if (!reportMonth) { toast.error('Oyni tanlang'); return; }
     setReportLoading(true);
     try {
       const rows = await buildReport1CData(reportMonth);
       if (rows.length === 0) { toast.error("Bu oy uchun ma'lumot topilmadi"); return; }
-      if (format === 'xls') {
-        download1CReport(rows, { month: reportMonth, headName: reportHead, warehouseName: 'Ombor' });
-      } else {
-        download1CCsv(rows, reportMonth);
-      }
+      download1CReport(rows, { month: reportMonth, headName: reportHead, warehouseName: 'Ombor' });
       toast.success('Hisobot yuklandi');
     } catch (e) {
       toast.error('Hisobotni tayyorlashda xatolik');
@@ -268,18 +264,14 @@ export default function LogsPage() {
               <Label className="text-xs">Oy</Label>
               <Input type="month" value={reportMonth} onChange={(e) => setReportMonth(e.target.value)} />
             </div>
-            <div className="space-y-1 sm:col-span-2">
+            <div className="space-y-1">
               <Label className="text-xs">Rahbar (F.I.Sh.)</Label>
               <Input value={reportHead} onChange={(e) => setReportHead(e.target.value)} placeholder="Ixtiyoriy" />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={() => handle1CExport('xls')} disabled={reportLoading}>
+              <Button size="sm" onClick={handle1CExport} disabled={reportLoading}>
                 <Download className="w-4 h-4 mr-2" />
                 XLS
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handle1CExport('csv')} disabled={reportLoading}>
-                <Download className="w-4 h-4 mr-2" />
-                CSV
               </Button>
             </div>
           </div>
