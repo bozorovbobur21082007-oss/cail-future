@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Printer, QrCode, Barcode as BarcodeIcon, Camera } from 'lucide-react';
+import { Loader2, Printer, QrCode, Barcode as BarcodeIcon, Camera, ImagePlus, X } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import QrScanner from '@/components/QrScanner';
@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useAuth } from '@/contexts/AuthContext';
+import { compressImage } from '@/utils/compressImage';
+import { uploadToR2 } from '@/utils/r2';
+
 
 interface QuickLabelDialogProps {
   open: boolean;
