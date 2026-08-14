@@ -31,6 +31,7 @@ interface Product {
   name: string;
   quantity: number;
   low_stock_threshold: number;
+  price: number;
   created_at: string;
   sector_id: string | null;
   approved: boolean;
@@ -53,7 +54,7 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<Product | null>(null);
   const [qrProduct, setQrProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '' });
+  const [form, setForm] = useState({ name: '', quantity: 1, low_stock_threshold: 10, sector_id: '', price: 0 });
   const [useCustomCode, setUseCustomCode] = useState(false);
   const [customCode, setCustomCode] = useState('');
   const [showQrScanner, setShowQrScanner] = useState(false);
@@ -143,7 +144,7 @@ export default function ProductsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '' });
+    setForm({ name: '', quantity: 0, low_stock_threshold: 10, sector_id: '', price: 0 });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
@@ -155,7 +156,7 @@ export default function ProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', price: Number(p.price) || 0 });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
@@ -245,6 +246,7 @@ export default function ProductsPage() {
       name: trimmedName,
       quantity: editing ? form.quantity : (form.quantity || 0),
       low_stock_threshold: form.low_stock_threshold,
+      price: Number(form.price) || 0,
       sector_id: form.sector_id || null,
     };
     if (useCustomCode && customCodeVal) {
@@ -497,6 +499,7 @@ export default function ProductsPage() {
                  <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Narxi</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Holat</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Yaratilgan</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground text-right">Amallar</TableHead>
@@ -570,6 +573,9 @@ export default function ProductsPage() {
                        </TableCell>
                       <TableCell className={`font-semibold ${isLow ? 'text-destructive' : ''}`}>{p.quantity}</TableCell>
                       <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {Number(p.price) > 0 ? `${Number(p.price).toLocaleString('uz-UZ')} so'm` : '—'}
+                      </TableCell>
                       <TableCell>
                         {!p.approved ? (
                           <Badge className="bg-warning/10 text-warning border-warning/20 text-xs gap-1">
@@ -702,6 +708,19 @@ export default function ProductsPage() {
                <Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: parseInt(e.target.value) || 10 })} min={1} />
                <p className="text-[11px] text-muted-foreground">Soni shu chegaradan past tushsa, "Kam" deb belgilanadi.</p>
             </div>
+
+            <div className="space-y-2">
+              <Label>Narxi (birlik, so'm)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+              />
+              <p className="text-[11px] text-muted-foreground">1C hisobotidagi "сумма" ustunlari shu narx asosida hisoblanadi.</p>
+            </div>
+
 
             <div className="space-y-2">
               <Label>Sektor</Label>

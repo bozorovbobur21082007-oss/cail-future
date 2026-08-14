@@ -23,6 +23,7 @@ interface ProductRow {
   product_code: string;
   quantity: number;
   sector_id: string | null;
+  price: number | null;
 }
 
 interface OpRow {
@@ -38,6 +39,10 @@ function monthRange(month: string) {
   const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0));
   const end = new Date(Date.UTC(y, m, 1, 0, 0, 0));
   return { start, end };
+}
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
 }
 
 function fmtDate(d: Date) {
@@ -64,10 +69,15 @@ export interface Report1CRow {
   sector: string;
   name: string;
   code: string;
+  price: number;
   startQty: number;
   inQty: number;
   outQty: number;
   endQty: number;
+  startSum: number;
+  inSum: number;
+  outSum: number;
+  endSum: number;
 }
 
 /** Oylik boshlanish/oxirgi qoldiq va kirim/chiqimni hisoblaydi */
@@ -75,7 +85,7 @@ export async function buildReport1CData(month: string): Promise<Report1CRow[]> {
   const { start, end } = monthRange(month);
 
   const [{ data: products, error: pErr }, { data: sectors, error: sErr }] = await Promise.all([
-    supabase.from('products').select('id, name, product_code, quantity, sector_id'),
+    supabase.from('products').select('id, name, product_code, quantity, sector_id, price'),
     supabase.from('sectors').select('id, name'),
   ]);
   if (pErr) throw pErr;
@@ -112,20 +122,30 @@ export async function buildReport1CData(month: string): Promise<Report1CRow[]> {
     const endQty = p.quantity - after.in + after.out;
     const startQty = endQty - cur.in + cur.out;
     if (startQty === 0 && endQty === 0 && cur.in === 0 && cur.out === 0) continue;
+    const price = Number(p.price) || 0;
     rows.push({
       sector: p.sector_id ? sectorName.get(p.sector_id) || 'Ombor' : 'Ombor',
       name: p.name,
       code: p.product_code || '',
+      price,
       startQty,
       inQty: cur.in,
       outQty: cur.out,
       endQty,
+      startSum: round2(startQty * price),
+      inSum: round2(cur.in * price),
+      outSum: round2(cur.out * price),
+      endSum: round2(endQty * price),
     });
   }
 
   // O'chirilgan mahsulotlar bo'yicha harakatlar
   for (const o of orphan.values()) {
-    rows.push({ sector: 'Ombor', name: o.name, code: '', startQty: 0, inQty: o.in, outQty: o.out, endQty: 0 });
+    rows.push({
+      sector: 'Ombor', name: o.name, code: '', price: 0,
+      startQty: 0, inQty: o.in, outQty: o.out, endQty: 0,
+      startSum: 0, inSum: 0, outSum: 0, endSum: 0,
+    });
   }
 
   rows.sort((a, b) => a.sector.localeCompare(b.sector) || a.name.localeCompare(b.name));
@@ -158,7 +178,7 @@ export function buildReport1CSheet(rows: Report1CRow[], opts: Report1COptions) {
   ]);
   aoa.push([null, null, null, 'кол.', 'сумма', 'кол.', 'сумма', 'кол.', 'сумма', 'кол.', 'сумма']);
 
-  const totals = { s: 0, i: 0, o: 0, e: 0 };
+  const totals = { s: 0, i: 0, o: 0, e: 0, ss: 0, is: 0, os: 0, es: 0 };
   let currentSector = '';
   const groups = new Map<string, Report1CRow[]>();
   for (const r of rows) {
@@ -171,18 +191,27 @@ export function buildReport1CSheet(rows: Report1CRow[], opts: Report1COptions) {
     const g = list.reduce(
       (acc, r) => ({
         s: acc.s + r.startQty, i: acc.i + r.inQty, o: acc.o + r.outQty, e: acc.e + r.endQty,
+        ss: acc.ss + r.startSum, is: acc.is + r.inSum, os: acc.os + r.outSum, es: acc.es + r.endSum,
       }),
-      { s: 0, i: 0, o: 0, e: 0 },
+      { s: 0, i: 0, o: 0, e: 0, ss: 0, is: 0, os: 0, es: 0 },
     );
     currentSector = sector;
-    aoa.push([`${warehouse} / ${currentSector}`, null, null, g.s, null, g.i, null, g.o, null, g.e, null]);
+    aoa.push([
+      `${warehouse} / ${currentSector}`, null, null,
+      g.s, round2(g.ss), g.i, round2(g.is), g.o, round2(g.os), g.e, round2(g.es),
+    ]);
     for (const r of list) {
-      aoa.push([r.name, r.code, null, r.startQty, null, r.inQty, null, r.outQty, null, r.endQty, null]);
+      aoa.push([r.name, r.code, null, r.startQty, r.startSum, r.inQty, r.inSum, r.outQty, r.outSum, r.endQty, r.endSum]);
     }
     totals.s += g.s; totals.i += g.i; totals.o += g.o; totals.e += g.e;
+    totals.ss += g.ss; totals.is += g.is; totals.os += g.os; totals.es += g.es;
   }
 
-  aoa.push(['Итого', null, null, totals.s, null, totals.i, null, totals.o, null, totals.e, null]);
+  aoa.push([
+    'Итого', null, null,
+    totals.s, round2(totals.ss), totals.i, round2(totals.is),
+    totals.o, round2(totals.os), totals.e, round2(totals.es),
+  ]);
   aoa.push([]);
   aoa.push(['Исполнитель', null, null, '(должность)', null, '(подпись)', null, '(расшифровка подписи)']);
 
@@ -211,8 +240,17 @@ export function download1CReport(rows: Report1CRow[], opts: Report1COptions) {
 
 /** 1C "Загрузка из табличного документа" uchun sodda CSV */
 export function download1CCsv(rows: Report1CRow[], month: string) {
-  const header = ['Номенклатура', 'Код', 'Остаток на начало', 'Приход', 'Расход', 'Остаток на конец'];
-  const body = rows.map((r) => [r.name, r.code, r.startQty, r.inQty, r.outQty, r.endQty]);
+  const header = [
+    'Номенклатура', 'Код', 'Цена',
+    'Остаток на начало кол.', 'Остаток на начало сумма',
+    'Приход кол.', 'Приход сумма',
+    'Расход кол.', 'Расход сумма',
+    'Остаток на конец кол.', 'Остаток на конец сумма',
+  ];
+  const body = rows.map((r) => [
+    r.name, r.code, r.price,
+    r.startQty, r.startSum, r.inQty, r.inSum, r.outQty, r.outSum, r.endQty, r.endSum,
+  ]);
   const csv = [header, ...body]
     .map((row) => row.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';'))
     .join('\r\n');
