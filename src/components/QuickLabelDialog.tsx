@@ -162,9 +162,17 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       if (idMethod === 'manual' && manualCode.trim()) {
         payload.product_code = manualCode.trim().toUpperCase();
       }
-      if (imageFile) {
-        const { blob, ext, contentType } = await compressImage(imageFile);
-        payload.image_url = await uploadToR2(blob, ext, contentType);
+      // Agar foydalanuvchi rasmga olib "Tasdiqlash"ni bosmagan bo'lsa ham, rasm yo'qolmasin
+      const fileToUpload = imageFile ?? capturedFile;
+      if (fileToUpload) {
+        try {
+          const { blob, ext, contentType } = await compressImage(fileToUpload);
+          payload.image_url = await uploadToR2(blob, ext, contentType);
+        } catch (e: any) {
+          toast.error('Rasm yuklanmadi: ' + (e?.message || 'xatolik'));
+          setSubmitting(false);
+          return;
+        }
       }
 
 
