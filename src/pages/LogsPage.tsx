@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Filter, ChevronLeft, ChevronRight, Download, ArrowDownToLine, ArrowUpFromLine, TrendingUp, TrendingDown } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, Download, ArrowDownToLine, ArrowUpFromLine, TrendingUp, TrendingDown, FileSpreadsheet } from 'lucide-react';
 import { exportCSV, exportPDF } from '@/utils/exportLogs';
+import { buildReport1CData, download1CReport, download1CCsv } from '@/utils/export1C';
 import { toast } from 'sonner';
 
 interface Operation {
@@ -41,6 +42,31 @@ export default function LogsPage() {
   const [statPeriod, setStatPeriod] = useState<StatPeriod>('today');
   const [stats, setStats] = useState({ inQty: 0, outQty: 0, inCount: 0, outCount: 0 });
   const [statsLoading, setStatsLoading] = useState(false);
+
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [reportHead, setReportHead] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
+  const handle1CExport = async (format: 'xls' | 'csv') => {
+    if (!reportMonth) { toast.error('Oyni tanlang'); return; }
+    setReportLoading(true);
+    try {
+      const rows = await buildReport1CData(reportMonth);
+      if (rows.length === 0) { toast.error("Bu oy uchun ma'lumot topilmadi"); return; }
+      if (format === 'xls') {
+        download1CReport(rows, { month: reportMonth, headName: reportHead, warehouseName: 'Ombor' });
+      } else {
+        download1CCsv(rows, reportMonth);
+      }
+      toast.success('Hisobot yuklandi');
+    } catch (e) {
+      toast.error('Hisobotni tayyorlashda xatolik');
+      console.error(e);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
 
   const limit = 20;
 
@@ -234,6 +260,41 @@ export default function LogsPage() {
           </Card>
         </div>
       </div>
+
+      {/* 1C uchun oylik material hisoboti */}
+      <Card className="shadow-sm">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold">1C uchun oylik hisobot (Материальный отчет)</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Tanlangan oy bo'yicha har bir mahsulotning boshlang'ich qoldig'i, kirim, chiqim va oxirgi qoldig'i
+            1C formatida yuklanadi.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Oy</Label>
+              <Input type="month" value={reportMonth} onChange={(e) => setReportMonth(e.target.value)} />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs">Rahbar (F.I.Sh.)</Label>
+              <Input value={reportHead} onChange={(e) => setReportHead(e.target.value)} placeholder="Ixtiyoriy" />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => handle1CExport('xls')} disabled={reportLoading}>
+                <Download className="w-4 h-4 mr-2" />
+                XLS
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handle1CExport('csv')} disabled={reportLoading}>
+                <Download className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
 
       {showFilters && (
         <Card className="shadow-sm">
