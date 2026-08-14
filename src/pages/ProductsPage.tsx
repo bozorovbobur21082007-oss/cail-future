@@ -573,6 +573,9 @@ export default function ProductsPage() {
                        </TableCell>
                       <TableCell className={`font-semibold ${isLow ? 'text-destructive' : ''}`}>{p.quantity}</TableCell>
                       <TableCell className="text-muted-foreground">{p.low_stock_threshold}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {Number(p.price) > 0 ? `${Number(p.price).toLocaleString('uz-UZ')} so'm` : '—'}
+                      </TableCell>
                       <TableCell>
                         {!p.approved ? (
                           <Badge className="bg-warning/10 text-warning border-warning/20 text-xs gap-1">
