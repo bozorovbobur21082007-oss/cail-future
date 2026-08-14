@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Printer, QrCode, Barcode as BarcodeIcon, Camera } from 'lucide-react';
+import { Loader2, Printer, QrCode, Barcode as BarcodeIcon, Camera, ImagePlus, X } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from '@/components/Barcode';
 import QrScanner from '@/components/QrScanner';
@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { printLabel, THERMAL_76X39 } from '@/utils/printLabel';
 import { useScannerMode } from '@/hooks/useScannerMode';
 import { useAuth } from '@/contexts/AuthContext';
+import { compressImage } from '@/utils/compressImage';
+import { uploadToR2 } from '@/utils/r2';
+
 
 interface QuickLabelDialogProps {
   open: boolean;
@@ -30,12 +33,17 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
   const [name, setName] = useState('');
   const [idMethod, setIdMethod] = useState<IdMethod>('auto');
   const [manualCode, setManualCode] = useState('');
+  const [price, setPrice] = useState(0);
+  const [lowStock, setLowStock] = useState(10);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [format, setFormat] = useState<'qr' | 'barcode'>('barcode');
   const [submitting, setSubmitting] = useState(false);
   const [createdProduct, setCreatedProduct] = useState<{ code: string; name: string } | null>(null);
   const [scannerMode] = useScannerMode();
   const { role, getWorkerToken } = useAuth();
+  const isAdmin = role !== 'worker';
 
   const qrRef = useRef<HTMLCanvasElement>(null);
   const barcodeRef = useRef<HTMLCanvasElement>(null);
@@ -46,11 +54,27 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       setName('');
       setIdMethod('auto');
       setManualCode('');
+      setPrice(0);
+      setLowStock(10);
+      setImageFile(null);
+      setImagePreview(null);
       setShowQrScanner(false);
       setFormat('barcode');
       setCreatedProduct(null);
     }
   }, [open]);
+
+  const pickImage = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Faqat rasm fayli tanlang');
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+
 
   const handleCreate = async () => {
     const trimmedName = name.trim();
@@ -104,12 +128,18 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       const payload: any = {
         name: trimmedName,
         quantity: 0,
-        low_stock_threshold: 10,
+        low_stock_threshold: lowStock || 10,
+        price: Number(price) || 0,
         approved,
       };
       if (idMethod === 'manual' && manualCode.trim()) {
         payload.product_code = manualCode.trim().toUpperCase();
       }
+      if (imageFile) {
+        const { blob, ext, contentType } = await compressImage(imageFile);
+        payload.image_url = await uploadToR2(blob, ext, contentType);
+      }
+
 
       const { data, error } = await supabase
         .from('products')
@@ -172,6 +202,66 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
                 placeholder="Masalan: Sement 50kg"
               />
             </div>
+
+            {isAdmin && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="ql-price">Narxi (birlik, so'm)</Label>
+                    <Input
+                      id="ql-price"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={price}
+                      onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ql-low">Kam qolish chegarasi</Label>
+                    <Input
+                      id="ql-low"
+                      type="number"
+                      min={1}
+                      value={lowStock}
+                      onChange={(e) => setLowStock(parseInt(e.target.value) || 10)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Mahsulot rasmi</Label>
+                  {imagePreview ? (
+                    <div className="relative w-24 h-24">
+                      <img src={imagePreview} alt="Mahsulot rasmi" className="w-24 h-24 object-cover rounded-md border border-border" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 w-6 h-6"
+                        onClick={() => { setImageFile(null); setImagePreview(null); }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/30 text-sm text-muted-foreground">
+                      <ImagePlus className="w-4 h-4" />
+                      Rasm tanlash
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">Rasm avtomatik siqiladi (WebP, ~100KB).</p>
+                </div>
+              </>
+            )}
+
+
 
             <div className="space-y-2">
               <Label>Identifikator turi</Label>
