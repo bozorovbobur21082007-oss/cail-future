@@ -235,6 +235,41 @@ export default function LogsPage() {
         </div>
       </div>
 
+      {/* 1C uchun oylik material hisoboti */}
+      <Card className="shadow-sm">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold">1C uchun oylik hisobot (Материальный отчет)</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Tanlangan oy bo'yicha har bir mahsulotning boshlang'ich qoldig'i, kirim, chiqim va oxirgi qoldig'i
+            1C formatida yuklanadi.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Oy</Label>
+              <Input type="month" value={reportMonth} onChange={(e) => setReportMonth(e.target.value)} />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs">Rahbar (F.I.Sh.)</Label>
+              <Input value={reportHead} onChange={(e) => setReportHead(e.target.value)} placeholder="Ixtiyoriy" />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => handle1CExport('xls')} disabled={reportLoading}>
+                <Download className="w-4 h-4 mr-2" />
+                XLS
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handle1CExport('csv')} disabled={reportLoading}>
+                <Download className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
       {showFilters && (
         <Card className="shadow-sm">
           <CardContent className="p-4">
