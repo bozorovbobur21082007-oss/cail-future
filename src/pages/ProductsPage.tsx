@@ -156,7 +156,7 @@ export default function ProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '' });
+    setForm({ name: p.name, quantity: p.quantity, low_stock_threshold: p.low_stock_threshold, sector_id: p.sector_id || '', price: Number(p.price) || 0 });
     setUseCustomCode(false);
     setCustomCode('');
     setShowQrScanner(false);
