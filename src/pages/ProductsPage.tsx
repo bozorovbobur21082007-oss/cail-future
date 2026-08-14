@@ -499,6 +499,7 @@ export default function ProductsPage() {
                  <TableHead className="text-xs uppercase text-muted-foreground">Sektor</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Soni</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Limit</TableHead>
+                 <TableHead className="text-xs uppercase text-muted-foreground">Narxi</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Holat</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground">Yaratilgan</TableHead>
                  <TableHead className="text-xs uppercase text-muted-foreground text-right">Amallar</TableHead>
