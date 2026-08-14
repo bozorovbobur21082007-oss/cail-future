@@ -203,6 +203,66 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
               />
             </div>
 
+            {isAdmin && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="ql-price">Narxi (birlik, so'm)</Label>
+                    <Input
+                      id="ql-price"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={price}
+                      onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ql-low">Kam qolish chegarasi</Label>
+                    <Input
+                      id="ql-low"
+                      type="number"
+                      min={1}
+                      value={lowStock}
+                      onChange={(e) => setLowStock(parseInt(e.target.value) || 10)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Mahsulot rasmi</Label>
+                  {imagePreview ? (
+                    <div className="relative w-24 h-24">
+                      <img src={imagePreview} alt="Mahsulot rasmi" className="w-24 h-24 object-cover rounded-md border border-border" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 w-6 h-6"
+                        onClick={() => { setImageFile(null); setImagePreview(null); }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/30 text-sm text-muted-foreground">
+                      <ImagePlus className="w-4 h-4" />
+                      Rasm tanlash
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">Rasm avtomatik siqiladi (WebP, ~100KB).</p>
+                </div>
+              </>
+            )}
+
+
+
             <div className="space-y-2">
               <Label>Identifikator turi</Label>
               <RadioGroup value={idMethod} onValueChange={(v) => setIdMethod(v as IdMethod)}>
