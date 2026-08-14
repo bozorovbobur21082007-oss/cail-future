@@ -128,12 +128,18 @@ export default function QuickLabelDialog({ open, onOpenChange, approved = false,
       const payload: any = {
         name: trimmedName,
         quantity: 0,
-        low_stock_threshold: 10,
+        low_stock_threshold: lowStock || 10,
+        price: Number(price) || 0,
         approved,
       };
       if (idMethod === 'manual' && manualCode.trim()) {
         payload.product_code = manualCode.trim().toUpperCase();
       }
+      if (imageFile) {
+        const { blob, ext, contentType } = await compressImage(imageFile);
+        payload.image_url = await uploadToR2(blob, ext, contentType);
+      }
+
 
       const { data, error } = await supabase
         .from('products')
