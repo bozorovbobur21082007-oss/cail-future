@@ -169,14 +169,6 @@ export default function LogsPage() {
             <Filter className="w-4 h-4 mr-2" />
             Filterlar
           </Button>
-          <Button variant="outline" size="sm" onClick={() => exportCSV(operations)} disabled={operations.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => exportPDF(operations)} disabled={operations.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
         </div>
       </div>
 
