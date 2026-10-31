@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
 import QrScanner from '@/components/QrScanner';
+import WarehouseDigitalTwin from '@/components/WarehouseDigitalTwin';
 
 interface Sector {
   id: string;
@@ -257,7 +258,7 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
     <>
       {/* Root dialog: rooms list */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5 text-primary" /> Ombor xaritasi (faqat ko'rish)
@@ -266,6 +267,9 @@ export default function SectorsViewer({ open, onOpenChange }: Props) {
               Xonalar va ulardagi shkaflarni 3D ko'rinishda ko'ring. Mahsulotni qidirib, joyini aniqlang.
             </DialogDescription>
           </DialogHeader>
+
+          {!loading && <WarehouseDigitalTwin sectors={sectors} shelves={shelves} products={products} placements={placements}
+            onOpenShelf={(sh) => { setOpenSectorId(sh.sector_id); setOpenShelfId(sh.id); }} />}
 
           {/* Global search */}
           <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
