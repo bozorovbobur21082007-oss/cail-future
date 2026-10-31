@@ -69,18 +69,22 @@ function world(rack: RackLayout, x: number, y: number, z: number): [number, numb
 }
 function CameraRig({ center, distance, focus, mode, revision }: { center: [number, number, number]; distance: number; focus: WarehouseSlot | null; mode: string; revision: number }) {
   const controls = useRef<OrbitControlsImpl>(null);
-  const { camera, invalidate } = useThree();
+  const { camera, invalidate, size } = useThree();
   const destination = useRef(new THREE.Vector3()); const target = useRef(new THREE.Vector3()); const moving = useRef(true);
   useEffect(() => {
     const p = focus ? slotPosition(focus) : center;
     target.current.set(p[0], focus ? p[1] + .3 : .5, p[2]);
-    const d = focus ? Math.max(3, focus.rack.width * 1.6) : distance;
+    const aspectFit = Math.max(1, size.height / Math.max(1, size.width));
+    const d = (focus ? Math.max(3, focus.rack.width * 1.6) : distance) * aspectFit;
     destination.current.set(p[0] + (mode === 'top' ? .01 : mode === 'front' ? 0 : d * .72), (mode === 'top' ? d * 1.35 : mode === 'front' ? d * .3 : d * .7) + p[1], p[2] + (mode === 'top' ? .01 : d * .85));
-    moving.current = true; invalidate();
-  }, [focus, mode, revision, center, distance, invalidate]);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      camera.position.copy(destination.current); controls.current?.target.copy(target.current); controls.current?.update(); moving.current = false;
+    } else moving.current = true;
+    invalidate();
+  }, [focus, mode, revision, center, distance, invalidate, size.width, size.height, camera]);
   useFrame((_, delta) => {
     if (!moving.current || !controls.current) return;
-    const amount = 1 - Math.exp(-6 * Math.min(delta, .05));
+    const amount = 1 - Math.exp(-6 * Math.min(delta, .25));
     camera.position.lerp(destination.current, amount); controls.current.target.lerp(target.current, amount); controls.current.update();
     if (camera.position.distanceTo(destination.current) < .025) moving.current = false;
     else invalidate();
