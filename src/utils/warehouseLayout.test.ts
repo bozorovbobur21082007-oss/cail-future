@@ -8,6 +8,6 @@ describe('warehouse digital twin', () => {
     const occupied = slots.filter(s => s.product);
     expect(occupied).toHaveLength(1); expect(occupied[0].quantity).toBe(5); expect(slotPosition(occupied[0])[1]).toBe(2.08);
   });
-  it('separates coincident racks without changing saved coordinates', () => { const racks = layoutWarehouse([], [shelf, { ...shelf, id: 'b' }]); expect(racks[1].z).toBe(2.5); expect(shelf.position_y).toBe(0); });
-  it('applies room rotation to the rack location', () => { const [rack] = layoutWarehouse([{ id: 'room', name: 'Room', code: 'R', position_x: 500, position_y: 200, orientation: 90 }], [{ ...shelf, position_x: 100 }]); expect(rack.x).toBeCloseTo(5); expect(rack.z).toBeCloseTo(1); });
+  it('separates coincident racks without changing saved coordinates', () => { const racks = layoutWarehouse([], [shelf, { ...shelf, id: 'b' }]); expect(racks[1].z).toBe(3); expect(shelf.position_y).toBe(0); });
+  it('applies room rotation and footprint center to the rack location', () => { const [rack] = layoutWarehouse([{ id: 'room', name: 'Room', code: 'R', position_x: 500, position_y: 200, orientation: 90 }], [{ ...shelf, position_x: 100 }]); expect(rack.x).toBeCloseTo(5.5); expect(rack.z).toBeCloseTo(-.5); });
 });

@@ -11,9 +11,9 @@ export function layoutWarehouse(sectors: WarehouseSector[], shelves: WarehouseSh
   for (const shelf of shelves) {
     const room = sectors.find(s => s.id === shelf.sector_id);
     const roomAngle = (room?.orientation ?? 0) * Math.PI / 180;
-    const localX = shelf.position_x / 100, localZ = shelf.position_y / 100;
     const angle = roomAngle + shelf.orientation * Math.PI / 180;
     const width = Math.max(.5, shelf.width_cm / 100), depth = Math.max(.3, shelf.depth_cm / 100);
+    const localX = shelf.position_x / 100 + width / 2, localZ = shelf.position_y / 100 + depth / 2;
     let x = (room?.position_x ?? 0) / 100 + localX * Math.cos(roomAngle) + localZ * Math.sin(roomAngle);
     let z = (room?.position_y ?? 0) / 100 - localX * Math.sin(roomAngle) + localZ * Math.cos(roomAngle);
     const extent = (w: number, d: number, a: number) => [Math.abs(Math.cos(a)) * w + Math.abs(Math.sin(a)) * d, Math.abs(Math.sin(a)) * w + Math.abs(Math.cos(a)) * d];

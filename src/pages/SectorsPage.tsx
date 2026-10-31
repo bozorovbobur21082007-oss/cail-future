@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errorMessages';
 import SectorRack3D, { placementKey, type PlacementMap, type HighlightSlot } from '@/components/SectorRack3D';
 import QrScanner from '@/components/QrScanner';
+import WarehouseDigitalTwin from '@/components/WarehouseDigitalTwin';
 
 interface Sector {
   id: string;
@@ -519,6 +520,9 @@ export default function SectorsPage() {
           <StatCard label="Umumiy sig'im" value={totalStats.capacity} icon={<Box className="w-4 h-4" />} />
           <StatCard label="Bo'sh joy" value={totalStats.free} icon={<Package className="w-4 h-4" />} sub={`band: ${totalStats.occupied}`} />
         </div>
+
+        <WarehouseDigitalTwin sectors={sectors} shelves={shelves} products={products} placements={placements}
+          onOpenShelf={(sh) => { setOpenSectorId(sh.sector_id); openShelf(sh.id); }} />
 
         {/* Search */}
         <div className="relative max-w-sm">
